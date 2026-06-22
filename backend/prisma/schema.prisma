@@ -1,0 +1,353 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum AvailabilityStatus {
+  AVAILABLE
+  BUSY
+  UNAVAILABLE
+}
+
+enum SkillLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum MatchRequestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  CANCELLED
+  COMPLETED
+  EXPIRED
+}
+
+enum SessionStatus {
+  PROPOSED
+  ACCEPTED
+  DECLINED
+  COUNTER_PROPOSED
+  COMPLETED
+  CANCELLED
+}
+
+enum MeetingMethod {
+  VIDEO
+  IN_PERSON
+  PHONE
+}
+
+enum FlagStatus {
+  PENDING
+  RESOLVED
+  DISMISSED
+}
+
+enum FlagTargetType {
+  SKILL
+  REVIEW
+  USER
+}
+
+model User {
+  id                    String             @id @default(cuid())
+  email                 String             @unique
+  passwordHash          String?
+  googleId              String?            @unique
+  name                  String
+  bio                   String?
+  location              String?
+  avatarUrl             String?
+  timezone              String             @default("UTC")
+  role                  UserRole           @default(USER)
+  availabilityStatus    AvailabilityStatus @default(AVAILABLE)
+  notifyMatches         Boolean            @default(true)
+  notifyMessages        Boolean            @default(true)
+  notifySessions        Boolean            @default(true)
+  isSuspended           Boolean            @default(false)
+  suspendedAt           DateTime?
+  suspendedReason       String?
+  deletedAt             DateTime?
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  skills                Skill[]
+  wantedSkills          WantedSkill[]
+  sentMatchRequests     MatchRequest[]     @relation("SentRequests")
+  receivedMatchRequests MatchRequest[]     @relation("ReceivedRequests")
+  activeMatchesAsUser1  ActiveMatch[]      @relation("MatchUser1")
+  activeMatchesAsUser2  ActiveMatch[]      @relation("MatchUser2")
+  messages              Message[]
+  sessionsProposed      Session[]          @relation("SessionProposer")
+  reviewsGiven          Review[]           @relation("ReviewsGiven")
+  reviewsReceived       Review[]           @relation("ReviewsReceived")
+  flagsCreated          Flag[]             @relation("FlagsCreated")
+  auditLogs             AuditLog[]         @relation("AuditActor")
+  auditLogsTarget       AuditLog[]         @relation("AuditTarget")
+  conversationsAsUser1  Conversation[]     @relation("ConversationUser1")
+  conversationsAsUser2  Conversation[]     @relation("ConversationUser2")
+
+  @@index([email])
+  @@index([role])
+}
+
+model Category {
+  id            String        @id @default(cuid())
+  name          String        @unique
+  slug          String        @unique
+  icon          String?
+  sortOrder     Int           @default(0)
+  createdAt     DateTime      @default(now())
+  subcategories Subcategory[]
+  skills        Skill[]
+}
+
+model Subcategory {
+  id         String   @id @default(cuid())
+  name       String
+  slug       String
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  skills     Skill[]
+
+  @@unique([categoryId, slug])
+}
+
+model Skill {
+  id               String             @id @default(cuid())
+  title            String
+  level            SkillLevel
+  shortDescription String
+  fullDescription  String
+  learningOutcomes String
+  prerequisites    String?
+  sessionDurations Int[]
+  coverImageUrl    String?
+  availability     AvailabilityStatus @default(AVAILABLE)
+  requestCount     Int                @default(0)
+  viewCount        Int                @default(0)
+  avgRating        Float              @default(0)
+  reviewCount      Int                @default(0)
+  isFeatured       Boolean            @default(false)
+  isFlagged        Boolean            @default(false)
+  providerId       String
+  categoryId       String
+  subcategoryId    String
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  provider         User               @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  category         Category           @relation(fields: [categoryId], references: [id])
+  subcategory      Subcategory        @relation(fields: [subcategoryId], references: [id])
+  tags             SkillTag[]
+  schedules        SkillSchedule[]
+  offeredInRequests MatchRequest[]    @relation("OfferedSkill")
+  wantedInRequests  MatchRequest[]   @relation("WantedSkill")
+
+  @@index([categoryId])
+  @@index([level])
+  @@index([createdAt])
+  @@index([requestCount])
+  @@index([avgRating])
+}
+
+model Tag {
+  id     String     @id @default(cuid())
+  name   String     @unique
+  skills SkillTag[]
+}
+
+model SkillTag {
+  skillId String
+  tagId   String
+  skill   Skill  @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  tag     Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([skillId, tagId])
+}
+
+model SkillSchedule {
+  id        String @id @default(cuid())
+  skillId   String
+  dayOfWeek Int
+  startTime String
+  endTime   String
+  skill     Skill  @relation(fields: [skillId], references: [id], onDelete: Cascade)
+}
+
+model WantedSkill {
+  id          String     @id @default(cuid())
+  title       String
+  level       SkillLevel?
+  description String?
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime   @default(now())
+}
+
+model MatchRequest {
+  id             String             @id @default(cuid())
+  message        String
+  status         MatchRequestStatus @default(PENDING)
+  senderId       String
+  receiverId     String
+  offeredSkillId String
+  wantedSkillId  String
+  expiresAt      DateTime?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  sender         User               @relation("SentRequests", fields: [senderId], references: [id])
+  receiver       User               @relation("ReceivedRequests", fields: [receiverId], references: [id])
+  offeredSkill   Skill              @relation("OfferedSkill", fields: [offeredSkillId], references: [id])
+  wantedSkill    Skill              @relation("WantedSkill", fields: [wantedSkillId], references: [id])
+  activeMatch    ActiveMatch?
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([status])
+}
+
+model ActiveMatch {
+  id             String       @id @default(cuid())
+  matchRequestId String       @unique
+  user1Id        String
+  user2Id        String
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+
+  matchRequest   MatchRequest @relation(fields: [matchRequestId], references: [id])
+  user1          User         @relation("MatchUser1", fields: [user1Id], references: [id])
+  user2          User         @relation("MatchUser2", fields: [user2Id], references: [id])
+  conversation   Conversation?
+  sessions       Session[]
+
+  @@index([user1Id])
+  @@index([user2Id])
+}
+
+model Conversation {
+  id            String       @id @default(cuid())
+  user1Id       String
+  user2Id       String
+  activeMatchId String?      @unique
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  activeMatch   ActiveMatch? @relation(fields: [activeMatchId], references: [id], onDelete: Cascade)
+  user1         User         @relation("ConversationUser1", fields: [user1Id], references: [id])
+  user2         User         @relation("ConversationUser2", fields: [user2Id], references: [id])
+  messages      Message[]
+
+  @@unique([user1Id, user2Id])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  senderId       String
+  content        String?
+  fileUrl        String?
+  fileName       String?
+  fileType       String?
+  isRead         Boolean      @default(false)
+  readAt         DateTime?
+  createdAt      DateTime     @default(now())
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User         @relation(fields: [senderId], references: [id])
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([createdAt])
+}
+
+model Session {
+  id              String        @id @default(cuid())
+  activeMatchId   String
+  proposerId      String
+  scheduledStart  DateTime
+  scheduledEnd    DateTime
+  durationMinutes Int
+  agenda          String?
+  meetingMethod   MeetingMethod @default(VIDEO)
+  meetingDetails  String?
+  status          SessionStatus @default(PROPOSED)
+  counterStart    DateTime?
+  counterEnd      DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  activeMatch     ActiveMatch   @relation(fields: [activeMatchId], references: [id], onDelete: Cascade)
+  proposer        User          @relation("SessionProposer", fields: [proposerId], references: [id])
+  reviews         Review[]
+
+  @@index([activeMatchId])
+  @@index([scheduledStart])
+  @@index([status])
+}
+
+model Review {
+  id                   String   @id @default(cuid())
+  sessionId            String
+  reviewerId           String
+  revieweeId           String
+  ratingOverall        Int
+  ratingTeaching       Int
+  ratingCommunication  Int
+  ratingPunctuality    Int
+  feedback             String
+  isRevealed           Boolean  @default(false)
+  lockedAt             DateTime?
+  createdAt            DateTime @default(now())
+
+  session              Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  reviewer             User     @relation("ReviewsGiven", fields: [reviewerId], references: [id])
+  reviewee             User     @relation("ReviewsReceived", fields: [revieweeId], references: [id])
+
+  @@unique([sessionId, reviewerId])
+  @@index([revieweeId])
+}
+
+model Flag {
+  id          String         @id @default(cuid())
+  targetType  FlagTargetType
+  targetId    String
+  reason      String
+  status      FlagStatus     @default(PENDING)
+  reporterId  String
+  resolvedBy  String?
+  resolvedAt  DateTime?
+  createdAt   DateTime       @default(now())
+
+  reporter    User           @relation("FlagsCreated", fields: [reporterId], references: [id])
+
+  @@index([status])
+  @@index([targetType, targetId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  action     String
+  actorId    String
+  targetId   String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  actor      User     @relation("AuditActor", fields: [actorId], references: [id])
+  target     User?    @relation("AuditTarget", fields: [targetId], references: [id])
+
+  @@index([actorId])
+  @@index([createdAt])
+}

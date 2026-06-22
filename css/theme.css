@@ -1,0 +1,109 @@
+/* Shared theme tokens — Aigocy Agency Theme */
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* Primary Accent & Buttons */
+  --brand-blue: #E92E20; /* Primary Red */
+  --brand-blue-hover-shadow: #F87E62; /* Accent Orange */
+  --brand-blue-shadow: #454049; /* Button Shadow */
+
+  /* Background & Typography */
+  --bg-page: #EEEEF5; /* Light Background */
+  --text-primary: #272128; /* Primary Text */
+  --text-secondary: #828582; /* Secondary Text */
+  --text-muted: #A1A1AA; /* Muted Text */
+  --accent-star: #F87E62; /* Accent Orange */
+
+  /* Glow Elements */
+  --glow-orb-1: #FBBBB3; /* Soft Glow Peach */
+  --glow-orb-2: #F87E62; /* Accent Orange */
+  --glow-opacity: 0.8;
+
+  /* UI Cards / Containers */
+  --glass-bg: #FFFFFF; /* Card / Surface */
+  --glass-bg-hover: #F5F5F7; /* Light Gray */
+  --glass-bg-subtle: #DCDCE1; /* Secondary Background */
+  --glass-bg-btn: #E5E5EA; /* Border / Divider */
+  --glass-border: #E5E5EA; /* Sublte Borders */
+  --glass-border-subtle: rgba(229, 229, 234, 0.5); 
+  --glass-border-light: #FFFFFF;
+  --glass-inset: rgba(255, 255, 255, 0.5);
+  --glass-inset-strong: rgba(255, 255, 255, 0.8);
+  --glass-shadow: rgba(69, 64, 73, 0.15); 
+  --glass-cta-inset: rgba(255, 255, 255, 0.2);
+
+  /* Gradients */
+  --orb-gradient: radial-gradient(
+    circle at 35% 30%,
+    #EEEEF5 0%,
+    #FBBBB3 35%,
+    #F87E62 70%,
+    #E92E20 100%
+  );
+  --orb-inner-gradient: radial-gradient(
+    circle at 40% 35%,
+    rgba(255, 255, 255, 0.7) 0%,
+    rgba(251, 187, 179, 0.4) 50%,
+    transparent 80%
+  );
+  --orb-shine: rgba(255, 255, 255, 0.85);
+  --orb-border: rgba(255, 255, 255, 0.5);
+  --orb-shadow-outer: rgba(233, 46, 32, 0.25);
+  --orb-shadow-inner: rgba(248, 126, 98, 0.2);
+
+  --transition-theme: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Primary Accent & Buttons */
+  --brand-blue: #FF4B29; /* Primary Red Base */
+  --brand-blue-hover-shadow: #E92E20; 
+  --brand-blue-shadow: #060408;
+
+  /* Background & Typography */
+  --bg-page: #0A0A0D; /* Dark Background */
+  --text-primary: #FFFFFF; /* Primary Text */
+  --text-secondary: #8B878E; /* Secondary Text */
+  --text-muted: #666666; /* Medium Gray */
+  --accent-star: #FF4B29;
+
+  /* Glow Elements */
+  --glow-orb-1: #FF4B29;
+  --glow-orb-2: #F87E62;
+  --glow-opacity: 0.3;
+
+  /* UI Cards / Containers */
+  --glass-bg: #1D1D22; /* Card Background */
+  --glass-bg-hover: #141417; /* Dark Surface */
+  --glass-bg-subtle: #141417; 
+  --glass-bg-btn: #141417; 
+  --glass-border: #666666; 
+  --glass-border-subtle: rgba(102, 102, 102, 0.3);
+  --glass-border-light: rgba(102, 102, 102, 0.5);
+  --glass-inset: rgba(255, 255, 255, 0.05);
+  --glass-inset-strong: rgba(255, 255, 255, 0.1);
+  --glass-shadow: rgba(0, 0, 0, 0.5);
+  --glass-cta-inset: rgba(255, 255, 255, 0.1);
+
+  /* Gradients */
+  --orb-gradient: radial-gradient(
+    circle at 35% 30%,
+    #1D1D22 0%,
+    #FF4B29 50%,
+    #141417 100%
+  );
+  --orb-inner-gradient: radial-gradient(
+    circle at 40% 35%,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 75, 41, 0.2) 50%,
+    transparent 80%
+  );
+  --orb-shine: rgba(255, 255, 255, 0.2);
+  --orb-border: rgba(255, 255, 255, 0.1);
+  --orb-shadow-outer: rgba(255, 75, 41, 0.3);
+  --orb-shadow-inner: rgba(255, 75, 41, 0.2);
+}

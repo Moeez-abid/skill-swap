@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Settings — SkillSwap</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fustat:wght@700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    <script>(function(){var t=localStorage.getItem('skillswap-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t;})();</script>
+    <link rel="stylesheet" href="./style.css">
+  </head>
+  <body>
+    <header id="app-header"></header>
+    <main class="main-container" style="padding-top:100px;padding-bottom:64px">
+      <div class="page-header"><h1 class="page-title">Settings</h1><p class="page-subtitle">Update your profile, notifications, and account security.</p></div>
+      <form id="settings-form" class="form-card glass-card" style="margin-bottom:32px">
+        <h2 style="font-family:Fustat,sans-serif;margin-bottom:16px">Profile</h2>
+        <div class="form-group"><label for="name">Name</label><input id="name" name="name" /></div>
+        <div class="form-group"><label for="bio">Bio</label><textarea id="bio" name="bio"></textarea></div>
+        <div class="form-row"><div class="form-group"><label for="location">Location</label><input id="location" name="location" /></div><div class="form-group"><label for="timezone">Timezone</label><input id="timezone" name="timezone" placeholder="UTC" /></div></div>
+        <div class="form-group"><label for="availabilityStatus">Global Availability</label><select id="availabilityStatus" name="availabilityStatus"><option value="AVAILABLE">Available</option><option value="BUSY">Busy</option><option value="UNAVAILABLE">Unavailable</option></select></div>
+        <fieldset style="border:none;margin-top:16px"><legend style="margin-bottom:12px">Notifications</legend>
+          <div class="checkbox-group"><label><input type="checkbox" name="notifyMatches" /> Match requests</label><label><input type="checkbox" name="notifyMessages" /> Messages</label><label><input type="checkbox" name="notifySessions" /> Sessions</label></div>
+        </fieldset>
+        <button type="submit" class="primary-cta" style="margin-top:16px">Save Settings</button>
+        <p id="form-error" class="form-error" hidden></p>
+      </form>
+      <form id="password-form" class="form-card glass-card" style="margin-bottom:32px">
+        <h2 style="font-family:Fustat,sans-serif;margin-bottom:16px">Change Password</h2>
+        <div class="form-group"><label for="currentPassword">Current password</label><input type="password" id="currentPassword" name="currentPassword" required /></div>
+        <div class="form-group"><label for="newPassword">New password</label><input type="password" id="newPassword" name="newPassword" required minlength="8" /></div>
+        <button type="submit" class="btn-secondary">Update Password</button>
+        <p id="pw-error" class="form-error" hidden></p>
+      </form>
+      <div class="form-card glass-card"><h2 style="font-family:Fustat,sans-serif;margin-bottom:16px;color:#dc2626">Danger Zone</h2><button type="button" id="delete-account" class="btn-secondary" style="border-color:#dc2626;color:#dc2626">Delete Account</button></div>
+    </main>
+    <footer id="app-footer"></footer>
+    <script type="module" src="/js/pages/settings.js"></script>
+  </body>
+</html>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>List a Skill — SkillSwap</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fustat:wght@700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    <script>(function(){var t=localStorage.getItem('skillswap-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t;})();</script>
+    <link rel="stylesheet" href="./style.css">
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <header id="app-header"></header>
+    <main id="main-content" class="main-container" style="padding-top:100px;padding-bottom:64px">
+      <div class="page-header"><h1 class="page-title">List a Skill</h1><p class="page-subtitle">Share what you can teach. All fields marked with validation rules from the spec apply.</p></div>
+      <form id="create-skill-form" class="form-card glass-card">
+        <div class="form-group"><label for="title">Skill Title *</label><input id="title" name="title" required minlength="5" maxlength="100" /></div>
+        <div class="form-row">
+          <div class="form-group"><label for="category">Category *</label><select id="category" name="category" required><option value="">Select category</option></select></div>
+          <div class="form-group"><label for="subcategory">Subcategory *</label><select id="subcategory" name="subcategory" required><option value="">Select subcategory</option></select></div>
+        </div>
+        <div class="form-group"><label for="level">Skill Level *</label><select id="level" name="level" required><option value="BEGINNER">Beginner</option><option value="INTERMEDIATE">Intermediate</option><option value="ADVANCED">Advanced</option></select></div>
+        <div class="form-group"><label for="shortDescription">Short Description * (20–200 chars)</label><input id="shortDescription" name="shortDescription" required minlength="20" maxlength="200" /></div>
+        <div class="form-group"><label for="fullDescription">Full Description * (50–5000 chars)</label><textarea id="fullDescription" name="fullDescription" required minlength="50" maxlength="5000"></textarea></div>
+        <div class="form-group"><label for="learningOutcomes">Learning Outcomes *</label><textarea id="learningOutcomes" name="learningOutcomes" required minlength="10"></textarea></div>
+        <div class="form-group"><label for="prerequisites">Prerequisites (optional)</label><textarea id="prerequisites" name="prerequisites"></textarea></div>
+        <div class="form-group"><fieldset style="border:none"><legend>Session Durations *</legend><div class="checkbox-group"><label><input type="checkbox" name="duration" value="30" /> 30 min</label><label><input type="checkbox" name="duration" value="45" /> 45 min</label><label><input type="checkbox" name="duration" value="60" checked /> 60 min</label><label><input type="checkbox" name="duration" value="90" /> 90 min</label></div></fieldset></div>
+        <div class="form-group"><label for="tags">Tags (comma-separated, max 10)</label><input id="tags" name="tags" placeholder="e.g. javascript, frontend" /></div>
+        <div class="form-group"><label for="coverImage">Cover Image (max 2MB, optional)</label><input type="file" id="coverImage" name="coverImage" accept="image/*" /></div>
+        <button type="submit" class="primary-cta">Publish Skill</button>
+        <p id="form-error" class="form-error" hidden></p>
+      </form>
+    </main>
+    <footer id="app-footer"></footer>
+    <script type="module" src="/js/pages/create-skill.js"></script>
+  </body>
+</html>

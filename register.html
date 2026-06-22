@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign up — SkillSwap</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fustat:wght@700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    <script>(function(){var t=localStorage.getItem('skillswap-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t;})();</script>
+    <link rel="stylesheet" href="./style.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+  </head>
+  <body data-page="register">
+    <header id="app-header"></header>
+    <main class="main-container" style="padding-top:100px;padding-bottom:64px">
+      <form id="auth-form" class="form-card glass-card">
+        <h1 class="page-title">Join SkillSwap</h1>
+        <p class="page-subtitle" style="margin-bottom:24px">Create your free account and start exchanging skills.</p>
+        <div class="form-group"><label for="name">Full name</label><input type="text" id="name" name="name" required minlength="2" autocomplete="name" /></div>
+        <div class="form-group"><label for="email">Email</label><input type="email" id="email" name="email" required autocomplete="email" /></div>
+        <div class="form-group"><label for="password">Password (min 8 characters)</label><input type="password" id="password" name="password" required minlength="8" autocomplete="new-password" /></div>
+        <button type="submit" class="primary-cta">Create account</button>
+        <div style="display:flex;align-items:center;margin:24px 0;">
+          <div style="flex-grow:1;height:1px;background:var(--border-color)"></div>
+          <span style="padding:0 12px;color:var(--text-secondary);font-size:14px">or</span>
+          <div style="flex-grow:1;height:1px;background:var(--border-color)"></div>
+        </div>
+        <div id="google-btn" style="display:flex;justify-content:center;"></div>
+        <p style="margin-top:24px;font-size:14px;color:var(--text-secondary);text-align:center;">Already have an account? <a href="/login.html">Log in</a></p>
+        <p id="form-error" class="form-error" hidden></p>
+      </form>
+    </main>
+    <footer id="app-footer"></footer>
+    <script type="module" src="/js/pages/auth.js"></script>
+  </body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Messages — SkillSwap</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fustat:wght@700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    <script>(function(){var t=localStorage.getItem('skillswap-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t;})();</script>
+    <link rel="stylesheet" href="./style.css">
+  </head>
+  <body>
+    <header id="app-header"></header>
+    <main class="main-container" style="padding-top:100px;padding-bottom:64px">
+      <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <h1 class="page-title">Messages</h1>
+          <p class="page-subtitle">Chat with any user.</p>
+        </div>
+        <button type="button" class="primary-cta" id="new-chat-btn">New Chat</button>
+      </div>
+      <div class="messages-layout">
+        <aside id="conversation-list" class="conversation-list glass-card" style="padding:12px" aria-label="Conversations"></aside>
+        <section id="message-thread" class="message-thread glass-card" aria-label="Message thread"><p class="empty-state">Select a conversation</p></section>
+      </div>
+
+      <!-- New Chat Modal -->
+      <dialog id="new-chat-modal" class="modal glass-card" style="padding:24px;border-radius:12px;border:1px solid var(--glass-border);width:100%;max-width:400px;">
+        <h2 style="margin-top:0">Start a new chat</h2>
+        <div class="form-group" style="margin-top:16px">
+          <label for="user-select">Select User</label>
+          <select id="user-select" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-primary)"></select>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:24px">
+          <button type="button" class="btn-secondary" id="close-modal-btn">Cancel</button>
+          <button type="button" class="primary-cta" id="start-chat-btn">Start Chat</button>
+        </div>
+      </dialog>
+    </main>
+    <footer id="app-footer"></footer>
+    <script type="module" src="/js/pages/messages.js"></script>
+  </body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "name": "skillswap",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "backend:dev": "npm run dev --prefix backend",
+    "backend:start": "npm run start --prefix backend",
+    "db:generate": "npm run db:generate --prefix backend",
+    "db:push": "npm run db:push --prefix backend",
+    "db:seed": "npm run db:seed --prefix backend"
+  },
+  "devDependencies": {
+    "vite": "^8.0.12"
+  },
+  "dependencies": {
+    "pusher-js": "^8.5.0"
+  }
+}
