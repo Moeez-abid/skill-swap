@@ -64,9 +64,9 @@ body {
   align-items: center;
   gap: 24px;
   padding: 12px 24px;
-  background: color-mix(in srgb, var(--glass-bg) 75%, transparent);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background: color-mix(in srgb, var(--glass-bg) 90%, transparent);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
   border-radius: 16px;
   border: 1px solid var(--glass-border);
   box-shadow: inset 0px 4px 4px 0px var(--glass-inset),
