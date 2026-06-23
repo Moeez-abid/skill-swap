@@ -114,7 +114,13 @@ router.patch('/:id/status', authenticate, async (req, res) => {
           user2Id: mr.receiverId,
         },
       });
-      await tx.conversation.create({ data: { activeMatchId: activeMatch.id } });
+      await tx.conversation.create({
+        data: {
+          activeMatchId: activeMatch.id,
+          user1Id: mr.senderId,
+          user2Id: mr.receiverId,
+        }
+      });
       await triggerEvent(`user-${mr.senderId}`, 'match-accepted', { matchRequestId: mr.id });
     }
 
