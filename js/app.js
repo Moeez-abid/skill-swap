@@ -1,6 +1,21 @@
 import { initTheme } from './theme.js';
 import { mountLayout, mountFooter } from './shared/layout.js';
 
+// Pre-fetch pages on hover to eliminate the "white flash" delay on Safari/iOS
+document.addEventListener('mouseover', (e) => {
+  const link = e.target.closest('a');
+  if (link && link.hostname === window.location.hostname && !link.hasAttribute('download')) {
+    const prefetchUrl = new URL(link.href);
+    if (!window._prefetchedUrls) window._prefetchedUrls = new Set();
+    const urlStr = prefetchUrl.toString();
+    
+    if (!window._prefetchedUrls.has(urlStr)) {
+      window._prefetchedUrls.add(urlStr);
+      fetch(urlStr, { method: 'GET', priority: 'low' }).catch(() => {});
+    }
+  }
+});
+
 export function initApp(activePage) {
   mountLayout(activePage);
   initTheme();
