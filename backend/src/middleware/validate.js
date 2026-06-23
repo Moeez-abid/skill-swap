@@ -37,7 +37,7 @@ export const skillSchema = z.object({
   fullDescription: z.string().min(50).max(5000),
   learningOutcomes: z.string().min(10).max(2000),
   prerequisites: z.string().max(1000).optional(),
-  sessionDurations: z.array(z.union([z.literal(30), z.literal(45), z.literal(60), z.literal(90)])).min(1),
+  sessionDurations: z.array(z.number()).optional(),
   tags: z.array(z.string().max(50)).max(10).optional(),
   availability: z.enum(['AVAILABLE', 'BUSY', 'UNAVAILABLE']).optional(),
   schedules: z.array(z.object({
@@ -70,7 +70,7 @@ export const reviewSchema = z.object({
   ratingTeaching: z.number().int().min(1).max(5),
   ratingCommunication: z.number().int().min(1).max(5),
   ratingPunctuality: z.number().int().min(1).max(5),
-  feedback: z.string().min(50).max(1000),
+  feedback: z.string().min(1).max(1000),
 });
 
 export const profileUpdateSchema = z.object({

@@ -20,10 +20,32 @@ router.get('/match/:matchId', authenticate, async (req, res) => {
   const sessions = await prisma.session.findMany({
     where: { activeMatchId: match.id },
     orderBy: { scheduledStart: 'asc' },
-    include: { proposer: { select: { id: true, name: true, avatarUrl: true } } },
+    include: { proposer: { select: { id: true, name: true, avatarUrl: true } }, reviews: true },
   });
 
-  return apiSuccess(res, { sessions });
+  const sanitizedSessions = sessions.map(s => {
+    const sanitizedReviews = s.reviews.map(r => {
+      if (!r.isRevealed && r.reviewerId !== req.user.id) {
+        return {
+          id: r.id,
+          sessionId: r.sessionId,
+          reviewerId: r.reviewerId,
+          revieweeId: r.revieweeId,
+          isRevealed: false,
+          createdAt: r.createdAt,
+          ratingOverall: 0,
+          ratingTeaching: 0,
+          ratingCommunication: 0,
+          ratingPunctuality: 0,
+          feedback: 'Hidden until both users submit reviews.'
+        };
+      }
+      return r;
+    });
+    return { ...s, reviews: sanitizedReviews };
+  });
+
+  return apiSuccess(res, { sessions: sanitizedSessions });
 });
 
 router.post('/match/:matchId', authenticate, validate(sessionSchema), async (req, res) => {

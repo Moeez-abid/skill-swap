@@ -39,6 +39,54 @@ router.get('/', authenticate, async (req, res) => {
   return apiSuccess(res, { requests });
 });
 
+router.get('/active', authenticate, async (req, res) => {
+  const { status = 'active' } = req.query;
+  const where = { OR: [{ user1Id: req.user.id }, { user2Id: req.user.id }] };
+  if (status === 'active') where.isActive = true;
+  if (status === 'past') where.isActive = false;
+
+  const matches = await prisma.activeMatch.findMany({
+    where,
+    include: {
+      user1: { select: { id: true, name: true, avatarUrl: true } },
+      user2: { select: { id: true, name: true, avatarUrl: true } },
+      matchRequest: {
+        include: {
+          offeredSkill: { select: { id: true, title: true } },
+          wantedSkill: { select: { id: true, title: true } }
+        }
+      },
+      reviews: true
+    },
+    orderBy: { createdAt: 'desc' }
+  });
+
+  const activeMatches = matches.map(m => {
+    const partner = m.user1Id === req.user.id ? m.user2 : m.user1;
+    const sanitizedReviews = m.reviews.map(r => {
+      if (!r.isRevealed && r.reviewerId !== req.user.id) {
+        return {
+          id: r.id,
+          activeMatchId: r.activeMatchId,
+          reviewerId: r.reviewerId,
+          revieweeId: r.revieweeId,
+          isRevealed: false,
+          createdAt: r.createdAt,
+          ratingOverall: 0,
+          ratingTeaching: 0,
+          ratingCommunication: 0,
+          ratingPunctuality: 0,
+          feedback: 'Hidden until both users submit reviews.'
+        };
+      }
+      return r;
+    });
+    return { ...m, partner, reviews: sanitizedReviews };
+  });
+
+  return apiSuccess(res, { activeMatches });
+});
+
 router.post('/', authenticate, validate(matchRequestSchema), async (req, res) => {
   const { offeredSkillId, wantedSkillId, message } = req.body;
 
@@ -114,13 +162,29 @@ router.patch('/:id/status', authenticate, async (req, res) => {
           user2Id: mr.receiverId,
         },
       });
-      await tx.conversation.create({
-        data: {
-          activeMatchId: activeMatch.id,
-          user1Id: mr.senderId,
-          user2Id: mr.receiverId,
+      let conv = await tx.conversation.findFirst({
+        where: {
+          OR: [
+            { user1Id: mr.senderId, user2Id: mr.receiverId },
+            { user1Id: mr.receiverId, user2Id: mr.senderId }
+          ]
         }
       });
+
+      if (conv) {
+        await tx.conversation.update({
+          where: { id: conv.id },
+          data: { activeMatchId: activeMatch.id }
+        });
+      } else {
+        await tx.conversation.create({
+          data: {
+            activeMatchId: activeMatch.id,
+            user1Id: mr.senderId,
+            user2Id: mr.receiverId,
+          }
+        });
+      }
       await triggerEvent(`user-${mr.senderId}`, 'match-accepted', { matchRequestId: mr.id });
     }
 
@@ -128,6 +192,29 @@ router.patch('/:id/status', authenticate, async (req, res) => {
   });
 
   return apiSuccess(res, { request: updated });
+});
+
+router.patch('/active/:id/complete', authenticate, async (req, res) => {
+  const match = await prisma.activeMatch.findUnique({ where: { id: req.params.id } });
+  if (!match) return apiError(res, 404, 'Match not found');
+  if (!match.isActive) return apiError(res, 400, 'Match is already completed');
+  
+  const isParticipant = match.user1Id === req.user.id || match.user2Id === req.user.id;
+  if (!isParticipant) return apiError(res, 403, 'Access denied');
+
+  const updated = await prisma.$transaction(async (tx) => {
+    const am = await tx.activeMatch.update({
+      where: { id: match.id },
+      data: { isActive: false },
+    });
+    await tx.matchRequest.update({
+      where: { id: match.matchRequestId },
+      data: { status: 'COMPLETED' },
+    });
+    return am;
+  });
+
+  return apiSuccess(res, { match: updated });
 });
 
 export default router;

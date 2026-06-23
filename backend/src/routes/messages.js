@@ -118,8 +118,8 @@ router.get('/:conversationId/messages', authenticate, async (req, res) => {
 
   const messages = await prisma.message.findMany({
     where: { conversationId: conv.id },
-    orderBy: { createdAt: 'asc' },
-    include: { sender: { select: { id: true, name: true, avatarUrl: true } } },
+    include: { replyTo: true, sender: { select: { id: true, name: true, avatarUrl: true } } },
+    orderBy: { createdAt: 'asc' }
   });
 
   await prisma.message.updateMany({
@@ -161,14 +161,90 @@ router.post('/:conversationId/messages', authenticate, msgLimiter, upload.single
       fileUrl,
       fileName,
       fileType,
+      replyToId: req.body.replyToId || null,
     },
-    include: { sender: { select: { id: true, name: true, avatarUrl: true } } },
+    include: { replyTo: true, sender: { select: { id: true, name: true, avatarUrl: true } } },
   });
 
   const partnerId = conv.user1Id === req.user.id ? conv.user2Id : conv.user1Id;
   await triggerEvent(`user-${partnerId}`, 'new-message', { message, conversationId: conv.id });
 
   return apiSuccess(res, { message }, 201);
+});
+
+router.post('/bulk-delete', authenticate, async (req, res) => {
+  const { messageIds } = req.body;
+  if (!Array.isArray(messageIds) || messageIds.length === 0) {
+    return apiError(res, 400, 'Invalid messageIds');
+  }
+
+  const messagesToDelete = await prisma.message.findMany({
+    where: { id: { in: messageIds }, senderId: req.user.id },
+    select: { id: true, conversationId: true, conversation: { select: { user1Id: true, user2Id: true } } }
+  });
+
+  if (messagesToDelete.length === 0) return apiSuccess(res, { success: true });
+
+  await prisma.message.deleteMany({
+    where: { id: { in: messagesToDelete.map(m => m.id) } }
+  });
+
+  const byConv = {};
+  messagesToDelete.forEach(m => {
+    if (!byConv[m.conversationId]) {
+      byConv[m.conversationId] = {
+        ids: [],
+        partnerId: m.conversation.user1Id === req.user.id ? m.conversation.user2Id : m.conversation.user1Id
+      };
+    }
+    byConv[m.conversationId].ids.push(m.id);
+  });
+
+  for (const [convId, data] of Object.entries(byConv)) {
+    await triggerEvent(`user-${data.partnerId}`, 'messages-deleted', { messageIds: data.ids, conversationId: convId });
+  }
+
+  return apiSuccess(res, { success: true });
+});
+
+router.delete('/conversations/:conversationId', authenticate, async (req, res) => {
+  const conv = await getConversation(req.user.id, req.params.conversationId);
+  if (!conv) return apiError(res, 403, 'No active conversation');
+
+  await prisma.conversation.delete({
+    where: { id: conv.id }
+  });
+
+  const partnerId = conv.user1Id === req.user.id ? conv.user2Id : conv.user1Id;
+  await triggerEvent(`user-${partnerId}`, 'conversation-deleted', { conversationId: conv.id });
+
+  return apiSuccess(res, { success: true });
+});
+
+router.delete('/:conversationId/messages/:messageId', authenticate, async (req, res) => {
+  const conv = await getConversation(req.user.id, req.params.conversationId);
+  if (!conv) return apiError(res, 403, 'No active conversation');
+
+  const message = await prisma.message.findUnique({
+    where: { id: req.params.messageId }
+  });
+
+  if (!message || message.conversationId !== conv.id) {
+    return apiError(res, 404, 'Message not found');
+  }
+
+  if (message.senderId !== req.user.id) {
+    return apiError(res, 403, 'You can only delete your own messages');
+  }
+
+  await prisma.message.delete({
+    where: { id: message.id }
+  });
+
+  const partnerId = conv.user1Id === req.user.id ? conv.user2Id : conv.user1Id;
+  await triggerEvent(`user-${partnerId}`, 'message-deleted', { messageId: message.id, conversationId: conv.id });
+
+  return apiSuccess(res, { success: true });
 });
 
 export default router;

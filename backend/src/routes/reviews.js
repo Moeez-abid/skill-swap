@@ -68,4 +68,54 @@ async function revealIfBothSubmitted(sessionId) {
   }
 }
 
+async function revealMatchIfBothSubmitted(activeMatchId) {
+  const reviews = await prisma.review.findMany({ where: { activeMatchId } });
+  if (reviews.length >= 2) {
+    await prisma.review.updateMany({
+      where: { activeMatchId },
+      data: { isRevealed: true },
+    });
+  }
+}
+
+router.post('/match/:matchId', authenticate, validate(reviewSchema), async (req, res) => {
+  const match = await prisma.activeMatch.findUnique({
+    where: { id: req.params.matchId },
+    include: { reviews: true },
+  });
+  if (!match) return apiError(res, 404, 'Match not found');
+  if (match.isActive) {
+    return apiError(res, 400, 'Match must be completed before reviewing');
+  }
+
+  const isParticipant = match.user1Id === req.user.id || match.user2Id === req.user.id;
+  if (!isParticipant) return apiError(res, 403, 'Access denied');
+
+  const revieweeId = match.user1Id === req.user.id ? match.user2Id : match.user1Id;
+  const existing = match.reviews.find((r) => r.reviewerId === req.user.id);
+  
+  if (existing) {
+    if (existing.lockedAt) return apiError(res, 400, 'Review is locked and cannot be edited');
+    const updated = await prisma.review.update({
+      where: { id: existing.id },
+      data: { ...req.body, lockedAt: new Date(Date.now() + 48 * 60 * 60 * 1000) },
+    });
+    await revealMatchIfBothSubmitted(match.id);
+    return apiSuccess(res, { review: updated });
+  }
+
+  const review = await prisma.review.create({
+    data: {
+      activeMatchId: match.id,
+      reviewerId: req.user.id,
+      revieweeId,
+      ...req.body,
+      lockedAt: new Date(Date.now() + 48 * 60 * 60 * 1000),
+    },
+  });
+
+  await revealMatchIfBothSubmitted(match.id);
+  return apiSuccess(res, { review }, 201);
+});
+
 export default router;

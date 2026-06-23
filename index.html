@@ -9,70 +9,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fustat:wght@700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script>(function(){var t=localStorage.getItem('skillswap-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t;})();</script>
-    <link rel="stylesheet" href="./style.css">
   </head>
   <body>
-    <a href="#main-content" class="skip-link">Skip to main content</a>
-    <header id="app-header"></header>
-
-    <main id="main-content" class="main-container">
-      <section class="hero-section" aria-labelledby="hero-title">
-        <div class="hero-content">
-          <div class="social-proof">
-            <div class="stars" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-              <svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-              <svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-              <svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-              <svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-            </div>
-            <span>Educational barter — zero monetary transactions</span>
-          </div>
-          <h1 id="hero-title" class="hero-title">Teach what you know,<br/>learn what you need</h1>
-          <p class="hero-subtitle">SkillSwap connects people who want to exchange knowledge directly. Offer a skill you have, request one you want — no payments, just mutual learning.</p>
-          <div class="cta-row">
-            <a href="/register.html" class="primary-cta">Start Swapping <span class="cta-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
-            <a href="/marketplace.html" class="btn-secondary">Browse Marketplace</a>
-          </div>
-        </div>
-        <div class="hero-media">
-          <canvas id="hero-node-graph" width="500" height="500" aria-label="Interactive Node Graph Animation"></canvas>
-        </div>
-      </section>
-
-      <section class="section" aria-labelledby="how-title">
-        <h2 id="how-title" class="section-title">How It Works</h2>
-        <div class="steps-grid">
-          <article class="step-card glass-card"><div class="step-card__icon" aria-hidden="true">1</div><h3>List</h3><p>Create a profile and list skills you can teach and skills you want to learn.</p></article>
-          <article class="step-card glass-card"><div class="step-card__icon" aria-hidden="true">2</div><h3>Match</h3><p>Send swap requests to users whose skills complement yours. Accept incoming offers.</p></article>
-          <article class="step-card glass-card"><div class="step-card__icon" aria-hidden="true">3</div><h3>Learn</h3><p>Schedule sessions, chat in real time, and leave mutual reviews after each swap.</p></article>
-        </div>
-      </section>
-
-      <section class="section" aria-labelledby="featured-title">
-        <h2 id="featured-title" class="section-title">Most Requested Skills</h2>
-        <div class="carousel">
-          <div id="featured-carousel" class="carousel__track" role="list"></div>
-          <div class="carousel__controls">
-            <button type="button" class="carousel__btn" id="carousel-prev" aria-label="Previous skills">&larr;</button>
-            <button type="button" class="carousel__btn" id="carousel-next" aria-label="Next skills">&rarr;</button>
-          </div>
-        </div>
-      </section>
-
-      <section class="section" aria-labelledby="stats-title">
-        <h2 id="stats-title" class="section-title">Community at a Glance</h2>
-        <div id="community-stats" class="stats-grid"></div>
-      </section>
-
-      <section class="section" aria-labelledby="categories-title">
-        <h2 id="categories-title" class="section-title">Explore by Category</h2>
-        <div id="category-pills" class="category-pills"></div>
-      </section>
-    </main>
-
-    <footer id="app-footer"></footer>
-    <script type="module" src="/js/pages/home.js"></script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

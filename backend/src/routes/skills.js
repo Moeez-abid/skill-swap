@@ -20,6 +20,7 @@ const skillInclude = {
 function buildSkillWhere(query) {
   const where = { provider: { deletedAt: null, isSuspended: false } };
   if (query.provider) where.providerId = query.provider;
+  if (query.excludeProvider) where.providerId = { not: query.excludeProvider };
   if (query.category) where.category = { slug: query.category };
   if (query.categories) {
     const slugs = String(query.categories).split(',');
@@ -69,9 +70,14 @@ router.get('/', optionalAuth, async (req, res) => {
   });
 });
 
-router.get('/featured', async (_req, res) => {
+router.get('/featured', optionalAuth, async (req, res) => {
+  const where = { provider: { deletedAt: null, isSuspended: false } };
+  if (req.user) {
+    where.providerId = { not: req.user.id };
+  }
+  
   const skills = await prisma.skill.findMany({
-    where: { provider: { deletedAt: null, isSuspended: false } },
+    where,
     orderBy: { requestCount: 'desc' },
     take: 8,
     include: skillInclude,
@@ -96,10 +102,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
 
 router.post('/', authenticate, upload.single('coverImage'), async (req, res) => {
   const body = { ...req.body };
-  if (typeof body.sessionDurations === 'string') {
-    try { body.sessionDurations = JSON.parse(body.sessionDurations); } catch { /* keep */ }
-  }
-  body.sessionDurations = (body.sessionDurations || []).map((d) => parseInt(d, 10));
+  body.sessionDurations = [];
   if (typeof body.tags === 'string') {
     try { body.tags = JSON.parse(body.tags); } catch { body.tags = body.tags.split(',').map((t) => t.trim()).filter(Boolean); }
   }

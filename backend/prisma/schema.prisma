@@ -232,6 +232,7 @@ model ActiveMatch {
   user2          User         @relation("MatchUser2", fields: [user2Id], references: [id])
   conversation   Conversation?
   sessions       Session[]
+  reviews        Review[]
 
   @@index([user1Id])
   @@index([user2Id])
@@ -267,6 +268,9 @@ model Message {
 
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   sender         User         @relation(fields: [senderId], references: [id])
+  replyToId      String?
+  replyTo        Message?     @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies        Message[]    @relation("MessageReplies")
 
   @@index([conversationId])
   @@index([senderId])
@@ -300,7 +304,8 @@ model Session {
 
 model Review {
   id                   String   @id @default(cuid())
-  sessionId            String
+  sessionId            String?
+  activeMatchId        String?
   reviewerId           String
   revieweeId           String
   ratingOverall        Int
@@ -312,11 +317,13 @@ model Review {
   lockedAt             DateTime?
   createdAt            DateTime @default(now())
 
-  session              Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  reviewer             User     @relation("ReviewsGiven", fields: [reviewerId], references: [id])
-  reviewee             User     @relation("ReviewsReceived", fields: [revieweeId], references: [id])
+  session              Session?      @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  activeMatch          ActiveMatch?  @relation(fields: [activeMatchId], references: [id], onDelete: Cascade)
+  reviewer             User          @relation("ReviewsGiven", fields: [reviewerId], references: [id])
+  reviewee             User          @relation("ReviewsReceived", fields: [revieweeId], references: [id])
 
   @@unique([sessionId, reviewerId])
+  @@unique([activeMatchId, reviewerId])
   @@index([revieweeId])
 }
 

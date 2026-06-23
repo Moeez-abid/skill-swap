@@ -1,0 +1,122 @@
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { isLoggedIn, getUser, logout, isAdmin } from '../shared/auth';
+import { getImageUrl } from '../shared/api';
+
+export default function Navbar() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [user, setUser] = useState(null);
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [theme, setTheme] = useState(localStorage.getItem('skillswap-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+
+  useEffect(() => {
+    setLoggedIn(isLoggedIn());
+    if (isLoggedIn()) {
+      setUser(getUser());
+    }
+  }, [location.pathname]);
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    localStorage.setItem('skillswap-theme', newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+    document.documentElement.style.colorScheme = newTheme;
+  };
+
+  const handleLogout = (e) => {
+    e.preventDefault();
+    logout();
+    setLoggedIn(false);
+    setUser(null);
+    window.location.href = '/';
+  };
+
+  const currentPath = location.pathname;
+
+  const links = loggedIn
+    ? [
+        { href: '/', label: 'Home' },
+        { href: '/marketplace', label: 'Marketplace' },
+        { href: '/dashboard', label: 'Dashboard' },
+        { href: '/matches', label: 'Matches' },
+        { href: '/messages', label: 'Messages' },
+        { href: '/sessions', label: 'Sessions' },
+        { href: '/settings', label: 'Settings' },
+      ]
+    : [
+        { href: '/', label: 'Home' },
+        { href: '/marketplace', label: 'Marketplace' },
+      ];
+
+  if (isAdmin()) {
+    links.push({ href: '/admin', label: 'Admin' });
+  }
+
+  function getInitials(name) {
+    return (name || '?').split(' ').map(n => n[0]).join('').slice(0, 2);
+  }
+
+  return (
+    <>
+      <div className="bg-glow" aria-hidden="true">
+        <div className="glow-orb glow-orb-1"></div>
+        <div className="glow-orb glow-orb-2"></div>
+      </div>
+      <nav className="navbar" aria-label="Main navigation">
+        <Link to="/" className="nav-logo">SkillSwap</Link>
+        <div className="nav-links">
+          {links.map(l => (
+            <Link 
+              key={l.href} 
+              to={l.href} 
+              className={currentPath === l.href || (currentPath === '/' && l.href === '/index.html') ? 'active' : ''}
+              aria-current={currentPath === l.href ? 'page' : undefined}
+            >
+              {l.label}
+            </Link>
+          ))}
+        </div>
+        <div className="nav-actions">
+          <button type="button" className="theme-toggle" onClick={toggleTheme} aria-pressed={theme === 'dark'} aria-label="Switch to night mode">
+            <svg className="theme-icon-sun" hidden={theme === 'dark'} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+            <svg className="theme-icon-moon" hidden={theme === 'light'} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+          </button>
+          
+          {loggedIn && user ? (
+            <div className="nav-profile-dropdown">
+              <button className="nav-profile-trigger" aria-haspopup="true" aria-label="Open profile menu">
+                {user.avatarUrl ? (
+                  <img src={getImageUrl(user.avatarUrl)} alt={user.name} className="avatar nav-avatar" width="36" height="36" style={{ objectFit: 'cover' }} />
+                ) : (
+                  <span className="avatar avatar--initials nav-avatar" style={{ width: '36px', height: '36px', fontSize: '14px', cursor: 'pointer' }} aria-hidden="true">
+                    {getInitials(user.name)}
+                  </span>
+                )}
+              </button>
+              <div className="nav-profile-menu">
+                <div className="nav-profile-info">
+                  <strong>{user.name || 'User'}</strong>
+                  <span>{user.email || ''}</span>
+                </div>
+                <Link to="/profile">My Profile</Link>
+                <Link to="/settings">Settings</Link>
+                <button type="button" onClick={handleLogout}>Log out</button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <Link to="/login" className="nav-btn nav-btn--ghost">Log in</Link>
+              <Link to="/register" className="nav-btn">Sign up</Link>
+            </>
+          )}
+        </div>
+      </nav>
+    </>
+  );
+}

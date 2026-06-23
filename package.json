@@ -14,9 +14,14 @@
     "db:seed": "npm run db:seed --prefix backend"
   },
   "devDependencies": {
+    "@vitejs/plugin-react": "^6.0.2",
     "vite": "^8.0.12"
   },
   "dependencies": {
-    "pusher-js": "^8.5.0"
+    "puppeteer": "^25.2.0",
+    "pusher-js": "^8.5.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "react-router-dom": "^7.18.0"
   }
 }
