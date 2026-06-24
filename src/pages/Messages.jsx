@@ -388,10 +388,8 @@ export default function Messages() {
                 {threadMsgs.map((m, index) => {
                   const sent = m.senderId === currentUser.id;
                   const isHovered = hoveredMsgId === m.id;
-                  const isMenuOpen = openMenuId === m.id;
                   const isSelected = selectedMessages.has(m.id);
                   const isSelecting = selectedMessages.size > 0;
-                  const isNearBottom = index >= threadMsgs.length - 2;
 
                   return (
                     <div 
