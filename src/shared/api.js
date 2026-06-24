@@ -2,7 +2,7 @@ export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/a
 
 export function getImageUrl(path) {
   if (!path) return null;
-  if (path.startsWith('http')) return path;
+  if (path.startsWith('http') || path.startsWith('blob:') || path.startsWith('data:')) return path;
   const baseUrl = API_BASE.replace(/\/api$/, '');
   return `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
 }

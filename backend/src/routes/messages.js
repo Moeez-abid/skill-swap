@@ -140,12 +140,19 @@ router.post('/:conversationId/messages', authenticate, msgLimiter, upload.single
 
   let fileUrl, fileName, fileType;
   if (req.file) {
-    if (process.env.CLOUDINARY_CLOUD_NAME) {
-       // Cloudinary requires memoryStorage buffer, but we switched to diskStorage.
-       // So we can use the local file path to upload if we wanted, but we'll default to local
-       // file sharing instead of breaking since the setup is now local-first.
+    const result = await uploadFile(req.file.buffer);
+    if (result && result.secure_url) {
+      fileUrl = result.secure_url;
+    } else {
+      const uploadDir = path.join(process.cwd(), 'uploads');
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      const filename = uniqueSuffix + '-' + req.file.originalname;
+      fs.writeFileSync(path.join(uploadDir, filename), req.file.buffer);
+      fileUrl = `/uploads/${filename}`;
     }
-    fileUrl = `${process.env.API_URL || 'http://localhost:3001'}/uploads/${req.file.filename}`;
     fileName = req.file.originalname;
     fileType = req.file.mimetype;
   }

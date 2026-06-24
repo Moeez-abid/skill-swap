@@ -403,7 +403,7 @@ export default function Messages() {
                         {m.content ? (
                           m.content
                         ) : (
-                          <a href={m.fileUrl} target="_blank" rel="noreferrer">{m.fileName || 'File'}</a>
+                          <a href={getImageUrl(m.fileUrl)} target="_blank" rel="noreferrer">{m.fileName || 'File'}</a>
                         )}
                         <div className="message-meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
                           <span>
