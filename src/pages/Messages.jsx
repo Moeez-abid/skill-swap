@@ -155,6 +155,7 @@ export default function Messages() {
 
   useEffect(() => {
     if (activeConversationId) {
+      setThreadMsgs([]);
       loadThread();
       setReplyingTo(null);
       setSelectedMessages(new Set());
@@ -218,7 +219,22 @@ export default function Messages() {
       return;
     }
     
-    // Auto send if it's just a file upload
+    // Optimistic UI for file-only upload
+    const optimisticMsg = {
+      id: `temp-${Date.now()}`,
+      senderId: currentUser.id,
+      content: null,
+      fileUrl: URL.createObjectURL(f),
+      fileName: f.name,
+      createdAt: new Date().toISOString(),
+      isRead: false,
+      replyTo: null
+    };
+    setThreadMsgs(prev => [...prev, optimisticMsg]);
+    setTimeout(() => {
+      if (messageListRef.current) messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
+    }, 50);
+
     const fd = new FormData();
     fd.append('file', f);
     try {
@@ -228,6 +244,7 @@ export default function Messages() {
       loadConversations();
     } catch (err) {
       showToast(err.message);
+      loadThread(); // rollback
     }
   };
 
@@ -368,12 +385,13 @@ export default function Messages() {
                 <button type="button" className="btn-secondary" style={{ padding: '6px 10px', fontSize: '12px', color: '#ef4444', borderColor: 'rgba(239,68,68,0.3)', background: 'transparent' }} onClick={handleDeleteChat}>Delete Chat</button>
               </div>
               <div className="message-list" ref={messageListRef}>
-                {threadMsgs.map(m => {
+                {threadMsgs.map((m, index) => {
                   const sent = m.senderId === currentUser.id;
                   const isHovered = hoveredMsgId === m.id;
                   const isMenuOpen = openMenuId === m.id;
                   const isSelected = selectedMessages.has(m.id);
                   const isSelecting = selectedMessages.size > 0;
+                  const isNearBottom = index >= threadMsgs.length - 2;
 
                   return (
                     <div 
@@ -408,11 +426,12 @@ export default function Messages() {
                         <div className="message-meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
                           <span>
                             {new Date(m.createdAt).toLocaleTimeString()}
-                            {sent && m.isRead ? ' · Read' : ''}
+                            {sent && !m.id.startsWith('temp-') && m.isRead ? ' · Read' : ''}
+                            {m.id.startsWith('temp-') && ' · Sending...'}
                           </span>
                         </div>
 
-                        {(isHovered || isMenuOpen) && !m.id.startsWith('temp-') && (
+                        {(isHovered || isMenuOpen) && !isSelecting && !m.id.startsWith('temp-') && (
                           <div style={{ position: 'absolute', top: '8px', right: sent ? '100%' : '8px', paddingRight: sent ? '12px' : '0', zIndex: isMenuOpen ? 20 : 1 }}>
                             <button 
                               type="button" 
@@ -424,7 +443,7 @@ export default function Messages() {
                             {isMenuOpen && (
                               <>
                                 <div style={{ position: 'fixed', inset: 0, zIndex: 10 }} onClick={(e) => { e.stopPropagation(); setOpenMenuId(null); }}></div>
-                                <div style={{ position: 'absolute', top: '100%', right: sent ? '12px' : 0, marginTop: '4px', background: 'var(--bg-card)', border: '1px solid var(--glass-border-subtle)', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 20, minWidth: '150px', overflow: 'hidden' }}>
+                                <div style={{ position: 'absolute', [isNearBottom ? 'bottom' : 'top']: '100%', right: sent ? '12px' : 0, [isNearBottom ? 'marginBottom' : 'marginTop']: '4px', background: 'var(--bg-card)', border: '1px solid var(--glass-border-subtle)', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 20, minWidth: '150px', overflow: 'hidden' }}>
                                   <button type="button" style={{ display: 'block', width: '100%', padding: '8px 12px', textAlign: 'left', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '13px', color: 'var(--text-primary)' }} onClick={() => { setReplyingTo(m); setOpenMenuId(null); }}>Reply to Message</button>
                                   <button type="button" style={{ display: 'block', width: '100%', padding: '8px 12px', textAlign: 'left', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '13px', color: 'var(--text-primary)' }} onClick={() => { toggleSelection(m.id); setOpenMenuId(null); }}>Select Message</button>
                                   {sent && (
