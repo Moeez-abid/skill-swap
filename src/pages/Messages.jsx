@@ -441,7 +441,7 @@ export default function Messages() {
                                   const spaceBelow = window.innerHeight - rect.bottom;
                                   setMenuConfig({
                                     id: m.id,
-                                    isUp: spaceBelow < 160
+                                    isUp: spaceBelow < 280
                                   });
                                 }
                               }}
