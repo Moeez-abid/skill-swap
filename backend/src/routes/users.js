@@ -93,9 +93,7 @@ router.patch('/me', authenticate, validate(profileUpdateSchema), async (req, res
 router.post('/me/avatar', authenticate, upload.single('avatar'), async (req, res) => {
   if (!req.file) return apiError(res, 400, 'No image provided');
   try {
-    const b64 = Buffer.from(req.file.buffer).toString('base64');
-    const dataURI = 'data:' + req.file.mimetype + ';base64,' + b64;
-    const result = await uploadImage(dataURI, { folder: 'skillswap/avatars' });
+    const result = await uploadImage(req.file.buffer, 'skillswap/avatars');
     
     const user = await prisma.user.update({
       where: { id: req.user.id },
