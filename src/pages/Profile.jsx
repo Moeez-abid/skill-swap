@@ -87,7 +87,7 @@ export default function Profile() {
         <h2 className="section-title" style={{ textAlign: 'left', fontSize: '1.5rem' }}>Offered Skills</h2>
         <div className="skills-grid">
           {profile.skills.length > 0 ? (
-            profile.skills.map(s => <SkillCard key={s.id} skill={s} />)
+            profile.skills.map(s => <SkillCard key={s.id} skill={{ ...s, provider: { id: profile.id, name: profile.name, avatarUrl: profile.avatarUrl } }} />)
           ) : (
             <p className="empty-state" style={{ gridColumn: '1 / -1' }}>No skills listed</p>
           )}

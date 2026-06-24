@@ -11,10 +11,16 @@ export default function Navbar() {
   const [theme, setTheme] = useState(localStorage.getItem('skillswap-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
 
   useEffect(() => {
-    setLoggedIn(isLoggedIn());
-    if (isLoggedIn()) {
-      setUser(getUser());
-    }
+    const handleAuthChange = () => {
+      setLoggedIn(isLoggedIn());
+      if (isLoggedIn()) {
+        setUser(getUser());
+      }
+    };
+    handleAuthChange();
+
+    window.addEventListener('user-updated', handleAuthChange);
+    return () => window.removeEventListener('user-updated', handleAuthChange);
   }, [location.pathname]);
 
   const toggleTheme = () => {

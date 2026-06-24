@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, users } from '../shared/api';
-import { isLoggedIn, clearAuth } from '../shared/auth';
+import { isLoggedIn, clearAuth, getUser, setAuth, getToken } from '../shared/auth';
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -60,7 +60,7 @@ export default function Settings() {
     e.preventDefault();
     setProfileError('');
     try {
-      await users.update({
+      const res = await users.update({
         name,
         bio,
         location,
@@ -70,7 +70,13 @@ export default function Settings() {
         notifyMessages,
         notifySessions,
       });
+      const currentUser = getUser();
+      if (currentUser && res.user) {
+        setAuth(getToken(), { ...currentUser, ...res.user });
+      }
       showToast('Settings saved');
+      // Dispatch event to update navbar instantly without reload
+      window.dispatchEvent(new Event('user-updated'));
     } catch (err) {
       setProfileError(err.message);
     }
