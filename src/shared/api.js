@@ -101,6 +101,7 @@ export const users = {
   list: () => api('/users'),
   profile: (id) => api(`/users/${id}/profile`),
   update: (data) => api('/users/me', { method: 'PATCH', body: JSON.stringify(data) }),
+  uploadAvatar: (formData) => api('/users/me/avatar', { method: 'POST', body: formData }),
   updatePassword: (data) => api('/users/me/password', { method: 'PATCH', body: JSON.stringify(data) }),
   deleteAccount: () => api('/users/me', { method: 'DELETE' }),
 };

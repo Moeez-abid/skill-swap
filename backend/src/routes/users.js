@@ -5,7 +5,11 @@ import { authenticate } from '../middleware/auth.js';
 import { validate, profileUpdateSchema, passwordUpdateSchema } from '../middleware/validate.js';
 import { apiError, apiSuccess, sanitizeString } from '../utils/helpers.js';
 
+import multer from 'multer';
+import { uploadImage } from '../lib/cloudinary.js';
+
 const router = Router();
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 router.get('/', authenticate, async (req, res) => {
   const usersList = await prisma.user.findMany({
@@ -20,7 +24,8 @@ router.get('/:id/profile', async (req, res) => {
   const user = await prisma.user.findFirst({
     where: { id: req.params.id, deletedAt: null, isSuspended: false },
     select: {
-      id: true, name: true, bio: true, location: true, avatarUrl: true,
+      id: true, name: true, headline: true, bio: true, location: true, avatarUrl: true,
+      linkedinUrl: true, githubUrl: true, portfolioUrl: true,
       availabilityStatus: true, createdAt: true,
       skills: {
         where: { provider: { deletedAt: null } },
@@ -69,8 +74,12 @@ router.get('/:id/profile', async (req, res) => {
 router.patch('/me', authenticate, validate(profileUpdateSchema), async (req, res) => {
   const data = {};
   if (req.body.name) data.name = sanitizeString(req.body.name);
+  if (req.body.headline !== undefined) data.headline = sanitizeString(req.body.headline);
   if (req.body.bio !== undefined) data.bio = sanitizeString(req.body.bio);
   if (req.body.location !== undefined) data.location = sanitizeString(req.body.location);
+  if (req.body.linkedinUrl !== undefined) data.linkedinUrl = req.body.linkedinUrl;
+  if (req.body.githubUrl !== undefined) data.githubUrl = req.body.githubUrl;
+  if (req.body.portfolioUrl !== undefined) data.portfolioUrl = req.body.portfolioUrl;
   if (req.body.timezone) data.timezone = req.body.timezone;
   if (req.body.availabilityStatus) data.availabilityStatus = req.body.availabilityStatus;
   if (req.body.notifyMatches !== undefined) data.notifyMatches = req.body.notifyMatches;
@@ -78,7 +87,26 @@ router.patch('/me', authenticate, validate(profileUpdateSchema), async (req, res
   if (req.body.notifySessions !== undefined) data.notifySessions = req.body.notifySessions;
 
   const user = await prisma.user.update({ where: { id: req.user.id }, data });
-  return apiSuccess(res, { user: { id: user.id, name: user.name, email: user.email } });
+  return apiSuccess(res, { user: { id: user.id, name: user.name, email: user.email, avatarUrl: user.avatarUrl } });
+});
+
+router.post('/me/avatar', authenticate, upload.single('avatar'), async (req, res) => {
+  if (!req.file) return apiError(res, 400, 'No image provided');
+  try {
+    const b64 = Buffer.from(req.file.buffer).toString('base64');
+    const dataURI = 'data:' + req.file.mimetype + ';base64,' + b64;
+    const result = await uploadImage(dataURI, { folder: 'skillswap/avatars' });
+    
+    const user = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { avatarUrl: result.secure_url }
+    });
+    
+    return apiSuccess(res, { user: { id: user.id, name: user.name, email: user.email, avatarUrl: user.avatarUrl } });
+  } catch (err) {
+    console.error('Avatar upload error:', err);
+    return apiError(res, 500, 'Image upload failed');
+  }
 });
 
 router.patch('/me/password', authenticate, validate(passwordUpdateSchema), async (req, res) => {

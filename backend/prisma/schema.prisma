@@ -66,9 +66,13 @@ model User {
   passwordHash          String?
   googleId              String?            @unique
   name                  String
+  headline              String?
   bio                   String?
   location              String?
   avatarUrl             String?
+  linkedinUrl           String?
+  githubUrl             String?
+  portfolioUrl          String?
   timezone              String             @default("UTC")
   role                  UserRole           @default(USER)
   availabilityStatus    AvailabilityStatus @default(AVAILABLE)

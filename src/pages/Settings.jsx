@@ -2,14 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, users } from '../shared/api';
 import { isLoggedIn, clearAuth, getUser, setAuth, getToken } from '../shared/auth';
+import { getImageUrl } from '../shared/api';
 
 export default function Settings() {
   const navigate = useNavigate();
 
   // Form states
   const [name, setName] = useState('');
+  const [headline, setHeadline] = useState('');
   const [bio, setBio] = useState('');
   const [location, setLocation] = useState('');
+  const [linkedinUrl, setLinkedinUrl] = useState('');
+  const [githubUrl, setGithubUrl] = useState('');
+  const [portfolioUrl, setPortfolioUrl] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
   const [timezone, setTimezone] = useState('UTC');
   const [availabilityStatus, setAvailabilityStatus] = useState('AVAILABLE');
   const [notifyMatches, setNotifyMatches] = useState(false);
@@ -40,21 +46,43 @@ export default function Settings() {
       .then(res => {
         const { user } = res;
         setName(user.name || '');
+        setHeadline(user.headline || '');
         setBio(user.bio || '');
         setLocation(user.location || '');
+        setLinkedinUrl(user.linkedinUrl || '');
+        setGithubUrl(user.githubUrl || '');
+        setPortfolioUrl(user.portfolioUrl || '');
+        setAvatarUrl(user.avatarUrl || '');
         setTimezone(user.timezone || 'UTC');
         setAvailabilityStatus(user.availabilityStatus || 'AVAILABLE');
         setNotifyMatches(user.notifyMatches || false);
         setNotifyMessages(user.notifyMessages || false);
         setNotifySessions(user.notifySessions || false);
       })
-      .catch(() => {
-        // Handle error, e.g. offline
-      })
+      .catch(() => {})
       .finally(() => {
         setLoading(false);
       });
   }, [navigate]);
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const formData = new FormData();
+      formData.append('avatar', file);
+      const res = await users.uploadAvatar(formData);
+      setAvatarUrl(res.user.avatarUrl);
+      const currentUser = getUser();
+      if (currentUser) {
+        setAuth(getToken(), { ...currentUser, avatarUrl: res.user.avatarUrl });
+        window.dispatchEvent(new Event('user-updated'));
+      }
+      showToast('Profile picture updated');
+    } catch (err) {
+      showToast(err.message || 'Failed to upload image');
+    }
+  };
 
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
@@ -62,8 +90,12 @@ export default function Settings() {
     try {
       const res = await users.update({
         name,
+        headline,
         bio,
         location,
+        linkedinUrl,
+        githubUrl,
+        portfolioUrl,
         timezone,
         availabilityStatus,
         notifyMatches,
@@ -122,9 +154,31 @@ export default function Settings() {
         <>
       <form className="form-card glass-card animate-fade-up delay-1" style={{ marginBottom: '32px' }} onSubmit={handleProfileSubmit}>
         <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>Profile</h2>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
+          {avatarUrl ? (
+            <img src={getImageUrl(avatarUrl)} alt="" className="avatar" width="80" height="80" style={{ objectFit: 'cover' }} />
+          ) : (
+            <div className="avatar avatar--initials" style={{ width: '80px', height: '80px', fontSize: '32px' }}>
+              {(name || '?').split(' ').map(n => n[0]).join('').slice(0, 2)}
+            </div>
+          )}
+          <div>
+            <label className="btn-secondary" style={{ cursor: 'pointer', display: 'inline-block' }}>
+              Upload Picture
+              <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarChange} />
+            </label>
+            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '8px' }}>JPEG or PNG, max 5MB</p>
+          </div>
+        </div>
+
         <div className="form-group">
           <label htmlFor="name">Name</label>
           <input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label htmlFor="headline">Professional Headline</label>
+          <input id="headline" placeholder="e.g. Senior Software Engineer" value={headline} onChange={(e) => setHeadline(e.target.value)} />
         </div>
         <div className="form-group">
           <label htmlFor="bio">Bio</label>
@@ -139,6 +193,20 @@ export default function Settings() {
             <label htmlFor="timezone">Timezone</label>
             <input id="timezone" placeholder="UTC" value={timezone} onChange={(e) => setTimezone(e.target.value)} />
           </div>
+        </div>
+        
+        <h3 style={{ fontSize: '1rem', marginBottom: '12px', marginTop: '16px' }}>Social Links</h3>
+        <div className="form-group">
+          <label htmlFor="linkedinUrl">LinkedIn URL</label>
+          <input id="linkedinUrl" type="url" placeholder="https://linkedin.com/in/username" value={linkedinUrl} onChange={(e) => setLinkedinUrl(e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label htmlFor="githubUrl">GitHub URL</label>
+          <input id="githubUrl" type="url" placeholder="https://github.com/username" value={githubUrl} onChange={(e) => setGithubUrl(e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label htmlFor="portfolioUrl">Portfolio/Website URL</label>
+          <input id="portfolioUrl" type="url" placeholder="https://yourwebsite.com" value={portfolioUrl} onChange={(e) => setPortfolioUrl(e.target.value)} />
         </div>
         <div className="form-group">
           <label htmlFor="availabilityStatus">Global Availability</label>

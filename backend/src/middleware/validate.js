@@ -75,8 +75,12 @@ export const reviewSchema = z.object({
 
 export const profileUpdateSchema = z.object({
   name: z.string().min(2).max(100).optional(),
+  headline: z.string().max(150).optional(),
   bio: z.string().max(1000).optional(),
   location: z.string().max(200).optional(),
+  linkedinUrl: z.string().url().max(255).optional().or(z.literal('')),
+  githubUrl: z.string().url().max(255).optional().or(z.literal('')),
+  portfolioUrl: z.string().url().max(255).optional().or(z.literal('')),
   timezone: z.string().max(64).optional(),
   availabilityStatus: z.enum(['AVAILABLE', 'BUSY', 'UNAVAILABLE']).optional(),
   notifyMatches: z.boolean().optional(),
