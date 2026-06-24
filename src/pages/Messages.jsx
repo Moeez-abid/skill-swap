@@ -35,10 +35,10 @@ export default function Messages() {
   const [file, setFile] = useState(null);
   const fileInputRef = useRef(null);
 
-  const [hoveredMsgId, setHoveredMsgId] = useState(null);
-  const [replyingTo, setReplyingTo] = useState(null);
   const [selectedMessages, setSelectedMessages] = useState(new Set());
-  const [openMenuId, setOpenMenuId] = useState(null);
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [hoveredMsgId, setHoveredMsgId] = useState(null);
+  const [menuConfig, setMenuConfig] = useState({ id: null });
 
   const messageListRef = useRef(null);
   const modalRef = useRef(null);
@@ -431,23 +431,51 @@ export default function Messages() {
                           </span>
                         </div>
 
-                        {(isHovered || isMenuOpen) && !isSelecting && !m.id.startsWith('temp-') && (
-                          <div style={{ position: 'absolute', top: '8px', right: sent ? '100%' : '8px', paddingRight: sent ? '12px' : '0', zIndex: isMenuOpen ? 20 : 1 }}>
+                        {(isHovered || menuConfig.id === m.id) && !isSelecting && !m.id.startsWith('temp-') && (
+                          <div style={{ position: 'absolute', top: '8px', right: sent ? '100%' : '8px', paddingRight: sent ? '12px' : '0', zIndex: menuConfig.id === m.id ? 20 : 1 }}>
                             <button 
                               type="button" 
-                              onClick={() => setOpenMenuId(isMenuOpen ? null : m.id)}
+                              onClick={(e) => {
+                                if (menuConfig.id === m.id) {
+                                  setMenuConfig({ id: null });
+                                } else {
+                                  const rect = e.currentTarget.getBoundingClientRect();
+                                  const spaceBelow = window.innerHeight - rect.bottom;
+                                  const isUp = spaceBelow < 120;
+                                  setMenuConfig({
+                                    id: m.id,
+                                    top: isUp ? 'auto' : rect.bottom + 4,
+                                    bottom: isUp ? window.innerHeight - rect.top + 4 : 'auto',
+                                    left: sent ? 'auto' : rect.left,
+                                    right: sent ? window.innerWidth - rect.right : 'auto'
+                                  });
+                                }
+                              }}
                               style={{ background: 'var(--glass-bg-subtle)', border: '1px solid var(--glass-border-subtle)', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-primary)' }}
                             >
                               ⋮
                             </button>
-                            {isMenuOpen && (
+                            {menuConfig.id === m.id && (
                               <>
-                                <div style={{ position: 'fixed', inset: 0, zIndex: 10 }} onClick={(e) => { e.stopPropagation(); setOpenMenuId(null); }}></div>
-                                <div style={{ position: 'absolute', [isNearBottom ? 'bottom' : 'top']: '100%', right: sent ? '12px' : 0, [isNearBottom ? 'marginBottom' : 'marginTop']: '4px', background: 'var(--bg-card)', border: '1px solid var(--glass-border-subtle)', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 20, minWidth: '150px', overflow: 'hidden' }}>
-                                  <button type="button" style={{ display: 'block', width: '100%', padding: '8px 12px', textAlign: 'left', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '13px', color: 'var(--text-primary)' }} onClick={() => { setReplyingTo(m); setOpenMenuId(null); }}>Reply to Message</button>
-                                  <button type="button" style={{ display: 'block', width: '100%', padding: '8px 12px', textAlign: 'left', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '13px', color: 'var(--text-primary)' }} onClick={() => { toggleSelection(m.id); setOpenMenuId(null); }}>Select Message</button>
+                                <div style={{ position: 'fixed', inset: 0, zIndex: 1000 }} onClick={(e) => { e.stopPropagation(); setMenuConfig({ id: null }); }}></div>
+                                <div style={{ 
+                                  position: 'fixed', 
+                                  top: menuConfig.top, 
+                                  bottom: menuConfig.bottom, 
+                                  left: menuConfig.left, 
+                                  right: menuConfig.right, 
+                                  background: 'var(--bg-page)', 
+                                  border: '1px solid var(--border-color)', 
+                                  borderRadius: '8px', 
+                                  boxShadow: '0 8px 24px rgba(0,0,0,0.4)', 
+                                  zIndex: 1001, 
+                                  minWidth: '150px', 
+                                  overflow: 'hidden' 
+                                }}>
+                                  <button type="button" style={{ display: 'block', width: '100%', padding: '8px 12px', textAlign: 'left', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '13px', color: 'var(--text-primary)' }} onClick={() => { setReplyingTo(m); setMenuConfig({ id: null }); }}>Reply to Message</button>
+                                  <button type="button" style={{ display: 'block', width: '100%', padding: '8px 12px', textAlign: 'left', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '13px', color: 'var(--text-primary)' }} onClick={() => { toggleSelection(m.id); setMenuConfig({ id: null }); }}>Select Message</button>
                                   {sent && (
-                                    <button type="button" style={{ display: 'block', width: '100%', padding: '8px 12px', textAlign: 'left', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '13px', color: '#ef4444' }} onClick={() => { handleDeleteMessage(m.id); setOpenMenuId(null); }}>Delete message</button>
+                                    <button type="button" style={{ display: 'block', width: '100%', padding: '8px 12px', textAlign: 'left', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '13px', color: '#ef4444' }} onClick={() => { handleDeleteMessage(m.id); setMenuConfig({ id: null }); }}>Delete message</button>
                                   )}
                                 </div>
                               </>
@@ -486,7 +514,7 @@ export default function Messages() {
                       aria-label="Message" 
                       value={messageInput}
                       onChange={(e) => setMessageInput(e.target.value)}
-                      style={{ borderRadius: '24px', flex: 1, padding: '12px 16px', border: '1px solid var(--border-color)', background: 'var(--bg-card)' }}
+                      style={{ borderRadius: '24px', flex: 1, padding: '12px 16px', border: '1px solid var(--glass-border)', background: 'var(--bg-page)', color: 'var(--text-primary)' }}
                     />
                     <label className="btn-secondary" style={{ cursor: 'pointer', borderRadius: '50%', width: '48px', height: '48px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       📎
