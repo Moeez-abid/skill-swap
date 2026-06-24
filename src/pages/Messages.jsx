@@ -439,13 +439,9 @@ export default function Messages() {
                                 } else {
                                   const rect = e.currentTarget.getBoundingClientRect();
                                   const spaceBelow = window.innerHeight - rect.bottom;
-                                  const isUp = spaceBelow < 120;
                                   setMenuConfig({
                                     id: m.id,
-                                    top: isUp ? 'auto' : rect.bottom + 4,
-                                    bottom: isUp ? window.innerHeight - rect.top + 4 : 'auto',
-                                    left: sent ? 'auto' : rect.left,
-                                    right: sent ? window.innerWidth - rect.right : 'auto'
+                                    isUp: spaceBelow < 160
                                   });
                                 }
                               }}
@@ -457,13 +453,12 @@ export default function Messages() {
                               <>
                                 <div style={{ position: 'fixed', inset: 0, zIndex: 1000 }} onClick={(e) => { e.stopPropagation(); setMenuConfig({ id: null }); }}></div>
                                 <div style={{ 
-                                  position: 'fixed', 
-                                  top: menuConfig.top, 
-                                  bottom: menuConfig.bottom, 
-                                  left: menuConfig.left, 
-                                  right: menuConfig.right, 
+                                  position: 'absolute', 
+                                  [menuConfig.isUp ? 'bottom' : 'top']: '100%', 
+                                  [menuConfig.isUp ? 'marginBottom' : 'marginTop']: '4px',
+                                  [sent ? 'right' : 'left']: sent ? '12px' : 0, 
                                   background: 'var(--bg-page)', 
-                                  border: '1px solid var(--border-color)', 
+                                  border: '1px solid var(--glass-border)', 
                                   borderRadius: '8px', 
                                   boxShadow: '0 8px 24px rgba(0,0,0,0.4)', 
                                   zIndex: 1001, 
