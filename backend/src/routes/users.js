@@ -94,6 +94,9 @@ router.post('/me/avatar', authenticate, upload.single('avatar'), async (req, res
   if (!req.file) return apiError(res, 400, 'No image provided');
   try {
     const result = await uploadImage(req.file.buffer, 'skillswap/avatars');
+    if (!result || !result.secure_url) {
+      return apiError(res, 500, 'Cloudinary is not configured on the server. Please add the Cloudinary variables to your Render environment.');
+    }
     
     const user = await prisma.user.update({
       where: { id: req.user.id },

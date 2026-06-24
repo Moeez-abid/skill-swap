@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { users } from '../shared/api';
+import { users, getImageUrl } from '../shared/api';
 import { getUser } from '../shared/auth';
 import SkillCard from '../components/SkillCard';
 
