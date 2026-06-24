@@ -83,8 +83,8 @@ export const messages = {
   deleteConversation: (conversationId) => api(`/messages/conversations/${conversationId}`, { method: 'DELETE' }),
   list: (conversationId) => api(`/messages/${conversationId}/messages`),
   send: (conversationId, formData) => api(`/messages/${conversationId}/messages`, { method: 'POST', body: formData }),
-  deleteMessage: (conversationId, messageId) => api(`/messages/${conversationId}/messages/${messageId}`, { method: 'DELETE' }),
-  bulkDeleteMessages: (messageIds) => api(`/messages/bulk-delete`, { method: 'POST', body: JSON.stringify({ messageIds }) }),
+  deleteMessage: (conversationId, messageId, forEveryone = false) => api(`/messages/${conversationId}/messages/${messageId}?forEveryone=${forEveryone}`, { method: 'DELETE' }),
+  bulkDeleteMessages: (messageIds, forEveryone = false) => api(`/messages/bulk-delete?forEveryone=${forEveryone}`, { method: 'POST', body: JSON.stringify({ messageIds }) }),
 };
 
 export const sessions = {

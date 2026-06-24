@@ -288,10 +288,10 @@ export default function Messages() {
     });
   };
 
-  const handleDeleteMessage = (msgId) => {
-    requestConfirm('Delete Message', 'Are you sure you want to delete this message? This cannot be undone.', async () => {
+  const handleDeleteMessage = async (messageId, forEveryone = false) => {
+    requestConfirm('Delete Message', `Are you sure you want to delete this message${forEveryone ? ' for everyone' : ' for yourself'}? This cannot be undone.`, async () => {
       try {
-        await messages.deleteMessage(activeConversationId, msgId);
+        await messages.deleteMessage(activeConversationId, messageId, forEveryone);
         loadThread();
         loadConversations();
       } catch (err) {
@@ -467,8 +467,9 @@ export default function Messages() {
                                 }}>
                                   <button type="button" style={{ display: 'block', width: '100%', padding: '8px 12px', textAlign: 'left', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '13px', color: 'var(--text-primary)' }} onClick={() => { setReplyingTo(m); setMenuConfig({ id: null }); }}>Reply to Message</button>
                                   <button type="button" style={{ display: 'block', width: '100%', padding: '8px 12px', textAlign: 'left', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '13px', color: 'var(--text-primary)' }} onClick={() => { toggleSelection(m.id); setMenuConfig({ id: null }); }}>Select Message</button>
+                                  <button type="button" style={{ display: 'block', width: '100%', padding: '8px 12px', textAlign: 'left', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '13px', color: '#ef4444' }} onClick={() => { handleDeleteMessage(m.id, false); setMenuConfig({ id: null }); }}>Delete for me</button>
                                   {sent && (
-                                    <button type="button" style={{ display: 'block', width: '100%', padding: '8px 12px', textAlign: 'left', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '13px', color: '#ef4444' }} onClick={() => { handleDeleteMessage(m.id); setMenuConfig({ id: null }); }}>Delete message</button>
+                                    <button type="button" style={{ display: 'block', width: '100%', padding: '8px 12px', textAlign: 'left', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '13px', color: '#ef4444' }} onClick={() => { handleDeleteMessage(m.id, true); setMenuConfig({ id: null }); }}>Delete for everyone</button>
                                   )}
                                 </div>
                               </>

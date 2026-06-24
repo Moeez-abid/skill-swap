@@ -45,41 +45,41 @@ router.get('/conversations', authenticate, async (req, res) => {
     include: {
       messages: { orderBy: { createdAt: 'desc' }, take: 1 },
       user1: { select: { id: true, name: true, avatarUrl: true } },
+router.get('/', authenticate, async (req, res) => {
+  const convs = await prisma.conversation.findMany({
+    where: { OR: [{ user1Id: req.user.id }, { user2Id: req.user.id }] },
+    include: {
+      user1: { select: { id: true, name: true, avatarUrl: true } },
       user2: { select: { id: true, name: true, avatarUrl: true } },
+      messages: { 
+        where: { NOT: { deletedFor: { has: req.user.id } } },
+        orderBy: { createdAt: 'desc' }, 
+        take: 1 
+      },
+      _count: {
+        select: { messages: { where: { senderId: { not: req.user.id }, isRead: false, NOT: { deletedFor: { has: req.user.id } } } } }
+      }
     },
+    orderBy: { updatedAt: 'desc' }
   });
 
-  const conversations = await Promise.all(
-    convos.map(async (c) => {
-      const partner = c.user1Id === req.user.id ? c.user2 : c.user1;
-      const unread = await prisma.message.count({
-        where: {
-          conversationId: c.id,
-          senderId: { not: req.user.id },
-          isRead: false,
-        },
-      });
-      const lastMessage = c.messages[0] || null;
-      return { conversationId: c.id, partner, lastMessage, unreadCount: unread };
-    })
-  );
+  const formatted = convs.map((c) => ({
+    id: c.id,
+    partner: c.user1Id === req.user.id ? c.user2 : c.user1,
+    lastMessage: c.messages[0] || null,
+    unreadCount: c._count.messages,
+    updatedAt: c.updatedAt
+  }));
 
-  conversations.sort((a, b) => {
-    const ta = a.lastMessage?.createdAt || 0;
-    const tb = b.lastMessage?.createdAt || 0;
-    return new Date(tb) - new Date(ta);
-  });
-
-  return apiSuccess(res, { conversations });
+  return apiSuccess(res, { conversations: formatted });
 });
 
-router.post('/conversations', authenticate, async (req, res) => {
+router.post('/', authenticate, async (req, res) => {
   const { partnerId } = req.body;
-  if (!partnerId) return apiError(res, 400, 'Partner ID required');
-  if (partnerId === req.user.id) return apiError(res, 400, 'Cannot chat with yourself');
+  if (!partnerId || partnerId === req.user.id) return apiError(res, 400, 'Invalid partner');
 
   const partner = await prisma.user.findUnique({ where: { id: partnerId } });
-  if (!partner) return apiError(res, 404, 'User not found');
+  if (!partner) return apiError(res, 404, 'Partner not found');
 
   let conv = await prisma.conversation.findFirst({
     where: {
@@ -92,10 +92,7 @@ router.post('/conversations', authenticate, async (req, res) => {
 
   if (!conv) {
     conv = await prisma.conversation.create({
-      data: {
-        user1Id: req.user.id,
-        user2Id: partnerId,
-      }
+      data: { user1Id: req.user.id, user2Id: partnerId }
     });
   }
 
@@ -107,7 +104,10 @@ router.get('/:conversationId/messages', authenticate, async (req, res) => {
   if (!conv) return apiError(res, 403, 'No active conversation');
 
   const messages = await prisma.message.findMany({
-    where: { conversationId: conv.id },
+    where: { 
+      conversationId: conv.id,
+      NOT: { deletedFor: { has: req.user.id } }
+    },
     include: { replyTo: true, sender: { select: { id: true, name: true, avatarUrl: true } } },
     orderBy: { createdAt: 'asc' }
   });
@@ -171,34 +171,59 @@ router.post('/:conversationId/messages', authenticate, msgLimiter, upload.single
 
 router.post('/bulk-delete', authenticate, async (req, res) => {
   const { messageIds } = req.body;
+  const forEveryone = req.query.forEveryone === 'true';
   if (!Array.isArray(messageIds) || messageIds.length === 0) {
     return apiError(res, 400, 'Invalid messageIds');
   }
 
   const messagesToDelete = await prisma.message.findMany({
-    where: { id: { in: messageIds }, senderId: req.user.id },
-    select: { id: true, conversationId: true, conversation: { select: { user1Id: true, user2Id: true } } }
+    where: { 
+      id: { in: messageIds },
+      conversation: { OR: [{ user1Id: req.user.id }, { user2Id: req.user.id }] }
+    },
+    select: { id: true, conversationId: true, senderId: true, deletedFor: true, conversation: { select: { user1Id: true, user2Id: true } } }
   });
 
   if (messagesToDelete.length === 0) return apiSuccess(res, { success: true });
 
-  await prisma.message.deleteMany({
-    where: { id: { in: messagesToDelete.map(m => m.id) } }
-  });
+  const byConvForPartner = {};
+  const byConvForMe = {};
 
-  const byConv = {};
-  messagesToDelete.forEach(m => {
-    if (!byConv[m.conversationId]) {
-      byConv[m.conversationId] = {
-        ids: [],
-        partnerId: m.conversation.user1Id === req.user.id ? m.conversation.user2Id : m.conversation.user1Id
-      };
+  if (forEveryone) {
+    const ownMessages = messagesToDelete.filter(m => m.senderId === req.user.id);
+    if (ownMessages.length > 0) {
+      await prisma.message.deleteMany({
+        where: { id: { in: ownMessages.map(m => m.id) } }
+      });
+      ownMessages.forEach(m => {
+        if (!byConvForPartner[m.conversationId]) {
+          byConvForPartner[m.conversationId] = { ids: [], partnerId: m.conversation.user1Id === req.user.id ? m.conversation.user2Id : m.conversation.user1Id };
+        }
+        byConvForPartner[m.conversationId].ids.push(m.id);
+        
+        if (!byConvForMe[m.conversationId]) byConvForMe[m.conversationId] = { ids: [] };
+        byConvForMe[m.conversationId].ids.push(m.id);
+      });
     }
-    byConv[m.conversationId].ids.push(m.id);
-  });
+  } else {
+    await Promise.all(messagesToDelete.map(m => {
+      if (!byConvForMe[m.conversationId]) byConvForMe[m.conversationId] = { ids: [] };
+      byConvForMe[m.conversationId].ids.push(m.id);
 
-  for (const [convId, data] of Object.entries(byConv)) {
+      if (!m.deletedFor.includes(req.user.id)) {
+        return prisma.message.update({
+          where: { id: m.id },
+          data: { deletedFor: { push: req.user.id } }
+        });
+      }
+    }));
+  }
+
+  for (const [convId, data] of Object.entries(byConvForPartner)) {
     await triggerEvent(`user-${data.partnerId}`, 'messages-deleted', { messageIds: data.ids, conversationId: convId });
+  }
+  for (const [convId, data] of Object.entries(byConvForMe)) {
+    await triggerEvent(`user-${req.user.id}`, 'messages-deleted', { messageIds: data.ids, conversationId: convId });
   }
 
   return apiSuccess(res, { success: true });
@@ -230,16 +255,27 @@ router.delete('/:conversationId/messages/:messageId', authenticate, async (req, 
     return apiError(res, 404, 'Message not found');
   }
 
-  if (message.senderId !== req.user.id) {
-    return apiError(res, 403, 'You can only delete your own messages');
+  const forEveryone = req.query.forEveryone === 'true';
+
+  if (forEveryone) {
+    if (message.senderId !== req.user.id) {
+      return apiError(res, 403, 'You can only delete your own messages for everyone');
+    }
+    await prisma.message.delete({
+      where: { id: message.id }
+    });
+    const partnerId = conv.user1Id === req.user.id ? conv.user2Id : conv.user1Id;
+    await triggerEvent(`user-${partnerId}`, 'message-deleted', { messageId: message.id, conversationId: conv.id });
+    await triggerEvent(`user-${req.user.id}`, 'message-deleted', { messageId: message.id, conversationId: conv.id });
+  } else {
+    if (!message.deletedFor.includes(req.user.id)) {
+      await prisma.message.update({
+        where: { id: message.id },
+        data: { deletedFor: { push: req.user.id } }
+      });
+    }
+    await triggerEvent(`user-${req.user.id}`, 'message-deleted', { messageId: message.id, conversationId: conv.id });
   }
-
-  await prisma.message.delete({
-    where: { id: message.id }
-  });
-
-  const partnerId = conv.user1Id === req.user.id ? conv.user2Id : conv.user1Id;
-  await triggerEvent(`user-${partnerId}`, 'message-deleted', { messageId: message.id, conversationId: conv.id });
 
   return apiSuccess(res, { success: true });
 });
