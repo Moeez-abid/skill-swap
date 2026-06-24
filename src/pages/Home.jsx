@@ -57,18 +57,18 @@ export default function Home() {
           <div className="social-proof animate-fade-up">
             <div className="stars" aria-hidden="true">
               {[...Array(5)].map((_, i) => (
-                <svg key={i} viewBox="0 0 24 24" width="16" height="16"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                <svg key={i} viewBox="0 0 24 24" width="16" height="16"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" /></svg>
               ))}
             </div>
             <span>Educational barter — zero monetary transactions</span>
           </div>
-          <h1 id="hero-title" className="hero-title animate-fade-up delay-1">Teach what you know,<br/>learn what you need</h1>
+          <h1 id="hero-title" className="hero-title animate-fade-up delay-1">Teach what you know,<br />learn what you need</h1>
           <p className="hero-subtitle animate-fade-up delay-2">SkillSwap connects people who want to exchange knowledge directly. Offer a skill you have, request one you want — no payments, just mutual learning.</p>
           <div className="cta-row animate-fade-up delay-3">
             <Link to="/register" className="primary-cta">
-              Start Swapping 
+              Start Swapping
               <span className="cta-icon" aria-hidden="true">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
               </span>
             </Link>
             <Link to="/marketplace" className="btn-secondary">Browse Marketplace</Link>
@@ -142,7 +142,7 @@ export default function Home() {
         <div id="category-pills" className="category-pills">
           {categoryPills.map(c => (
             <Link key={c.slug} to={`/marketplace?category=${c.slug}`} className="category-pill">
-              <span aria-hidden="true">{c.icon || '📚'}</span> {c.name}
+              {c.name}
             </Link>
           ))}
           {categoryPills.length === 0 && <Link to="/marketplace" className="category-pill">View Marketplace</Link>}
