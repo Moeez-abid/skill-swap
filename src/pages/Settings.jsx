@@ -168,7 +168,7 @@ export default function Settings() {
               Upload Picture
               <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarChange} />
             </label>
-            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '8px' }}>JPEG or PNG, max 5MB</p>
+            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '8px' }}>JPG, JPEG, or PNG, max 5MB</p>
           </div>
         </div>
 
