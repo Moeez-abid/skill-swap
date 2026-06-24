@@ -5,6 +5,8 @@ import { uploadImage } from '../lib/cloudinary.js';
 import { authenticate, optionalAuth } from '../middleware/auth.js';
 import { validate, skillSchema } from '../middleware/validate.js';
 import { apiError, apiSuccess, paginate, sanitizeString } from '../utils/helpers.js';
+import fs from 'fs';
+import path from 'path';
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 2 * 1024 * 1024 } });
@@ -122,7 +124,18 @@ router.post('/', authenticate, upload.single('coverImage'), async (req, res) => 
 
   if (req.file) {
     const result = await uploadImage(req.file.buffer);
-    coverImageUrl = result?.secure_url || null;
+    if (result && result.secure_url) {
+      coverImageUrl = result.secure_url;
+    } else {
+      const uploadDir = path.join(process.cwd(), 'uploads');
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      const filename = uniqueSuffix + '-' + req.file.originalname;
+      fs.writeFileSync(path.join(uploadDir, filename), req.file.buffer);
+      coverImageUrl = `${process.env.API_URL || 'http://localhost:3001'}/uploads/${filename}`;
+    }
   }
 
   const tagRecords = await upsertTags(data.tags || []);

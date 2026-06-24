@@ -4,7 +4,8 @@ import { prisma } from '../lib/prisma.js';
 import { authenticate } from '../middleware/auth.js';
 import { validate, profileUpdateSchema, passwordUpdateSchema } from '../middleware/validate.js';
 import { apiError, apiSuccess, sanitizeString } from '../utils/helpers.js';
-
+import fs from 'fs';
+import path from 'path';
 import multer from 'multer';
 import { uploadImage } from '../lib/cloudinary.js';
 
@@ -93,14 +94,25 @@ router.patch('/me', authenticate, validate(profileUpdateSchema), async (req, res
 router.post('/me/avatar', authenticate, upload.single('avatar'), async (req, res) => {
   if (!req.file) return apiError(res, 400, 'No image provided');
   try {
+    let avatarUrl;
     const result = await uploadImage(req.file.buffer, 'skillswap/avatars');
-    if (!result || !result.secure_url) {
-      return apiError(res, 500, 'Cloudinary is not configured on the server. Please add the Cloudinary variables to your Render environment.');
+    
+    if (result && result.secure_url) {
+      avatarUrl = result.secure_url;
+    } else {
+      const uploadDir = path.join(process.cwd(), 'uploads');
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      const filename = uniqueSuffix + '-' + req.file.originalname;
+      fs.writeFileSync(path.join(uploadDir, filename), req.file.buffer);
+      avatarUrl = `${process.env.API_URL || 'http://localhost:3001'}/uploads/${filename}`;
     }
     
     const user = await prisma.user.update({
       where: { id: req.user.id },
-      data: { avatarUrl: result.secure_url }
+      data: { avatarUrl }
     });
     
     return apiSuccess(res, { user: { id: user.id, name: user.name, email: user.email, avatarUrl: user.avatarUrl } });
