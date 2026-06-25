@@ -38,14 +38,6 @@ async function getConversation(userId, convId) {
 }
 
 router.get('/conversations', authenticate, async (req, res) => {
-  const convos = await prisma.conversation.findMany({
-    where: {
-      OR: [{ user1Id: req.user.id }, { user2Id: req.user.id }],
-    },
-    include: {
-      messages: { orderBy: { createdAt: 'desc' }, take: 1 },
-      user1: { select: { id: true, name: true, avatarUrl: true } },
-router.get('/', authenticate, async (req, res) => {
   const convs = await prisma.conversation.findMany({
     where: { OR: [{ user1Id: req.user.id }, { user2Id: req.user.id }] },
     include: {
