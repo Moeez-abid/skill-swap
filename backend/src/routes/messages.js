@@ -202,7 +202,8 @@ router.post('/bulk-delete', authenticate, async (req, res) => {
       if (!byConvForMe[m.conversationId]) byConvForMe[m.conversationId] = { ids: [] };
       byConvForMe[m.conversationId].ids.push(m.id);
 
-      if (!m.deletedFor.includes(req.user.id)) {
+      const deletedForArray = m.deletedFor || [];
+      if (!deletedForArray.includes(req.user.id)) {
         return prisma.message.update({
           where: { id: m.id },
           data: { deletedFor: { push: req.user.id } }
@@ -260,7 +261,8 @@ router.delete('/:conversationId/messages/:messageId', authenticate, async (req, 
     await triggerEvent(`user-${partnerId}`, 'message-deleted', { messageId: message.id, conversationId: conv.id });
     await triggerEvent(`user-${req.user.id}`, 'message-deleted', { messageId: message.id, conversationId: conv.id });
   } else {
-    if (!message.deletedFor.includes(req.user.id)) {
+    const deletedForArray = message.deletedFor || [];
+    if (!deletedForArray.includes(req.user.id)) {
       await prisma.message.update({
         where: { id: message.id },
         data: { deletedFor: { push: req.user.id } }
