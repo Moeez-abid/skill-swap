@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma.js';
-import { authenticate, requireRole } from '../middleware/auth.js';
+import { authenticate, requireAdmin } from '../middleware/auth.js';
 import { apiError, apiSuccess } from '../utils/helpers.js';
 
 const router = Router();
@@ -30,7 +30,7 @@ router.post('/', async (req, res) => {
 });
 
 // Admin route: Get all support messages
-router.get('/', authenticate, requireRole(['ADMIN']), async (req, res) => {
+router.get('/', authenticate, requireAdmin, async (req, res) => {
   try {
     const messages = await prisma.supportMessage.findMany({
       orderBy: { createdAt: 'desc' },
@@ -43,7 +43,7 @@ router.get('/', authenticate, requireRole(['ADMIN']), async (req, res) => {
 });
 
 // Admin route: Mark message as read
-router.patch('/:id/read', authenticate, requireRole(['ADMIN']), async (req, res) => {
+router.patch('/:id/read', authenticate, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const message = await prisma.supportMessage.update({
