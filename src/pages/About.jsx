@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function About() {
   return (
-    <div className="container animate-fade-up">
+    <div className="container animate-fade-up" style={{ paddingTop: '120px', minHeight: 'calc(100vh - 200px)', maxWidth: '800px', margin: '0 auto' }}>
       <div className="section-title">About SkillSwap</div>
       
       <section className="glass-card" style={{ padding: '32px', marginBottom: '32px' }}>

@@ -29,7 +29,7 @@ export default function SuccessStories() {
   ];
 
   return (
-    <div className="container animate-fade-up">
+    <div className="container animate-fade-up" style={{ paddingTop: '120px', minHeight: 'calc(100vh - 200px)', paddingBottom: '40px' }}>
       <div className="section-title">Success Stories</div>
       <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginBottom: '40px', maxWidth: '600px', margin: '0 auto 40px auto' }}>
         See how our community members are achieving their goals through peer-to-peer knowledge exchange.

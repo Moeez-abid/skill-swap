@@ -14,7 +14,7 @@ export default function Contact() {
   };
 
   return (
-    <div className="container animate-fade-up">
+    <div className="container animate-fade-up" style={{ paddingTop: '120px', minHeight: 'calc(100vh - 200px)' }}>
       <div className="section-title">Contact Us</div>
       
       <div className="glass-card" style={{ maxWidth: '600px', margin: '0 auto', padding: '32px' }}>
