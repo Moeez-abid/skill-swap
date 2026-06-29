@@ -32,7 +32,7 @@
 }
 
 .glass-card {
-  background: var(--glass-bg-subtle);
+  background: var(--glass-bg);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border-subtle);
@@ -748,6 +748,7 @@ select option {
   padding: 12px 16px;
   text-align: left;
   border-bottom: 1px solid var(--glass-border-subtle);
+  color: var(--text-primary);
 }
 
 .admin-table th { color: var(--text-secondary); font-weight: 500; }
