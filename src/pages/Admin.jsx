@@ -142,23 +142,23 @@ export default function Admin() {
 
       {activeTab === 'analytics' && (
       <div className="admin-grid animate-fade-up delay-2" style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
-        <div className="stat-card glass-card">
+        <div className="stat-card glass-card" style={{ background: 'var(--glass-bg)' }}>
           <div className="stat-card__value">{analytics.users.total}</div>
           <div className="stat-card__label">Total Users (+{analytics.users.growth30d} / 30d)</div>
         </div>
-        <div className="stat-card glass-card">
+        <div className="stat-card glass-card" style={{ background: 'var(--glass-bg)' }}>
           <div className="stat-card__value">{analytics.skills.total}</div>
           <div className="stat-card__label">Skills (+{analytics.skills.created30d} / 30d)</div>
         </div>
-        <div className="stat-card glass-card">
+        <div className="stat-card glass-card" style={{ background: 'var(--glass-bg)' }}>
           <div className="stat-card__value">{analytics.matches.active}</div>
           <div className="stat-card__label">Active Matches</div>
         </div>
-        <div className="stat-card glass-card">
+        <div className="stat-card glass-card" style={{ background: 'var(--glass-bg)' }}>
           <div className="stat-card__value">{analytics.matches.completed}</div>
           <div className="stat-card__label">Completed Swaps</div>
         </div>
-        <div className="stat-card glass-card">
+        <div className="stat-card glass-card" style={{ background: 'var(--glass-bg)' }}>
           <div className="stat-card__value">{analytics.moderation.pendingFlags}</div>
           <div className="stat-card__label">Pending Flags</div>
         </div>
@@ -169,7 +169,7 @@ export default function Admin() {
       <section className="glass-card animate-fade-up delay-2" style={{ padding: '24px', marginTop: '32px' }}>
         <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>User Management</h2>
         <div className="admin-table-wrap" style={{ overflowX: 'auto' }}>
-          <table className="admin-table" style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
+          <table className="admin-table" style={{ background: 'var(--glass-bg)',  width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--glass-border)' }}>
                 <th style={{ padding: '12px' }}>Name</th>
@@ -206,7 +206,7 @@ export default function Admin() {
         <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>Disputes</h2>
         {disputes.length > 0 ? (
           disputes.map(d => (
-            <div key={d.id} className="match-card" style={{ marginBottom: '12px', padding: '16px', border: '1px solid var(--glass-border-subtle)', borderRadius: '12px' }}>
+            <div key={d.id} className="match-card" style={{ background: 'var(--glass-bg)',  marginBottom: '12px', padding: '16px', border: '1px solid var(--glass-border-subtle)', borderRadius: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
                   <p><strong>Dispute #{d.id.slice(-6)}</strong> &middot; <span className={`badge ${d.status === 'RESOLVED' ? 'badge--success' : ''}`}>{d.status.replace('_', ' ')}</span></p>
@@ -276,7 +276,7 @@ export default function Admin() {
         <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>Moderation Queue</h2>
         {flags.length > 0 ? (
           flags.map(f => (
-            <div key={f.id} className="match-card" style={{ marginBottom: '12px', padding: '16px', border: '1px solid var(--glass-border-subtle)', borderRadius: '12px' }}>
+            <div key={f.id} className="match-card" style={{ background: 'var(--glass-bg)',  marginBottom: '12px', padding: '16px', border: '1px solid var(--glass-border-subtle)', borderRadius: '12px' }}>
               <p><strong>{f.targetType}</strong> &middot; {f.reason}</p>
               <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Reported by {f.reporter.name}</p>
               <div style={{ marginTop: '8px', display: 'flex', gap: '8px' }}>
@@ -296,7 +296,7 @@ export default function Admin() {
         <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>Verification Requests</h2>
         {verifications.length > 0 ? (
           verifications.map(v => (
-            <div key={v.id} className="match-card" style={{ marginBottom: '12px', padding: '16px', border: '1px solid var(--glass-border-subtle)', borderRadius: '12px' }}>
+            <div key={v.id} className="match-card" style={{ background: 'var(--glass-bg)',  marginBottom: '12px', padding: '16px', border: '1px solid var(--glass-border-subtle)', borderRadius: '12px' }}>
               <p><strong>{v.name}</strong> ({v.email})</p>
               <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>
                 {v.linkedinUrl && <a href={v.linkedinUrl} target="_blank" rel="noreferrer" style={{ marginRight: '8px' }}>LinkedIn</a>}
@@ -318,7 +318,7 @@ export default function Admin() {
       <section className="glass-card animate-fade-up delay-2" style={{ padding: '24px', marginTop: '32px' }}>
         <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>System Audit Logs</h2>
         <div className="admin-table-wrap" style={{ overflowX: 'auto', maxHeight: '400px' }}>
-          <table className="admin-table" style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
+          <table className="admin-table" style={{ background: 'var(--glass-bg)',  width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--glass-border)', position: 'sticky', top: 0, background: 'var(--bg-layer)' }}>
                 <th style={{ padding: '12px' }}>Timestamp</th>
