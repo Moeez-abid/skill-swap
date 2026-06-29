@@ -45,6 +45,50 @@
   box-shadow: 0 12px 40px var(--glass-shadow);
 }
 
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 16px;
+  padding-bottom: 8px; /* for scrollbar */
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0 16px;
+  }
+  
+  .glass-card {
+    padding: 16px !important;
+  }
+  
+  .section-title {
+    font-size: 1.5rem;
+  }
+  
+  .page-title {
+    font-size: 2rem;
+  }
+  
+  .tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+  }
+  
+  .tab {
+    white-space: nowrap;
+  }
+}
+
 /* Dialog Modals */
 dialog {
   margin: auto;
@@ -605,8 +649,23 @@ select option {
   overflow: hidden;
 }
 
+.mobile-back-btn {
+  display: flex;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  margin-right: 4px;
+}
+
 @media (min-width: 900px) {
   .messages-layout { grid-template-columns: 350px 1fr; }
+  .mobile-back-btn { display: none; }
+}
+
+@media (max-width: 899px) {
+  .hide-on-mobile { display: none !important; }
 }
 
 .conversation-list {

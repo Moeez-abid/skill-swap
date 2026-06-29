@@ -187,6 +187,8 @@ export default function Admin() {
       <section className="glass-card animate-fade-up delay-2" style={{ padding: '24px', marginTop: '32px' }}>
         <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>User Management</h2>
         <div className="admin-table-wrap" style={{ overflowX: 'auto' }}>
+          {users.length > 0 ? (
+          <div className="table-responsive">
           <table className="admin-table" style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--glass-border)' }}>
@@ -215,6 +217,8 @@ export default function Admin() {
               ))}
             </tbody>
           </table>
+          </div>
+          ) : (<p className="empty-state">No users found.</p>)}
         </div>
       </section>
       )}
@@ -365,6 +369,7 @@ export default function Admin() {
       <section className="glass-card animate-fade-up delay-2" style={{ padding: '24px', marginTop: '32px' }}>
         <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>System Audit Logs</h2>
         <div className="admin-table-wrap" style={{ overflowX: 'auto', maxHeight: '400px' }}>
+          <div className="table-responsive">
           <table className="admin-table" style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--glass-border)', position: 'sticky', top: 0, background: 'var(--bg-layer)' }}>
@@ -385,6 +390,7 @@ export default function Admin() {
               ))}
             </tbody>
           </table>
+          </div>
           {auditLogs.length === 0 && <p className="empty-state">No audit logs found</p>}
         </div>
       </section>

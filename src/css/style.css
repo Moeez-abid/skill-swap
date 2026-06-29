@@ -144,6 +144,58 @@ body {
   gap: 8px;
 }
 
+.mobile-menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 8px;
+  z-index: 100;
+}
+
+@media (max-width: 900px) {
+  .navbar {
+    width: calc(100% - 32px);
+    max-width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    border-radius: 24px;
+    padding: 16px 24px;
+  }
+  
+  .mobile-menu-toggle {
+    display: flex;
+  }
+  
+  .nav-links, .nav-actions {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    margin-top: 24px;
+    padding-bottom: 16px;
+  }
+  
+  .nav-links--open, .nav-actions--open {
+    display: flex;
+    animation: fadeUp 0.3s ease forwards;
+  }
+
+  .nav-links a {
+    font-size: 18px;
+    padding: 12px;
+    width: 100%;
+    text-align: center;
+  }
+
+  .nav-actions {
+    border-top: 1px solid var(--glass-border-subtle);
+    padding-top: 24px;
+  }
+}
+
 .theme-toggle, .notifications-trigger {
   display: flex;
   align-items: center;

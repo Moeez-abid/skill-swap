@@ -371,7 +371,7 @@ export default function Messages() {
       zIndex: 40 
     }}>
       <div className="messages-layout animate-fade-up delay-1" style={{ flex: 1, minHeight: 0 }}>
-        <aside className="glass-card" style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, overflow: 'hidden' }} aria-label="Conversations">
+        <aside className={`glass-card messages-sidebar ${activeConversationId ? 'hide-on-mobile' : ''}`} style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, overflow: 'hidden' }} aria-label="Conversations">
           <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--glass-bg)', borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }}>
             <strong style={{ fontSize: '1.05rem' }}>Messages</strong>
             <button type="button" className="primary-cta" onClick={openNewChatModal} style={{ padding: '6px 12px', fontSize: '0.85rem', width: 'auto' }}>New Chat</button>
@@ -405,7 +405,7 @@ export default function Messages() {
           </div>
         </aside>
 
-        <section className="message-thread glass-card" aria-label="Message thread">
+        <section className={`message-thread glass-card messages-main ${!activeConversationId ? 'hide-on-mobile' : ''}`} aria-label="Message thread">
           {!activeConversationId ? (
             <p className="empty-state">Select a conversation</p>
           ) : threadLoading && threadMsgs.length === 0 ? (
@@ -416,6 +416,9 @@ export default function Messages() {
             <>
               <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', background: 'var(--glass-bg)', borderTopLeftRadius: '16px', borderTopRightRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <button className="mobile-back-btn" onClick={() => setSearchParams({})} aria-label="Back to messages">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                  </button>
                   <Avatar user={partner} size={36} /> <strong style={{ fontSize: '1.05rem' }}>{partner?.name}</strong>
                 </div>
                 <button type="button" className="btn-secondary" style={{ padding: '6px 10px', fontSize: '12px', color: '#ef4444', borderColor: 'rgba(239,68,68,0.3)', background: 'transparent' }} onClick={handleDeleteChat}>Delete Chat</button>
