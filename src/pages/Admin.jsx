@@ -142,23 +142,23 @@ export default function Admin() {
 
       {activeTab === 'analytics' && (
       <div className="admin-grid animate-fade-up delay-2" style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
-        <div className="stat-card admin-card">
+        <div className="stat-card glass-card">
           <div className="stat-card__value">{analytics.users.total}</div>
           <div className="stat-card__label">Total Users (+{analytics.users.growth30d} / 30d)</div>
         </div>
-        <div className="stat-card admin-card">
+        <div className="stat-card glass-card">
           <div className="stat-card__value">{analytics.skills.total}</div>
           <div className="stat-card__label">Skills (+{analytics.skills.created30d} / 30d)</div>
         </div>
-        <div className="stat-card admin-card">
+        <div className="stat-card glass-card">
           <div className="stat-card__value">{analytics.matches.active}</div>
           <div className="stat-card__label">Active Matches</div>
         </div>
-        <div className="stat-card admin-card">
+        <div className="stat-card glass-card">
           <div className="stat-card__value">{analytics.matches.completed}</div>
           <div className="stat-card__label">Completed Swaps</div>
         </div>
-        <div className="stat-card admin-card">
+        <div className="stat-card glass-card">
           <div className="stat-card__value">{analytics.moderation.pendingFlags}</div>
           <div className="stat-card__label">Pending Flags</div>
         </div>
@@ -166,7 +166,7 @@ export default function Admin() {
       )}
 
       {activeTab === 'users' && (
-      <section className="admin-card animate-fade-up delay-2" style={{ padding: '24px', marginTop: '32px' }}>
+      <section className="glass-card animate-fade-up delay-2" style={{ padding: '24px', marginTop: '32px' }}>
         <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>User Management</h2>
         <div className="admin-table-wrap" style={{ overflowX: 'auto' }}>
           <table className="admin-table" style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
@@ -202,7 +202,7 @@ export default function Admin() {
       )}
 
       {activeTab === 'disputes' && (
-      <section className="admin-card animate-fade-up delay-2" style={{ padding: '24px', marginTop: '32px' }}>
+      <section className="glass-card animate-fade-up delay-2" style={{ padding: '24px', marginTop: '32px' }}>
         <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>Disputes</h2>
         {disputes.length > 0 ? (
           disputes.map(d => (
@@ -210,7 +210,7 @@ export default function Admin() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
                   <p><strong>Dispute #{d.id.slice(-6)}</strong> &middot; <span className={`badge ${d.status === 'RESOLVED' ? 'badge--success' : ''}`}>{d.status.replace('_', ' ')}</span></p>
-                  <p style={{ fontSize: '13px', color: 'var(--text-primary)' }}>Created by {d.creator.name} &middot; Deadline: {new Date(d.deadline).toLocaleDateString()}</p>
+                  <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Created by {d.creator.name} &middot; Deadline: {new Date(d.deadline).toLocaleDateString()}</p>
                 </div>
                 {d.status === 'UNDER_REVIEW' && resolvingDisputeId !== d.id && (
                   <button className="primary-cta" onClick={() => {
@@ -272,13 +272,13 @@ export default function Admin() {
       )}
 
       {activeTab === 'moderation' && (
-      <section className="admin-card animate-fade-up delay-2" style={{ padding: '24px', marginTop: '32px' }}>
+      <section className="glass-card animate-fade-up delay-2" style={{ padding: '24px', marginTop: '32px' }}>
         <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>Moderation Queue</h2>
         {flags.length > 0 ? (
           flags.map(f => (
             <div key={f.id} className="match-card" style={{ marginBottom: '12px', padding: '16px', border: '1px solid var(--glass-border-subtle)', borderRadius: '12px' }}>
               <p><strong>{f.targetType}</strong> &middot; {f.reason}</p>
-              <p style={{ fontSize: '13px', color: 'var(--text-primary)' }}>Reported by {f.reporter.name}</p>
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Reported by {f.reporter.name}</p>
               <div style={{ marginTop: '8px', display: 'flex', gap: '8px' }}>
                 <button className="btn-secondary" onClick={() => handleResolveFlag(f.id, 'RESOLVED')}>Resolve</button>
                 <button className="btn-secondary" onClick={() => handleResolveFlag(f.id, 'DISMISSED')}>Dismiss</button>
@@ -292,13 +292,13 @@ export default function Admin() {
       )}
 
       {activeTab === 'verifications' && (
-      <section className="admin-card animate-fade-up delay-2" style={{ padding: '24px', marginTop: '32px' }}>
+      <section className="glass-card animate-fade-up delay-2" style={{ padding: '24px', marginTop: '32px' }}>
         <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>Verification Requests</h2>
         {verifications.length > 0 ? (
           verifications.map(v => (
             <div key={v.id} className="match-card" style={{ marginBottom: '12px', padding: '16px', border: '1px solid var(--glass-border-subtle)', borderRadius: '12px' }}>
               <p><strong>{v.name}</strong> ({v.email})</p>
-              <div style={{ fontSize: '13px', color: 'var(--text-primary)', marginTop: '4px' }}>
+              <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>
                 {v.linkedinUrl && <a href={v.linkedinUrl} target="_blank" rel="noreferrer" style={{ marginRight: '8px' }}>LinkedIn</a>}
                 {v.portfolioUrl && <a href={v.portfolioUrl} target="_blank" rel="noreferrer">Portfolio</a>}
               </div>
@@ -315,7 +315,7 @@ export default function Admin() {
       )}
 
       {activeTab === 'audit' && (
-      <section className="admin-card animate-fade-up delay-2" style={{ padding: '24px', marginTop: '32px' }}>
+      <section className="glass-card animate-fade-up delay-2" style={{ padding: '24px', marginTop: '32px' }}>
         <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>System Audit Logs</h2>
         <div className="admin-table-wrap" style={{ overflowX: 'auto', maxHeight: '400px' }}>
           <table className="admin-table" style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>

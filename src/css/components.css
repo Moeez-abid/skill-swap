@@ -45,17 +45,6 @@
   box-shadow: 0 12px 40px var(--glass-shadow);
 }
 
-.admin-card {
-  background: var(--glass-bg-subtle);
-  border: 1px solid var(--glass-border-subtle);
-  border-radius: 16px;
-  color: var(--text-primary);
-  transition: var(--transition-theme);
-}
-.admin-card table td {
-  color: var(--text-primary);
-}
-
 /* Dialog Modals */
 dialog {
   margin: auto;
@@ -255,8 +244,7 @@ dialog[open] {
 
 .stat-card__label {
   font-size: 14px;
-  color: var(--text-primary);
-  opacity: 0.8;
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -762,7 +750,7 @@ select option {
   border-bottom: 1px solid var(--glass-border-subtle);
 }
 
-.admin-table th { color: var(--text-primary); font-weight: 500; }
+.admin-table th { color: var(--text-secondary); font-weight: 500; }
 
 .site-footer {
   padding: 48px 5% 32px;
