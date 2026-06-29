@@ -59,6 +59,8 @@ export default function Profile() {
       });
   }, [userId]);
 
+  const isOwner = loggedInUser?.id === profile?.id;
+
   if (error) return <div style={{ paddingTop: '100px', paddingBottom: '64px' }}><div className="empty-state"><h3>Profile not found</h3></div></div>;
 
   return (
