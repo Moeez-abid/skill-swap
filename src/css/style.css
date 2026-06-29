@@ -154,46 +154,98 @@ body {
   z-index: 100;
 }
 
+.nav-main-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 @media (max-width: 900px) {
-  .navbar {
-    width: calc(100% - 32px);
-    max-width: 100%;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    border-radius: 24px;
-    padding: 16px 24px;
-  }
-  
   .mobile-menu-toggle {
     display: flex;
   }
   
-  .nav-links, .nav-actions {
+  .nav-links {
     display: none;
-    width: 100%;
-    flex-direction: column;
-    align-items: center;
-    gap: 24px;
-    margin-top: 24px;
-    padding-bottom: 16px;
   }
-  
-  .nav-links--open, .nav-actions--open {
-    display: flex;
-    animation: fadeUp 0.3s ease forwards;
-  }
+}
 
-  .nav-links a {
-    font-size: 18px;
-    padding: 12px;
-    width: 100%;
-    text-align: center;
-  }
+/* Mobile Sidebar */
+.mobile-sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1000;
+  opacity: 0;
+  animation: fadeIn 0.3s ease forwards;
+}
 
-  .nav-actions {
-    border-top: 1px solid var(--glass-border-subtle);
-    padding-top: 24px;
-  }
+.mobile-sidebar {
+  position: fixed;
+  top: 0;
+  left: -300px;
+  width: 280px;
+  height: 100vh;
+  height: 100dvh;
+  background: var(--glass-bg);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  border-right: 1px solid var(--glass-border);
+  box-shadow: 10px 0 30px var(--glass-shadow);
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  transition: left 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mobile-sidebar.open {
+  left: 0;
+}
+
+.mobile-sidebar-header {
+  padding: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--glass-border-subtle);
+}
+
+.mobile-sidebar-close {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-sidebar-links {
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  gap: 20px;
+  overflow-y: auto;
+}
+
+.mobile-sidebar-links a {
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 18px;
+  transition: color 0.2s ease;
+}
+
+.mobile-sidebar-links a.active, .mobile-sidebar-links a:hover {
+  color: var(--text-primary);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .theme-toggle, .notifications-trigger {

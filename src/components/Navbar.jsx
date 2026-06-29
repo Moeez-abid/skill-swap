@@ -76,41 +76,30 @@ export default function Navbar() {
   return (
     <>
       <nav className="navbar" aria-label="Main navigation">
-        <div style={{ display: 'flex', alignItems: 'center', width: '100%', justifyContent: 'space-between' }}>
-          <Link to="/" className="nav-logo">SkillSwap</Link>
-          
-          <button className="mobile-menu-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label="Toggle menu" aria-expanded={isMenuOpen}>
+        <div className="nav-main-content">
+          <button className="mobile-menu-toggle" onClick={() => setIsMenuOpen(true)} aria-label="Open menu" aria-expanded={isMenuOpen}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              {isMenuOpen ? (
-                <>
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </>
-              ) : (
-                <>
-                  <line x1="3" y1="12" x2="21" y2="12"></line>
-                  <line x1="3" y1="6" x2="21" y2="6"></line>
-                  <line x1="3" y1="18" x2="21" y2="18"></line>
-                </>
-              )}
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
             </svg>
           </button>
+          <Link to="/" className="nav-logo">SkillSwap</Link>
         </div>
 
-        <div className={`nav-links ${isMenuOpen ? 'nav-links--open' : ''}`}>
+        <div className="nav-links">
           {links.map(l => (
             <Link 
               key={l.href} 
               to={l.href} 
               className={currentPath === l.href || (currentPath === '/' && l.href === '/index.html') ? 'active' : ''}
               aria-current={currentPath === l.href ? 'page' : undefined}
-              onClick={() => setIsMenuOpen(false)}
             >
               {l.label}
             </Link>
           ))}
         </div>
-        <div className={`nav-actions ${isMenuOpen ? 'nav-actions--open' : ''}`}>
+        <div className="nav-actions">
           <button type="button" className="theme-toggle" onClick={toggleTheme} aria-pressed={theme === 'dark'} aria-label="Switch to night mode">
             {theme === 'light' ? (
               <svg className="theme-icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -125,7 +114,7 @@ export default function Navbar() {
           
           {loggedIn && user ? (
             isAdmin() ? (
-              <button type="button" onClick={handleLogout} className="nav-btn nav-btn--ghost" style={{ marginLeft: '12px' }}>Log out</button>
+              <button type="button" onClick={handleLogout} className="nav-btn nav-btn--ghost hide-on-mobile" style={{ marginLeft: '12px' }}>Log out</button>
             ) : (
               <>
                 <NotificationsDropdown />
@@ -161,12 +150,57 @@ export default function Navbar() {
             )
           ) : (
             <>
-              <Link to="/login" className="nav-btn nav-btn--ghost">Log in</Link>
-              <Link to="/register" className="nav-btn">Sign up</Link>
+              <Link to="/login" className="nav-btn nav-btn--ghost hide-on-mobile">Log in</Link>
+              <Link to="/register" className="nav-btn hide-on-mobile">Sign up</Link>
             </>
           )}
         </div>
       </nav>
+
+      {/* Mobile Sidebar Overlay */}
+      {isMenuOpen && (
+        <div className="mobile-sidebar-overlay animate-fade-in" onClick={() => setIsMenuOpen(false)} aria-hidden="true" />
+      )}
+      
+      {/* Mobile Sidebar */}
+      <aside className={`mobile-sidebar ${isMenuOpen ? 'open' : ''}`} aria-label="Mobile navigation">
+        <div className="mobile-sidebar-header">
+          <span className="nav-logo">SkillSwap Menu</span>
+          <button className="mobile-sidebar-close" onClick={() => setIsMenuOpen(false)} aria-label="Close menu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div className="mobile-sidebar-links">
+          {links.map(l => (
+            <Link 
+              key={l.href} 
+              to={l.href} 
+              className={currentPath === l.href || (currentPath === '/' && l.href === '/index.html') ? 'active' : ''}
+              aria-current={currentPath === l.href ? 'page' : undefined}
+              onClick={() => setIsMenuOpen(false)}
+            >
+              {l.label}
+            </Link>
+          ))}
+          {isAdmin() && (
+             <Link to="/admin" className={currentPath === '/admin' ? 'active' : ''} onClick={() => setIsMenuOpen(false)}>Admin Dashboard</Link>
+          )}
+
+          <div className="mobile-sidebar-auth" style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid var(--glass-border-subtle)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {loggedIn && user ? (
+              <button type="button" onClick={(e) => { handleLogout(e); setIsMenuOpen(false); }} className="btn-secondary" style={{ width: '100%', padding: '12px' }}>Log out</button>
+            ) : (
+              <>
+                <Link to="/login" className="nav-btn nav-btn--ghost" onClick={() => setIsMenuOpen(false)} style={{ justifyContent: 'center' }}>Log in</Link>
+                <Link to="/register" className="nav-btn" onClick={() => setIsMenuOpen(false)} style={{ justifyContent: 'center' }}>Sign up</Link>
+              </>
+            )}
+          </div>
+        </div>
+      </aside>
     </>
   );
 }
