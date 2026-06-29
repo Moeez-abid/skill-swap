@@ -181,7 +181,7 @@ export default function Admin() {
               </tr>
             </thead>
             <tbody>
-              {users.map(u => (
+              {users.filter(u => u.role !== 'ADMIN').map(u => (
                 <tr key={u.id} style={{ borderBottom: '1px solid var(--glass-border-subtle)' }}>
                   <td style={{ padding: '12px' }}>{u.name}</td>
                   <td style={{ padding: '12px' }}>{u.email}</td>
