@@ -46,6 +46,51 @@ router.post('/session/:sessionId', authenticate, validate(reviewSchema), async (
   return apiSuccess(res, { review }, 201);
 });
 
+router.get('/featured', async (req, res) => {
+  try {
+    const reviews = await prisma.review.findMany({
+      where: { 
+        isRevealed: true,
+        ratingOverall: 5,
+        feedback: { not: '' } // Must have a written review
+      },
+      include: {
+        reviewer: { select: { id: true, name: true, avatarUrl: true } },
+        session: { 
+          include: { 
+            activeMatch: {
+              include: {
+                matchRequest: {
+                  include: {
+                    offeredSkill: { select: { title: true } },
+                    wantedSkill: { select: { title: true } }
+                  }
+                }
+              }
+            } 
+          } 
+        },
+        activeMatch: {
+          include: {
+            matchRequest: {
+              include: {
+                offeredSkill: { select: { title: true } },
+                wantedSkill: { select: { title: true } }
+              }
+            }
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 6, // Fetch top 6 recent 5-star reviews
+    });
+    return apiSuccess(res, { reviews });
+  } catch (error) {
+    console.error('Error fetching featured reviews:', error);
+    return apiError(res, 500, 'Internal server error');
+  }
+});
+
 router.get('/user/:userId', async (req, res) => {
   const reviews = await prisma.review.findMany({
     where: { revieweeId: req.params.userId, isRevealed: true },

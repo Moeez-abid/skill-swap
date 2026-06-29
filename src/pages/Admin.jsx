@@ -12,6 +12,7 @@ export default function Admin() {
   const [disputes, setDisputes] = useState([]);
   const [verifications, setVerifications] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
+  const [supportMessages, setSupportMessages] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -32,13 +33,14 @@ export default function Admin() {
     setLoading(true);
     setError(false);
     try {
-      const [analyticsRes, usersRes, flagsRes, disputesRes, verificationsRes, auditRes] = await Promise.all([
+      const [analyticsRes, usersRes, flagsRes, disputesRes, verificationsRes, auditRes, supportRes] = await Promise.all([
         admin.analytics(),
         admin.users(),
         admin.moderation(),
         admin.disputes(),
         admin.verifications(),
-        admin.auditLogs()
+        admin.auditLogs(),
+        admin.supportMessages()
       ]);
       setAnalytics(analyticsRes.analytics);
       setUsers(usersRes.users);
@@ -46,6 +48,7 @@ export default function Admin() {
       setDisputes(disputesRes.disputes);
       setVerifications(verificationsRes.users);
       setAuditLogs(auditRes.logs);
+      setSupportMessages(supportRes.messages || []);
     } catch (e) {
       setError(true);
     } finally {
@@ -118,6 +121,15 @@ export default function Admin() {
     }
   };
 
+  const handleMarkSupportRead = async (msgId) => {
+    try {
+      await admin.markSupportMessageRead(msgId);
+      loadData();
+    } catch (err) {
+      showToast(err.message);
+    }
+  };
+
   if (error) return <div style={{ paddingTop: '100px', paddingBottom: '64px' }}><div className="empty-state"><h3>Admin panel unavailable</h3></div></div>;
 
   return (
@@ -138,6 +150,12 @@ export default function Admin() {
         <button className={`tab ${activeTab === 'moderation' ? 'tab--active' : ''}`} style={{ background: 'none', border: 'none', padding: '8px 16px', cursor: 'pointer', color: activeTab === 'moderation' ? 'var(--text-primary)' : 'var(--text-secondary)', borderBottom: activeTab === 'moderation' ? '2px solid var(--brand-blue)' : 'none', fontWeight: activeTab === 'moderation' ? 600 : 400 }} onClick={() => setActiveTab('moderation')}>Moderation</button>
         <button className={`tab ${activeTab === 'verifications' ? 'tab--active' : ''}`} style={{ background: 'none', border: 'none', padding: '8px 16px', cursor: 'pointer', color: activeTab === 'verifications' ? 'var(--text-primary)' : 'var(--text-secondary)', borderBottom: activeTab === 'verifications' ? '2px solid var(--brand-blue)' : 'none', fontWeight: activeTab === 'verifications' ? 600 : 400 }} onClick={() => setActiveTab('verifications')}>Verifications</button>
         <button className={`tab ${activeTab === 'audit' ? 'tab--active' : ''}`} style={{ background: 'none', border: 'none', padding: '8px 16px', cursor: 'pointer', color: activeTab === 'audit' ? 'var(--text-primary)' : 'var(--text-secondary)', borderBottom: activeTab === 'audit' ? '2px solid var(--brand-blue)' : 'none', fontWeight: activeTab === 'audit' ? 600 : 400 }} onClick={() => setActiveTab('audit')}>Audit Logs</button>
+        <button className={`tab ${activeTab === 'support' ? 'tab--active' : ''}`} style={{ background: 'none', border: 'none', padding: '8px 16px', cursor: 'pointer', color: activeTab === 'support' ? 'var(--text-primary)' : 'var(--text-secondary)', borderBottom: activeTab === 'support' ? '2px solid var(--brand-blue)' : 'none', fontWeight: activeTab === 'support' ? 600 : 400 }} onClick={() => setActiveTab('support')}>
+          Support Inbox
+          {supportMessages.filter(m => !m.isRead).length > 0 && (
+            <span style={{ background: 'var(--brand-blue)', color: '#fff', fontSize: '11px', padding: '2px 6px', borderRadius: '10px', marginLeft: '6px' }}>{supportMessages.filter(m => !m.isRead).length}</span>
+          )}
+        </button>
       </div>
 
       {activeTab === 'analytics' && (
@@ -310,6 +328,35 @@ export default function Admin() {
           ))
         ) : (
           <p className="empty-state">No pending verifications</p>
+        )}
+      </section>
+      )}
+
+      {activeTab === 'support' && (
+      <section className="glass-card animate-fade-up delay-2" style={{ padding: '24px', marginTop: '32px' }}>
+        <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>Support Inbox</h2>
+        {supportMessages.length > 0 ? (
+          supportMessages.map(msg => (
+            <div key={msg.id} className="match-card" style={{ background: 'var(--glass-bg)', marginBottom: '12px', padding: '16px', border: '1px solid var(--glass-border-subtle)', borderRadius: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <p><strong>{msg.name}</strong> ({msg.email})</p>
+                  <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Received: {new Date(msg.createdAt).toLocaleString()}</p>
+                </div>
+                {!msg.isRead && (
+                  <button className="primary-cta" onClick={() => handleMarkSupportRead(msg.id)}>Mark as Read</button>
+                )}
+                {msg.isRead && (
+                  <span className="badge badge--success">Read</span>
+                )}
+              </div>
+              <div style={{ marginTop: '16px', padding: '12px', background: 'var(--glass-bg-subtle)', borderRadius: '8px' }}>
+                <p style={{ fontSize: '14px', whiteSpace: 'pre-wrap' }}>{msg.message}</p>
+              </div>
+            </div>
+          ))
+        ) : (
+          <p className="empty-state">No support messages found.</p>
         )}
       </section>
       )}

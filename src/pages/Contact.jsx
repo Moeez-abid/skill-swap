@@ -1,16 +1,24 @@
 import React, { useState } from 'react';
+import api from '../shared/api.js';
 
 export default function Contact() {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Simulate API call
-    setTimeout(() => {
+    setLoading(true);
+    try {
+      await api.post('/api/support', formData);
       setSubmitted(true);
       setFormData({ name: '', email: '', message: '' });
-    }, 500);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to send message. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -58,7 +66,9 @@ export default function Contact() {
                 placeholder="How can we help you?"
               ></textarea>
             </div>
-            <button type="submit" className="primary-cta" style={{ marginTop: '8px' }}>Send Message</button>
+            <button type="submit" className="primary-cta" style={{ marginTop: '8px' }} disabled={loading}>
+              {loading ? 'Sending...' : 'Send Message'}
+            </button>
           </form>
         )}
       </div>

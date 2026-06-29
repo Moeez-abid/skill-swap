@@ -1,32 +1,47 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { reviews } from '../shared/api.js';
 
 export default function SuccessStories() {
-  const stories = [
-    {
-      id: 1,
-      name: "Sarah M.",
-      learned: "Frontend Web Development",
-      taught: "Graphic Design",
-      quote: "SkillSwap changed my career path completely. I traded my design expertise with a developer who wanted to make his app look better. Over 3 months, he learned UI principles, and I learned React. Now I'm a UX Engineer!",
-      avatar: "S"
-    },
-    {
-      id: 2,
-      name: "David K.",
-      learned: "Conversational Spanish",
-      taught: "Guitar Basics",
-      quote: "Finding a language partner who actually wanted to stick to a schedule was hard until I joined SkillSwap. Teaching guitar gave me a sense of accountability, and my Spanish has improved so much.",
-      avatar: "D"
-    },
-    {
-      id: 3,
-      name: "Aisha R.",
-      learned: "Machine Learning Concepts",
-      taught: "Digital Marketing",
-      quote: "I had no idea where to start with AI. A data scientist on SkillSwap needed help marketing his side project, so we swapped skills. It's the most practical learning experience I've ever had.",
-      avatar: "A"
-    }
-  ];
+  const [stories, setStories] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    reviews.featured().then(res => {
+      if (res && res.reviews) {
+        const mapped = res.reviews.map(r => {
+          let learned = 'a new skill';
+          let taught = 'their expertise';
+          
+          const match = r.activeMatch || r.session?.activeMatch;
+          if (match && match.matchRequest) {
+            const req = match.matchRequest;
+            if (r.reviewerId === req.senderId) {
+              taught = req.offeredSkill?.title || taught;
+              learned = req.wantedSkill?.title || learned;
+            } else {
+              taught = req.wantedSkill?.title || taught;
+              learned = req.offeredSkill?.title || learned;
+            }
+          }
+          
+          return {
+            id: r.id,
+            name: r.reviewer?.name || 'Anonymous',
+            avatar: r.reviewer?.avatarUrl || r.reviewer?.name?.[0] || 'A',
+            isImageUrl: !!r.reviewer?.avatarUrl,
+            quote: r.feedback,
+            learned,
+            taught
+          };
+        });
+        setStories(mapped);
+      }
+      setLoading(false);
+    }).catch(err => {
+      console.error(err);
+      setLoading(false);
+    });
+  }, []);
 
   return (
     <div className="container animate-fade-up" style={{ paddingTop: '120px', minHeight: 'calc(100vh - 200px)', paddingBottom: '40px' }}>
@@ -35,24 +50,37 @@ export default function SuccessStories() {
         See how our community members are achieving their goals through peer-to-peer knowledge exchange.
       </p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
-        {stories.map(story => (
-          <div key={story.id} className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ fontStyle: 'italic', color: 'var(--text-primary)', lineHeight: '1.6' }}>
-              "{story.quote}"
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid var(--glass-border-subtle)' }}>
-              <div className="avatar" style={{ width: '40px', height: '40px', fontSize: '16px' }}>
-                {story.avatar}
+      {loading ? (
+        <p className="loading">Loading stories...</p>
+      ) : stories.length > 0 ? (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+          {stories.map(story => (
+            <div key={story.id} className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ fontStyle: 'italic', color: 'var(--text-primary)', lineHeight: '1.6' }}>
+                "{story.quote}"
               </div>
-              <div>
-                <strong style={{ display: 'block', color: 'var(--text-primary)' }}>{story.name}</strong>
-                <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Learned {story.learned}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid var(--glass-border-subtle)' }}>
+                {story.isImageUrl ? (
+                  <img src={story.avatar} alt={story.name} className="avatar" style={{ width: '40px', height: '40px', objectFit: 'cover' }} />
+                ) : (
+                  <div className="avatar avatar--initials" style={{ width: '40px', height: '40px', fontSize: '16px' }}>
+                    {story.avatar}
+                  </div>
+                )}
+                <div>
+                  <strong style={{ display: 'block', color: 'var(--text-primary)' }}>{story.name}</strong>
+                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Learned {story.learned}</span>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div className="empty-state">
+          <h3>No stories yet</h3>
+          <p>Complete a session and leave a 5-star review to be featured here!</p>
+        </div>
+      )}
     </div>
   );
 }

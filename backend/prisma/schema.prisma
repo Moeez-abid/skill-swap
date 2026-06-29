@@ -430,3 +430,14 @@ model Notification {
   @@index([userId])
   @@index([isRead])
 }
+
+model SupportMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}

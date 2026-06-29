@@ -207,6 +207,7 @@ export const reviews = {
     return res;
   },
   forUser: (userId) => cachedApi(`/reviews/user/${userId}`),
+  featured: () => cachedApi('/reviews/featured'),
 };
 
 export const admin = {
@@ -239,6 +240,11 @@ export const admin = {
     return res;
   },
   auditLogs: () => api('/admin/audit-logs'),
+  supportMessages: () => api('/support'),
+  markSupportMessageRead: async (id) => {
+    const res = await api(`/support/${id}/read`, { method: 'PATCH' });
+    return res;
+  },
 };
 
 export const disputes = {
