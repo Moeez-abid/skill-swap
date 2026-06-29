@@ -220,7 +220,7 @@ router.patch('/verifications/:id/approve', async (req, res) => {
       action: 'VERIFICATION_APPROVED',
       actorId: req.user.id,
       targetId: user.id,
-      details: { email: user.email },
+      metadata: { email: user.email },
     }
   });
   
@@ -238,7 +238,7 @@ router.patch('/verifications/:id/reject', async (req, res) => {
       action: 'VERIFICATION_REJECTED',
       actorId: req.user.id,
       targetId: user.id,
-      details: { email: user.email },
+      metadata: { email: user.email },
     }
   });
   

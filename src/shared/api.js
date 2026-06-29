@@ -210,40 +210,35 @@ export const reviews = {
 };
 
 export const admin = {
-  analytics: () => cachedApi('/admin/analytics'),
-  users: () => cachedApi('/admin/users'),
-  moderation: () => cachedApi('/admin/moderation'),
+  analytics: () => api('/admin/analytics'),
+  users: () => api('/admin/users'),
+  moderation: () => api('/admin/moderation'),
   resolveFlag: async (id, status) => {
     const res = await api(`/admin/moderation/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) });
-    clearApiCache('/admin');
     return res;
   },
   suspendUser: async (id, reason) => {
     const res = await api(`/admin/users/${id}/suspend`, { method: 'PATCH', body: JSON.stringify({ reason }) });
-    clearApiCache('/admin');
     clearApiCache('/users');
     return res;
   },
-  audit: () => cachedApi('/admin/audit'),
-  disputes: () => cachedApi('/admin/disputes'),
+  audit: () => api('/admin/audit'),
+  disputes: () => api('/admin/disputes'),
   resolveDispute: async (id, data) => {
     const res = await api(`/admin/disputes/${id}/resolve`, { method: 'POST', body: JSON.stringify(data) });
-    clearApiCache('/admin');
     clearApiCache('/matches');
     return res;
   },
-  verifications: () => cachedApi('/admin/verifications'),
+  verifications: () => api('/admin/verifications'),
   approveVerification: async (id) => {
     const res = await api(`/admin/verifications/${id}/approve`, { method: 'PATCH' });
-    clearApiCache('/admin');
     return res;
   },
   rejectVerification: async (id) => {
     const res = await api(`/admin/verifications/${id}/reject`, { method: 'PATCH' });
-    clearApiCache('/admin');
     return res;
   },
-  auditLogs: () => cachedApi('/admin/audit-logs'),
+  auditLogs: () => api('/admin/audit-logs'),
 };
 
 export const disputes = {
