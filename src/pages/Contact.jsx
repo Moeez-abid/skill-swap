@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import api from '../shared/api.js';
+import { api } from '../shared/api.js';
 
 export default function Contact() {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
