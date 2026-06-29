@@ -95,6 +95,8 @@ model User {
   notifyMessages        Boolean            @default(true)
   notifySessions        Boolean            @default(true)
   isSuspended           Boolean            @default(false)
+  isVerified            Boolean            @default(false)
+  verificationRequested Boolean            @default(false)
   suspendedAt           DateTime?
   suspendedReason       String?
   deletedAt             DateTime?
@@ -342,6 +344,7 @@ model Review {
   ratingCommunication  Int
   ratingPunctuality    Int
   feedback             String
+  wasMissed            Boolean  @default(false)
   isRevealed           Boolean  @default(false)
   lockedAt             DateTime?
   createdAt            DateTime @default(now())

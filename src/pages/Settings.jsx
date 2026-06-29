@@ -21,6 +21,8 @@ export default function Settings() {
   const [notifyMatches, setNotifyMatches] = useState(false);
   const [notifyMessages, setNotifyMessages] = useState(false);
   const [notifySessions, setNotifySessions] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
+  const [verificationRequested, setVerificationRequested] = useState(false);
 
   // Password states
   const [currentPassword, setCurrentPassword] = useState('');
@@ -58,6 +60,8 @@ export default function Settings() {
         setNotifyMatches(user.notifyMatches || false);
         setNotifyMessages(user.notifyMessages || false);
         setNotifySessions(user.notifySessions || false);
+        setIsVerified(user.isVerified || false);
+        setVerificationRequested(user.verificationRequested || false);
       })
       .catch(() => {})
       .finally(() => {
@@ -136,6 +140,17 @@ export default function Settings() {
       await users.deleteAccount();
       clearAuth();
       navigate('/');
+    } catch (err) {
+      showToast(err.message);
+    }
+  };
+
+  const handleRequestVerification = async () => {
+    try {
+      await users.requestVerification();
+      showToast('Verification requested');
+      setVerificationRequested(true);
+      window.dispatchEvent(new Event('user-updated'));
     } catch (err) {
       showToast(err.message);
     }
@@ -233,6 +248,30 @@ export default function Settings() {
         <button type="submit" className="primary-cta" style={{ marginTop: '16px' }}>Save Settings</button>
         {profileError && <p className="form-error">{profileError}</p>}
       </form>
+
+      <div className="form-card glass-card animate-fade-up delay-2" style={{ marginBottom: '32px' }}>
+        <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>Account Verification</h2>
+        <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+          Get a verified badge on your profile and skills to build trust with other users.
+        </p>
+        {isVerified ? (
+          <div className="badge badge--success" style={{ display: 'inline-flex', padding: '8px 16px', fontSize: '14px' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '8px' }}>
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            Verified Account
+          </div>
+        ) : verificationRequested ? (
+          <div className="badge" style={{ display: 'inline-block', padding: '8px 16px', fontSize: '14px' }}>
+            Verification Pending
+          </div>
+        ) : (
+          <button type="button" className="btn-secondary" onClick={handleRequestVerification}>
+            Request Verification
+          </button>
+        )}
+      </div>
 
       <form className="form-card glass-card animate-fade-up delay-2" style={{ marginBottom: '32px' }} onSubmit={handlePasswordSubmit}>
         <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>Change Password</h2>

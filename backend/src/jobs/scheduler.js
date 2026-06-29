@@ -22,11 +22,23 @@ export async function expirePendingRequests() {
   });
 }
 
+export async function cancelExpiredProposedSessions() {
+  const now = new Date();
+  await prisma.session.updateMany({
+    where: {
+      status: 'PROPOSED',
+      scheduledStart: { lt: now },
+    },
+    data: { status: 'CANCELLED' },
+  });
+}
+
 export function startScheduledJobs() {
   setInterval(async () => {
     try {
       await completePastSessions();
       await expirePendingRequests();
+      await cancelExpiredProposedSessions();
     } catch (err) {
       console.error('Scheduled job error:', err.message);
     }

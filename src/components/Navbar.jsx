@@ -42,23 +42,24 @@ export default function Navbar() {
 
   const currentPath = location.pathname;
 
-  const links = loggedIn
-    ? [
-        { href: '/', label: 'Home' },
-        { href: '/marketplace', label: 'Marketplace' },
-        { href: '/dashboard', label: 'Dashboard' },
-        { href: '/matches', label: 'Matches' },
-        { href: '/messages', label: 'Messages' },
-        { href: '/sessions', label: 'Sessions' },
-        { href: '/settings', label: 'Settings' },
-      ]
-    : [
-        { href: '/', label: 'Home' },
-        { href: '/marketplace', label: 'Marketplace' },
-      ];
-
+  let links = [];
   if (isAdmin()) {
-    links.push({ href: '/admin', label: 'Admin' });
+    links = [
+      { href: '/admin', label: 'Admin Dashboard' }
+    ];
+  } else {
+    links = loggedIn && user
+      ? [
+          { href: '/marketplace', label: 'Marketplace' },
+          { href: '/matches', label: 'Matches' },
+          { href: '/messages', label: 'Messages' },
+          { href: '/sessions', label: 'Sessions' },
+          { href: '/settings', label: 'Settings' },
+        ]
+      : [
+          { href: '/', label: 'Home' },
+          { href: '/marketplace', label: 'Marketplace' },
+        ];
   }
 
   function getInitials(name) {
@@ -95,29 +96,41 @@ export default function Navbar() {
           </button>
           
           {loggedIn && user ? (
-            <>
-              <NotificationsDropdown />
-              <div className="nav-profile-dropdown">
-              <button className="nav-profile-trigger" aria-haspopup="true" aria-label="Open profile menu">
-                {user.avatarUrl ? (
-                  <img src={getImageUrl(user.avatarUrl)} alt={user.name} className="avatar nav-avatar" width="36" height="36" style={{ objectFit: 'cover' }} />
-                ) : (
-                  <span className="avatar avatar--initials nav-avatar" style={{ width: '36px', height: '36px', fontSize: '14px', cursor: 'pointer' }} aria-hidden="true">
-                    {getInitials(user.name)}
-                  </span>
-                )}
-              </button>
-              <div className="nav-profile-menu">
-                <div className="nav-profile-info">
-                  <strong>{user.name || 'User'}</strong>
-                  <span>{user.email || ''}</span>
+            isAdmin() ? (
+              <button type="button" onClick={handleLogout} className="nav-btn nav-btn--ghost" style={{ marginLeft: '12px' }}>Log out</button>
+            ) : (
+              <>
+                <NotificationsDropdown />
+                <div className="nav-profile-dropdown">
+                  <button className="nav-profile-trigger" aria-haspopup="true" aria-label="Open profile menu">
+                    {user.avatarUrl ? (
+                      <img src={getImageUrl(user.avatarUrl)} alt={user.name} className="avatar nav-avatar" width="36" height="36" style={{ objectFit: 'cover' }} />
+                    ) : (
+                      <span className="avatar avatar--initials nav-avatar" style={{ width: '36px', height: '36px', fontSize: '14px', cursor: 'pointer' }} aria-hidden="true">
+                        {getInitials(user.name)}
+                      </span>
+                    )}
+                  </button>
+                  <div className="nav-profile-menu">
+                    <div className="nav-profile-info">
+                      <strong style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        {user.name || 'User'}
+                        {user.isVerified && (
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--brand-blue)' }}>
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                          </svg>
+                        )}
+                      </strong>
+                      <span>{user.email || ''}</span>
+                    </div>
+                    <Link to="/profile">My Profile</Link>
+                    <Link to="/settings">Settings</Link>
+                    <button type="button" onClick={handleLogout}>Log out</button>
+                  </div>
                 </div>
-                <Link to="/profile">My Profile</Link>
-                <Link to="/settings">Settings</Link>
-                <button type="button" onClick={handleLogout}>Log out</button>
-              </div>
-              </div>
-            </>
+              </>
+            )
           ) : (
             <>
               <Link to="/login" className="nav-btn nav-btn--ghost">Log in</Link>

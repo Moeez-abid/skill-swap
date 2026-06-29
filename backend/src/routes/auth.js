@@ -25,7 +25,7 @@ router.post('/register', authLimiter, validate(registerSchema), async (req, res)
   const passwordHash = await bcrypt.hash(password, 12);
   const user = await prisma.user.create({
     data: { email: email.toLowerCase(), passwordHash, name },
-    select: { id: true, email: true, name: true, role: true },
+    select: { id: true, email: true, name: true, role: true, isVerified: true, verificationRequested: true },
   });
 
   const token = signToken({ userId: user.id });
@@ -46,7 +46,7 @@ router.post('/login', authLimiter, validate(loginSchema), async (req, res) => {
 
   const token = signToken({ userId: user.id });
   return apiSuccess(res, {
-    user: { id: user.id, email: user.email, name: user.name, role: user.role, avatarUrl: user.avatarUrl },
+    user: { id: user.id, email: user.email, name: user.name, role: user.role, avatarUrl: user.avatarUrl, isVerified: user.isVerified, verificationRequested: user.verificationRequested },
     token,
   });
 });
@@ -86,7 +86,7 @@ router.post('/google', authLimiter, async (req, res) => {
 
     const token = signToken({ userId: user.id });
     return apiSuccess(res, {
-      user: { id: user.id, email: user.email, name: user.name, role: user.role, avatarUrl: user.avatarUrl },
+      user: { id: user.id, email: user.email, name: user.name, role: user.role, avatarUrl: user.avatarUrl, isVerified: user.isVerified, verificationRequested: user.verificationRequested },
       token,
     });
   } catch (error) {
@@ -102,7 +102,7 @@ router.get('/me', authenticate, async (req, res) => {
       id: true, email: true, name: true, bio: true, location: true, avatarUrl: true,
       timezone: true, role: true, availabilityStatus: true,
       notifyMatches: true, notifyMessages: true, notifySessions: true,
-      createdAt: true,
+      createdAt: true, isVerified: true, verificationRequested: true,
     },
   });
   return apiSuccess(res, { user });

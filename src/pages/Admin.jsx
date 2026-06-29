@@ -10,6 +10,8 @@ export default function Admin() {
   const [users, setUsers] = useState([]);
   const [flags, setFlags] = useState([]);
   const [disputes, setDisputes] = useState([]);
+  const [verifications, setVerifications] = useState([]);
+  const [auditLogs, setAuditLogs] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -28,16 +30,20 @@ export default function Admin() {
     setLoading(true);
     setError(false);
     try {
-      const [analyticsRes, usersRes, flagsRes, disputesRes] = await Promise.all([
+      const [analyticsRes, usersRes, flagsRes, disputesRes, verificationsRes, auditRes] = await Promise.all([
         admin.analytics(),
         admin.users(),
         admin.moderation(),
-        admin.disputes()
+        admin.disputes(),
+        admin.verifications(),
+        admin.auditLogs()
       ]);
       setAnalytics(analyticsRes.analytics);
       setUsers(usersRes.users);
       setFlags(flagsRes.flags);
       setDisputes(disputesRes.disputes);
+      setVerifications(verificationsRes.users);
+      setAuditLogs(auditRes.logs);
     } catch (e) {
       setError(true);
     } finally {
@@ -84,6 +90,26 @@ export default function Admin() {
       await admin.resolveDispute(disputeId, { decision: decisionText, winnerId });
       showToast('Dispute resolved');
       setResolvingDisputeId(null);
+      loadData();
+    } catch (err) {
+      showToast(err.message);
+    }
+  };
+
+  const handleApproveVerification = async (userId) => {
+    try {
+      await admin.approveVerification(userId);
+      showToast('User verified');
+      loadData();
+    } catch (err) {
+      showToast(err.message);
+    }
+  };
+
+  const handleRejectVerification = async (userId) => {
+    try {
+      await admin.rejectVerification(userId);
+      showToast('Verification rejected');
       loadData();
     } catch (err) {
       showToast(err.message);
@@ -244,6 +270,54 @@ export default function Admin() {
         ) : (
           <p className="empty-state">Queue empty</p>
         )}
+      </section>
+
+      <section className="glass-card animate-fade-up delay-4" style={{ padding: '24px', marginTop: '32px' }}>
+        <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>Verification Requests</h2>
+        {verifications.length > 0 ? (
+          verifications.map(v => (
+            <div key={v.id} className="match-card" style={{ marginBottom: '12px', padding: '16px', border: '1px solid var(--glass-border-subtle)', borderRadius: '12px' }}>
+              <p><strong>{v.name}</strong> ({v.email})</p>
+              <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                {v.linkedinUrl && <a href={v.linkedinUrl} target="_blank" rel="noreferrer" style={{ marginRight: '8px' }}>LinkedIn</a>}
+                {v.portfolioUrl && <a href={v.portfolioUrl} target="_blank" rel="noreferrer">Portfolio</a>}
+              </div>
+              <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
+                <button className="primary-cta" onClick={() => handleApproveVerification(v.id)}>Approve</button>
+                <button className="btn-secondary" onClick={() => handleRejectVerification(v.id)}>Reject</button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <p className="empty-state">No pending verifications</p>
+        )}
+      </section>
+
+      <section className="glass-card animate-fade-up delay-4" style={{ padding: '24px', marginTop: '32px' }}>
+        <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>System Audit Logs</h2>
+        <div className="admin-table-wrap" style={{ overflowX: 'auto', maxHeight: '400px' }}>
+          <table className="admin-table" style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--glass-border)', position: 'sticky', top: 0, background: 'var(--bg-layer)' }}>
+                <th style={{ padding: '12px' }}>Timestamp</th>
+                <th style={{ padding: '12px' }}>Admin</th>
+                <th style={{ padding: '12px' }}>Action</th>
+                <th style={{ padding: '12px' }}>Target ID</th>
+              </tr>
+            </thead>
+            <tbody>
+              {auditLogs.map(log => (
+                <tr key={log.id} style={{ borderBottom: '1px solid var(--glass-border-subtle)' }}>
+                  <td style={{ padding: '12px', fontSize: '13px' }}>{new Date(log.createdAt).toLocaleString()}</td>
+                  <td style={{ padding: '12px' }}>{log.actor?.name}</td>
+                  <td style={{ padding: '12px' }}><span className="badge">{log.action}</span></td>
+                  <td style={{ padding: '12px', fontSize: '13px', fontFamily: 'monospace' }}>{log.targetId}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {auditLogs.length === 0 && <p className="empty-state">No audit logs found</p>}
+        </div>
       </section>
 
       {toastMsg && (

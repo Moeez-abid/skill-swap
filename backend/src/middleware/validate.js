@@ -73,6 +73,7 @@ export const reviewSchema = z.object({
   ratingCommunication: z.number().int().min(1).max(5),
   ratingPunctuality: z.number().int().min(1).max(5),
   feedback: z.string().min(1).max(1000),
+  wasMissed: z.boolean().optional(),
 });
 
 export const profileUpdateSchema = z.object({

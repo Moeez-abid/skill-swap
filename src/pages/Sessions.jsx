@@ -32,6 +32,7 @@ export default function Sessions() {
   const [communication, setCommunication] = useState(5);
   const [punctuality, setPunctuality] = useState(5);
   const [comment, setComment] = useState('');
+  const [wasMissed, setWasMissed] = useState(false);
 
   const showToast = (msg) => {
     setToastMsg(msg);
@@ -85,9 +86,15 @@ export default function Sessions() {
         sessions.list(activeMatchId).then(res => setSessionsList(res.sessions));
       }
     });
+    const unsubCancelled = subscribeToUserEvents(currentUser.id, 'session-cancelled', (data) => {
+      if (data.session && data.session.activeMatchId === activeMatchId) {
+        sessions.list(activeMatchId).then(res => setSessionsList(res.sessions));
+      }
+    });
     return () => {
       unsubUpdate();
       unsubProposed();
+      unsubCancelled();
     };
   }, [currentUser?.id, activeMatchId]);
 
@@ -96,6 +103,18 @@ export default function Sessions() {
       await sessions.respond(id, { action });
       showToast(`Session ${action}ed`);
       // Reload sessions
+      const res = await sessions.list(activeMatchId);
+      setSessionsList(res.sessions);
+    } catch (err) {
+      showToast(err.message);
+    }
+  };
+
+  const handleCancel = async (id) => {
+    if (!window.confirm('Are you sure you want to cancel this session?')) return;
+    try {
+      await sessions.cancel(id);
+      showToast('Session cancelled');
       const res = await sessions.list(activeMatchId);
       setSessionsList(res.sessions);
     } catch (err) {
@@ -195,8 +214,9 @@ export default function Sessions() {
         ratingCommunication: parseInt(communication, 10),
         ratingPunctuality: parseInt(punctuality, 10),
         feedback: comment,
+        wasMissed,
       });
-      showToast('Feedback submitted successfully');
+      showToast('Feedback submitted');
       setReviewingSessionId(null);
       // Reload sessions
       const res = await sessions.list(activeMatchId);
@@ -345,7 +365,10 @@ export default function Sessions() {
                       <button className="btn-secondary" onClick={() => handleRespond(s.id, 'decline')}>Decline</button>
                     </>
                   ) : (
-                    <button className="btn-secondary" onClick={() => handleEdit(s)}>Edit</button>
+                    <>
+                      <button className="btn-secondary" onClick={() => handleEdit(s)}>Edit</button>
+                      <button className="btn-secondary" onClick={() => handleCancel(s.id)}>Cancel</button>
+                    </>
                   )}
                 </div>
               </div>
@@ -380,6 +403,7 @@ export default function Sessions() {
                   {s.proposerId === currentUser.id && (
                     <button className="btn-secondary" onClick={() => handleEdit(s)}>Edit</button>
                   )}
+                  <button className="btn-secondary" onClick={() => handleCancel(s.id)}>Cancel</button>
                 </div>
               </div>
             ))
@@ -426,6 +450,7 @@ export default function Sessions() {
                             setCommunication(5);
                             setPunctuality(5);
                             setComment('');
+                            setWasMissed(false);
                           }}>
                             Leave Feedback
                           </button>
@@ -469,7 +494,13 @@ export default function Sessions() {
                         </div>
                       </div>
                       <div className="form-group">
-                        <label>Comment (Private until both review)</label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'normal', cursor: 'pointer' }}>
+                          <input type="checkbox" checked={wasMissed} onChange={(e) => setWasMissed(e.target.checked)} />
+                          Partner did not show up (Mark session as missed)
+                        </label>
+                      </div>
+                      <div className="form-group">
+                        <label>Written Feedback (Private until both review)</label>
                         <textarea required value={comment} onChange={(e) => setComment(e.target.value)} rows="2"></textarea>
                       </div>
                       <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>

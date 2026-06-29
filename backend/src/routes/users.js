@@ -28,7 +28,7 @@ router.get('/:id/profile', async (req, res) => {
       select: {
         id: true, name: true, headline: true, bio: true, location: true, avatarUrl: true,
         linkedinUrl: true, githubUrl: true, portfolioUrl: true,
-        availabilityStatus: true, createdAt: true,
+        availabilityStatus: true, createdAt: true, isVerified: true, verificationRequested: true,
         skills: {
           where: { provider: { deletedAt: null } },
           include: { category: true, tags: { include: { tag: true } } },
@@ -140,6 +140,15 @@ router.delete('/me', authenticate, async (req, res) => {
     data: { deletedAt: new Date(), email: `deleted_${req.user.id}@removed.local` },
   });
   return apiSuccess(res, { message: 'Account deleted' });
+});
+
+router.patch('/me/verify', authenticate, async (req, res) => {
+  const user = await prisma.user.update({
+    where: { id: req.user.id },
+    data: { verificationRequested: true },
+    select: { id: true, name: true, verificationRequested: true, isVerified: true }
+  });
+  return apiSuccess(res, { user });
 });
 
 export default router;

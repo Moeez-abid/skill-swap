@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from './components/Navbar.jsx';
 import Footer from './components/Footer.jsx';
 
@@ -19,13 +19,23 @@ import Reviews from './pages/Reviews.jsx';
 import Admin from './pages/Admin.jsx';
 // We will import others as we build them
 
+import { isAdmin } from './shared/auth.js';
+
 export default function App() {
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
+    // Route guarding for Admin isolation
+    if (isAdmin() && location.pathname !== '/admin' && location.pathname !== '/login') {
+      navigate('/admin', { replace: true });
+    } else if (!isAdmin() && location.pathname === '/admin') {
+      navigate('/', { replace: true });
+    }
+
     // Scroll to top on route change
     window.scrollTo(0, 0);
-  }, [location.pathname]);
+  }, [location.pathname, navigate]);
 
   return (
     <>

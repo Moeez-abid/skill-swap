@@ -151,7 +151,13 @@ export const sessions = {
   respond: async (id, data) => {
     const res = await api(`/sessions/${id}/respond`, { method: 'PATCH', body: JSON.stringify(data) });
     clearApiCache('/sessions');
-    clearApiCache('/dashboard');
+    clearApiCache('/matches');
+    return res;
+  },
+  cancel: async (id) => {
+    const res = await api(`/sessions/${id}/cancel`, { method: 'PATCH' });
+    clearApiCache('/sessions');
+    clearApiCache('/matches');
     return res;
   },
 };
@@ -163,6 +169,12 @@ export const dashboard = {
 export const users = {
   list: () => cachedApi('/users'),
   profile: (id) => cachedApi(`/users/${id}/profile`),
+  requestVerification: async () => {
+    const res = await api('/users/me/verify', { method: 'PATCH' });
+    clearApiCache('/auth');
+    clearApiCache('/users');
+    return res;
+  },
   update: async (data) => {
     const res = await api('/users/me', { method: 'PATCH', body: JSON.stringify(data) });
     clearApiCache('/users');
@@ -220,6 +232,18 @@ export const admin = {
     clearApiCache('/matches');
     return res;
   },
+  verifications: () => cachedApi('/admin/verifications'),
+  approveVerification: async (id) => {
+    const res = await api(`/admin/verifications/${id}/approve`, { method: 'PATCH' });
+    clearApiCache('/admin');
+    return res;
+  },
+  rejectVerification: async (id) => {
+    const res = await api(`/admin/verifications/${id}/reject`, { method: 'PATCH' });
+    clearApiCache('/admin');
+    return res;
+  },
+  auditLogs: () => cachedApi('/admin/audit-logs'),
 };
 
 export const disputes = {

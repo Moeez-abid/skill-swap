@@ -211,4 +211,42 @@ router.patch('/:id', authenticate, validate(sessionUpdateSchema), async (req, re
   return apiSuccess(res, { session: updated });
 });
 
+router.patch('/:id/cancel', authenticate, async (req, res) => {
+  const session = await prisma.session.findUnique({
+    where: { id: req.params.id },
+    include: { activeMatch: true }
+  });
+
+  if (!session) return apiError(res, 404, 'Session not found');
+
+  const match = session.activeMatch;
+  const isPartner = match.user1Id === req.user.id || match.user2Id === req.user.id;
+  if (!isPartner) return apiError(res, 403, 'Only partners can cancel this session');
+
+  if (session.status !== 'PROPOSED' && session.status !== 'ACCEPTED') {
+    return apiError(res, 400, 'Only pending or accepted sessions can be cancelled');
+  }
+
+  const updated = await prisma.session.update({
+    where: { id: session.id },
+    data: { status: 'CANCELLED' }
+  });
+
+  const partnerId = match.user1Id === req.user.id ? match.user2Id : match.user1Id;
+
+  const notification = await prisma.notification.create({
+    data: {
+      userId: partnerId,
+      type: 'SESSION_UPDATED',
+      title: 'Session Cancelled',
+      content: `${req.user.name} cancelled the session scheduled for ${new Date(session.scheduledStart).toLocaleDateString()}.`,
+      linkUrl: '/sessions',
+    }
+  });
+
+  await triggerEvent(`user-${partnerId}`, 'session-cancelled', { session: updated, notification });
+
+  return apiSuccess(res, { session: updated });
+});
+
 export default router;

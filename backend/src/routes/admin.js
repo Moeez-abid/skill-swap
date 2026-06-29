@@ -200,4 +200,60 @@ router.post('/disputes/:id/resolve', async (req, res) => {
   return apiSuccess(res, { dispute });
 });
 
+router.get('/verifications', async (req, res) => {
+  const users = await prisma.user.findMany({
+    where: { verificationRequested: true, isVerified: false, deletedAt: null },
+    select: { id: true, name: true, email: true, createdAt: true, portfolioUrl: true, linkedinUrl: true },
+    orderBy: { createdAt: 'desc' }
+  });
+  return apiSuccess(res, { users });
+});
+
+router.patch('/verifications/:id/approve', async (req, res) => {
+  const user = await prisma.user.update({
+    where: { id: req.params.id },
+    data: { isVerified: true, verificationRequested: false }
+  });
+  
+  await prisma.auditLog.create({
+    data: {
+      action: 'VERIFICATION_APPROVED',
+      actorId: req.user.id,
+      targetId: user.id,
+      details: { email: user.email },
+    }
+  });
+  
+  return apiSuccess(res, { user });
+});
+
+router.patch('/verifications/:id/reject', async (req, res) => {
+  const user = await prisma.user.update({
+    where: { id: req.params.id },
+    data: { verificationRequested: false }
+  });
+  
+  await prisma.auditLog.create({
+    data: {
+      action: 'VERIFICATION_REJECTED',
+      actorId: req.user.id,
+      targetId: user.id,
+      details: { email: user.email },
+    }
+  });
+  
+  return apiSuccess(res, { user });
+});
+
+router.get('/audit-logs', async (req, res) => {
+  const logs = await prisma.auditLog.findMany({
+    orderBy: { createdAt: 'desc' },
+    take: 100,
+    include: {
+      actor: { select: { name: true, email: true } },
+    }
+  });
+  return apiSuccess(res, { logs });
+});
+
 export default router;
