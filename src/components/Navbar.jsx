@@ -50,7 +50,9 @@ export default function Navbar() {
   } else {
     links = loggedIn && user
       ? [
+          { href: '/', label: 'Home' },
           { href: '/marketplace', label: 'Marketplace' },
+          { href: '/dashboard', label: 'Dashboard' },
           { href: '/matches', label: 'Matches' },
           { href: '/messages', label: 'Messages' },
           { href: '/sessions', label: 'Sessions' },
