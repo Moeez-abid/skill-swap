@@ -61,6 +61,9 @@ export default function Navbar() {
       : [
           { href: '/', label: 'Home' },
           { href: '/marketplace', label: 'Marketplace' },
+          { href: '/about', label: 'About Us' },
+          { href: '/success-stories', label: 'Success Stories' },
+          { href: '/contact', label: 'Contact Us' },
         ];
   }
 

@@ -17,8 +17,9 @@ import Matches from './pages/Matches.jsx';
 import Sessions from './pages/Sessions.jsx';
 import Reviews from './pages/Reviews.jsx';
 import Admin from './pages/Admin.jsx';
-// We will import others as we build them
-
+import About from './pages/About.jsx';
+import Contact from './pages/Contact.jsx';
+import SuccessStories from './pages/SuccessStories.jsx';
 import { isAdmin } from './shared/auth.js';
 
 export default function App() {
@@ -69,7 +70,9 @@ export default function App() {
           <Route path="/sessions" element={<Sessions />} />
           <Route path="/reviews" element={<Reviews />} />
           <Route path="/admin" element={<Admin />} />
-          {/* We will add routes here as we migrate them */}
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/success-stories" element={<SuccessStories />} />
           <Route path="*" element={<div className="empty-state"><h3>Page not found</h3></div>} />
         </Routes>
       </main>
