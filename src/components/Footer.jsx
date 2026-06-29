@@ -11,7 +11,6 @@ export default function Footer() {
         </div>
         <div className="footer-links">
           <Link to="/marketplace">Marketplace</Link>
-          <Link to="/search">Search</Link>
           <Link to="/register">Join Free</Link>
         </div>
       </div>

@@ -107,7 +107,30 @@ export default function Profile() {
         <h2 className="section-title" style={{ textAlign: 'left', fontSize: '1.5rem' }}>Offered Skills</h2>
         <div className="skills-grid">
           {profile.skills.length > 0 ? (
-            profile.skills.map(s => <SkillCard key={s.id} skill={{ ...s, provider: { id: profile.id, name: profile.name, avatarUrl: profile.avatarUrl } }} />)
+            profile.skills.map(s => (
+              <SkillCard 
+                key={s.id} 
+                skill={{ ...s, provider: { id: profile.id, name: profile.name, avatarUrl: profile.avatarUrl } }} 
+                actions={
+                  isOwner ? (
+                    <button 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if(window.confirm('Delete this skill?')) {
+                          skills.delete(s.id).then(() => {
+                            window.location.reload();
+                          }).catch(err => alert(err.message));
+                        }
+                      }}
+                      className="btn btn--outline" 
+                      style={{ padding: '6px 12px', fontSize: '0.85rem', width: '100%', borderColor: 'var(--text-muted)', color: 'var(--text-muted)' }}
+                    >
+                      Delete Skill
+                    </button>
+                  ) : null
+                }
+              />
+            ))
           ) : (
             <p className="empty-state" style={{ gridColumn: '1 / -1' }}>No skills listed</p>
           )}

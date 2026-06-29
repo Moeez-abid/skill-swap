@@ -18,7 +18,7 @@ function Avatar({ user, size = 40 }) {
 export default function Matches() {
   const navigate = useNavigate();
   const currentUser = getUser();
-  const [activeTab, setActiveTab] = useState('requests');
+  const [activeTab, setActiveTab] = useState('active');
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -120,9 +120,73 @@ export default function Matches() {
     }
 
     if (activeTab === 'active') {
+      const dispute = r.dispute;
+      const isUser1 = r.user1Id === currentUser?.id;
+      const hasSubmittedStance = dispute && (isUser1 ? dispute.user1Stance : dispute.user2Stance);
+
       return (
-        <div className="match-card__actions">
-          <button className="primary-cta" onClick={() => handleComplete(r.id)}>Complete Match</button>
+        <div className="match-card__actions" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+          {!dispute ? (
+            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button className="primary-cta" onClick={() => navigate(`/sessions?matchId=${r.id}`)}>Schedule Session</button>
+                <button className="btn-secondary" style={{ borderColor: 'var(--brand-red)' }} onClick={() => handleComplete(r.id)}>Complete Match</button>
+              </div>
+              <button className="btn-secondary" style={{ color: 'var(--brand-red)', borderColor: 'var(--brand-red)' }} onClick={async () => {
+                if (window.confirm('Are you sure you want to file a dispute?')) {
+                  try {
+                    await import('../shared/api').then(m => m.disputes.create(r.id));
+                    showToast('Dispute filed successfully');
+                    loadMatches();
+                  } catch (err) {
+                    showToast(err.message);
+                  }
+                }
+              }}>File Dispute</button>
+            </div>
+          ) : (
+            <div style={{ background: 'var(--glass-bg-subtle)', padding: '16px', borderRadius: '12px', border: '1px solid var(--glass-border-subtle)', marginTop: '8px' }}>
+              <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', display: 'flex', justifyContent: 'space-between' }}>
+                Dispute Status
+                <span className={`badge ${dispute.status === 'RESOLVED' ? 'badge--success' : ''}`}>{dispute.status.replace('_', ' ')}</span>
+              </h4>
+
+              {dispute.status === 'PENDING_STANCES' && !hasSubmittedStance && (
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  try {
+                    const stance = e.target.stance.value;
+                    await import('../shared/api').then(m => m.disputes.submitStance(dispute.id, stance));
+                    showToast('Stance submitted');
+                    loadMatches();
+                  } catch (err) {
+                    showToast(err.message);
+                  }
+                }}>
+                  <div className="form-group">
+                    <label>Your Stance (Deadline: {new Date(dispute.deadline).toLocaleDateString()})</label>
+                    <textarea name="stance" required rows="3" placeholder="Explain your side of the dispute..."></textarea>
+                  </div>
+                  <button type="submit" className="primary-cta">Submit Stance</button>
+                </form>
+              )}
+
+              {dispute.status === 'PENDING_STANCES' && hasSubmittedStance && (
+                <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: 0 }}>You have submitted your stance. Waiting for partner or deadline.</p>
+              )}
+
+              {dispute.status === 'UNDER_REVIEW' && (
+                <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: 0 }}>Admin is reviewing both stances.</p>
+              )}
+
+              {dispute.status === 'RESOLVED' && (
+                <div>
+                  <p style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '4px' }}>Decision:</p>
+                  <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: 0 }}>{dispute.decision}</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       );
     }
@@ -148,7 +212,7 @@ export default function Matches() {
           ) : null}
 
           {partnerReview && !partnerReview.isRevealed && !myReview && (
-             <p style={{ fontSize: '13px', color: 'var(--brand-blue)', marginTop: '8px' }}>Your partner has submitted their review! Submit yours to see it.</p>
+            <p style={{ fontSize: '13px', color: 'var(--brand-blue)', marginTop: '8px' }}>{partner.name} has submitted their review! Submit yours to see it.</p>
           )}
 
           {partnerReview && partnerReview.isRevealed && (
@@ -168,13 +232,13 @@ export default function Matches() {
                 <div className="form-group">
                   <label>Overall</label>
                   <select value={ratingOverall} onChange={(e) => setRatingOverall(e.target.value)}>
-                    {[5,4,3,2,1].map(n => <option key={n} value={n}>{n} Stars</option>)}
+                    {[5, 4, 3, 2, 1].map(n => <option key={n} value={n}>{n} Stars</option>)}
                   </select>
                 </div>
                 <div className="form-group">
                   <label>Teaching</label>
                   <select value={ratingTeaching} onChange={(e) => setRatingTeaching(e.target.value)}>
-                    {[5,4,3,2,1].map(n => <option key={n} value={n}>{n} Stars</option>)}
+                    {[5, 4, 3, 2, 1].map(n => <option key={n} value={n}>{n} Stars</option>)}
                   </select>
                 </div>
               </div>
@@ -182,13 +246,13 @@ export default function Matches() {
                 <div className="form-group">
                   <label>Communication</label>
                   <select value={ratingCommunication} onChange={(e) => setRatingCommunication(e.target.value)}>
-                    {[5,4,3,2,1].map(n => <option key={n} value={n}>{n} Stars</option>)}
+                    {[5, 4, 3, 2, 1].map(n => <option key={n} value={n}>{n} Stars</option>)}
                   </select>
                 </div>
                 <div className="form-group">
                   <label>Punctuality</label>
                   <select value={ratingPunctuality} onChange={(e) => setRatingPunctuality(e.target.value)}>
-                    {[5,4,3,2,1].map(n => <option key={n} value={n}>{n} Stars</option>)}
+                    {[5, 4, 3, 2, 1].map(n => <option key={n} value={n}>{n} Stars</option>)}
                   </select>
                 </div>
               </div>
@@ -217,23 +281,23 @@ export default function Matches() {
       </div>
 
       <div className="tabs animate-fade-up delay-1" role="tablist">
-        <button 
-          className={`tab ${activeTab === 'requests' ? 'active' : ''}`} 
-          onClick={() => setActiveTab('requests')} 
-          role="tab"
-        >
-          Requests
-        </button>
-        <button 
-          className={`tab ${activeTab === 'active' ? 'active' : ''}`} 
-          onClick={() => setActiveTab('active')} 
+        <button
+          className={`tab ${activeTab === 'active' ? 'active' : ''}`}
+          onClick={() => setActiveTab('active')}
           role="tab"
         >
           Active
         </button>
-        <button 
-          className={`tab ${activeTab === 'past' ? 'active' : ''}`} 
-          onClick={() => setActiveTab('past')} 
+        <button
+          className={`tab ${activeTab === 'requests' ? 'active' : ''}`}
+          onClick={() => setActiveTab('requests')}
+          role="tab"
+        >
+          Requests
+        </button>
+        <button
+          className={`tab ${activeTab === 'past' ? 'active' : ''}`}
+          onClick={() => setActiveTab('past')}
           role="tab"
         >
           Past & Reviews
@@ -246,11 +310,11 @@ export default function Matches() {
         ) : error ? (
           <div className="empty-state animate-fade-up delay-2"><h3>Unable to load matches</h3></div>
         ) : items.length === 0 ? (
-          <div className="empty-state animate-fade-up delay-2"><h3>No matches found</h3></div>
+          <div className="empty-state animate-fade-up delay-2"><h3>No {activeTab === 'requests' ? 'Requests' : activeTab === 'active' ? 'Active Matches' : 'Past Matches'}</h3></div>
         ) : (
           items.map((r, i) => {
-            const partner = activeTab === 'requests' 
-              ? (r.direction === 'incoming' ? r.sender : r.receiver) 
+            const partner = activeTab === 'requests'
+              ? (r.direction === 'incoming' ? r.sender : r.receiver)
               : r.partner;
             const offeredSkill = activeTab === 'requests' ? r.offeredSkill : r.matchRequest?.offeredSkill;
             const wantedSkill = activeTab === 'requests' ? r.wantedSkill : r.matchRequest?.wantedSkill;
@@ -265,7 +329,7 @@ export default function Matches() {
                   <span className="badge">{statusLabel}</span>
                 </div>
                 <p>
-                  <strong>{partner?.name || 'Unknown User'}</strong> 
+                  <strong>{partner?.name || 'Unknown User'}</strong>
                   {activeTab === 'requests' && <span> &middot; {r.direction}</span>}
                 </p>
                 <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: '8px 0' }}>

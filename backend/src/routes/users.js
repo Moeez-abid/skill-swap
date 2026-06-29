@@ -22,41 +22,43 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 router.get('/:id/profile', async (req, res) => {
-  const user = await prisma.user.findFirst({
-    where: { id: req.params.id, deletedAt: null, isSuspended: false },
-    select: {
-      id: true, name: true, headline: true, bio: true, location: true, avatarUrl: true,
-      linkedinUrl: true, githubUrl: true, portfolioUrl: true,
-      availabilityStatus: true, createdAt: true,
-      skills: {
-        where: { provider: { deletedAt: null } },
-        include: { category: true, tags: { include: { tag: true } } },
-      },
-      wantedSkills: true,
-      reviewsReceived: {
-        where: { isRevealed: true },
-        select: {
-          ratingOverall: true, ratingTeaching: true, ratingCommunication: true,
-          ratingPunctuality: true, feedback: true, createdAt: true,
-          reviewer: { select: { name: true, avatarUrl: true } },
+  const [user, completedSwaps] = await Promise.all([
+    prisma.user.findFirst({
+      where: { id: req.params.id, deletedAt: null, isSuspended: false },
+      select: {
+        id: true, name: true, headline: true, bio: true, location: true, avatarUrl: true,
+        linkedinUrl: true, githubUrl: true, portfolioUrl: true,
+        availabilityStatus: true, createdAt: true,
+        skills: {
+          where: { provider: { deletedAt: null } },
+          include: { category: true, tags: { include: { tag: true } } },
         },
+        wantedSkills: true,
+        reviewsReceived: {
+          where: { isRevealed: true },
+          select: {
+            ratingOverall: true, ratingTeaching: true, ratingCommunication: true,
+            ratingPunctuality: true, feedback: true, createdAt: true,
+            reviewer: { select: { name: true, avatarUrl: true } },
+          },
+        },
+        activeMatchesAsUser1: { where: { isActive: true }, select: { id: true } },
+        activeMatchesAsUser2: { where: { isActive: true }, select: { id: true } },
       },
-      activeMatchesAsUser1: { where: { isActive: true }, select: { id: true } },
-      activeMatchesAsUser2: { where: { isActive: true }, select: { id: true } },
-    },
-  });
+    }),
+    prisma.matchRequest.count({
+      where: {
+        status: 'COMPLETED',
+        OR: [{ senderId: req.params.id }, { receiverId: req.params.id }],
+      },
+    })
+  ]);
+
   if (!user) return apiError(res, 404, 'User not found');
 
   const avgRating = user.reviewsReceived.length
     ? user.reviewsReceived.reduce((s, r) => s + r.ratingOverall, 0) / user.reviewsReceived.length
     : 0;
-
-  const completedSwaps = await prisma.matchRequest.count({
-    where: {
-      status: 'COMPLETED',
-      OR: [{ senderId: user.id }, { receiverId: user.id }],
-    },
-  });
 
   return apiSuccess(res, {
     profile: {

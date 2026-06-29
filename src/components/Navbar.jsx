@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { isLoggedIn, getUser, logout, isAdmin } from '../shared/auth';
 import { getImageUrl } from '../shared/api';
+import NotificationsDropdown from './NotificationsDropdown';
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -66,10 +67,6 @@ export default function Navbar() {
 
   return (
     <>
-      <div className="bg-glow" aria-hidden="true">
-        <div className="glow-orb glow-orb-1"></div>
-        <div className="glow-orb glow-orb-2"></div>
-      </div>
       <nav className="navbar" aria-label="Main navigation">
         <Link to="/" className="nav-logo">SkillSwap</Link>
         <div className="nav-links">
@@ -98,7 +95,9 @@ export default function Navbar() {
           </button>
           
           {loggedIn && user ? (
-            <div className="nav-profile-dropdown">
+            <>
+              <NotificationsDropdown />
+              <div className="nav-profile-dropdown">
               <button className="nav-profile-trigger" aria-haspopup="true" aria-label="Open profile menu">
                 {user.avatarUrl ? (
                   <img src={getImageUrl(user.avatarUrl)} alt={user.name} className="avatar nav-avatar" width="36" height="36" style={{ objectFit: 'cover' }} />
@@ -117,7 +116,8 @@ export default function Navbar() {
                 <Link to="/settings">Settings</Link>
                 <button type="button" onClick={handleLogout}>Log out</button>
               </div>
-            </div>
+              </div>
+            </>
           ) : (
             <>
               <Link to="/login" className="nav-btn nav-btn--ghost">Log in</Link>

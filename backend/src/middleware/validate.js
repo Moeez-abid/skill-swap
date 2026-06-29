@@ -65,6 +65,8 @@ export const sessionSchema = z.object({
   meetingDetails: z.string().max(500).optional(),
 });
 
+export const sessionUpdateSchema = sessionSchema.partial();
+
 export const reviewSchema = z.object({
   ratingOverall: z.number().int().min(1).max(5),
   ratingTeaching: z.number().int().min(1).max(5),

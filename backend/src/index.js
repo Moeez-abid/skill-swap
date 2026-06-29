@@ -6,6 +6,7 @@ import helmet from 'helmet';
 import { initCloudinary } from './lib/cloudinary.js';
 import { initPusher } from './lib/pusher.js';
 import { startScheduledJobs } from './jobs/scheduler.js';
+import { startCronJobs } from './lib/cron.js';
 
 import authRoutes from './routes/auth.js';
 import categoryRoutes from './routes/categories.js';
@@ -18,6 +19,8 @@ import userRoutes from './routes/users.js';
 import adminRoutes from './routes/admin.js';
 import statsRoutes from './routes/stats.js';
 import dashboardRoutes from './routes/dashboard.js';
+import disputeRoutes from './routes/disputes.js';
+import notificationRoutes from './routes/notifications.js';
 
 initCloudinary();
 initPusher();
@@ -55,14 +58,16 @@ app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/disputes', disputeRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error(err);
   res.status(500).json({ error: 'Internal server error' });
 });
 
-startScheduledJobs();
-
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`SkillSwap API running on port ${PORT}`);
+  startScheduledJobs();
+  startCronJobs();
 });

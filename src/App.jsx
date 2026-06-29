@@ -29,6 +29,15 @@ export default function App() {
 
   return (
     <>
+      <div className="bg-ambient-layer" aria-hidden="true">
+        <div className="bg-grid-overlay"></div>
+        <div className="glow-orb orb-top-left"></div>
+        <div className="glow-orb orb-top-right"></div>
+        <div className="glow-orb orb-mid-left"></div>
+        <div className="glow-orb orb-center"></div>
+        <div className="glow-orb orb-bottom-right"></div>
+      </div>
+
       <a href="#main-content" className="skip-link">Skip to main content</a>
       <header id="app-header">
         <Navbar />

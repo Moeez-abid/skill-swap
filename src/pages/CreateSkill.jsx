@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { skills, categories as categoriesApi } from '../shared/api';
 import { isLoggedIn } from '../shared/auth';
 
 export default function CreateSkill() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get('id');
 
   const [categoriesList, setCategoriesList] = useState([]);
   const [subcategoriesList, setSubcategoriesList] = useState([]);
@@ -35,7 +37,35 @@ export default function CreateSkill() {
     categoriesApi.list()
       .then(res => setCategoriesList(res.categories))
       .catch(() => setError('Could not load categories'));
-  }, [navigate]);
+      
+    if (editId) {
+      setLoading(true);
+      skills.get(editId)
+        .then(res => {
+          const s = res.skill;
+          setTitle(s.title || '');
+          setCategoryId(s.categoryId || '');
+          setLevel(s.level || 'BEGINNER');
+          setShortDescription(s.shortDescription || '');
+          setFullDescription(s.fullDescription || '');
+          setLearningOutcomes(s.learningOutcomes || '');
+          setPrerequisites(s.prerequisites || '');
+          setTags(s.tags?.join(', ') || '');
+          
+          if (s.categoryId) {
+            categoriesApi.list().then(cRes => {
+              const cat = cRes.categories.find(c => c.id === s.categoryId);
+              if (cat) {
+                setSubcategoriesList(cat.subcategories || []);
+                setSubcategoryId(s.subcategoryId || '');
+              }
+            });
+          }
+        })
+        .catch(() => setError('Could not load skill details for editing'))
+        .finally(() => setLoading(false));
+    }
+  }, [navigate, editId]);
 
   const handleCategoryChange = (e) => {
     const catId = e.target.value;
@@ -84,8 +114,14 @@ export default function CreateSkill() {
     if (coverImage) fd.append('coverImage', coverImage);
 
     try {
-      const res = await skills.create(fd);
-      setToastMsg('Skill listed successfully!');
+      let res;
+      if (editId) {
+        res = await skills.update(editId, fd);
+        setToastMsg('Skill updated successfully!');
+      } else {
+        res = await skills.create(fd);
+        setToastMsg('Skill listed successfully!');
+      }
       setTimeout(() => {
         navigate(`/skill-detail?id=${res.skill.id}`);
       }, 1000);
@@ -98,8 +134,10 @@ export default function CreateSkill() {
   return (
     <div style={{ paddingTop: '100px', paddingBottom: '64px' }}>
       <div className="page-header animate-fade-up">
-        <h1 className="page-title">List a Skill</h1>
-        <p className="page-subtitle">Share what you can teach. All fields marked with validation rules from the spec apply.</p>
+        <h1 className="page-title">{editId ? 'Edit Skill' : 'List a Skill'}</h1>
+        <p className="page-subtitle">
+          {editId ? 'Update your skill details below.' : 'Share what you can teach. All fields marked with validation rules from the spec apply.'}
+        </p>
       </div>
 
       <form className="form-card glass-card animate-fade-up delay-1" onSubmit={handleSubmit}>
@@ -165,7 +203,7 @@ export default function CreateSkill() {
         </div>
 
         <button type="submit" className="primary-cta" disabled={loading}>
-          {loading ? 'Publishing...' : 'Publish Skill'}
+          {loading ? (editId ? 'Updating...' : 'Publishing...') : (editId ? 'Update Skill' : 'Publish Skill')}
         </button>
         {error && <p className="form-error">{error}</p>}
       </form>

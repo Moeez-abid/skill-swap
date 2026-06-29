@@ -55,11 +55,6 @@ export default function Home() {
       <section className="hero-section" aria-labelledby="hero-title">
         <div className="hero-content">
           <div className="social-proof animate-fade-up">
-            <div className="stars" aria-hidden="true">
-              {[...Array(5)].map((_, i) => (
-                <svg key={i} viewBox="0 0 24 24" width="16" height="16"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" /></svg>
-              ))}
-            </div>
             <span>Educational barter — zero monetary transactions</span>
           </div>
           <h1 id="hero-title" className="hero-title animate-fade-up delay-1">Teach what you know,<br />learn what you need</h1>

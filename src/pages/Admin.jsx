@@ -9,10 +9,15 @@ export default function Admin() {
   const [analytics, setAnalytics] = useState(null);
   const [users, setUsers] = useState([]);
   const [flags, setFlags] = useState([]);
+  const [disputes, setDisputes] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
+
+  const [resolvingDisputeId, setResolvingDisputeId] = useState(null);
+  const [decisionText, setDecisionText] = useState('');
+  const [winnerId, setWinnerId] = useState('');
 
   const showToast = (msg) => {
     setToastMsg(msg);
@@ -23,14 +28,16 @@ export default function Admin() {
     setLoading(true);
     setError(false);
     try {
-      const [analyticsRes, usersRes, flagsRes] = await Promise.all([
+      const [analyticsRes, usersRes, flagsRes, disputesRes] = await Promise.all([
         admin.analytics(),
         admin.users(),
         admin.moderation(),
+        admin.disputes()
       ]);
       setAnalytics(analyticsRes.analytics);
       setUsers(usersRes.users);
       setFlags(flagsRes.flags);
+      setDisputes(disputesRes.disputes);
     } catch (e) {
       setError(true);
     } finally {
@@ -65,6 +72,18 @@ export default function Admin() {
     try {
       await admin.resolveFlag(flagId, status);
       showToast('Flag updated');
+      loadData();
+    } catch (err) {
+      showToast(err.message);
+    }
+  };
+
+  const handleResolveDispute = async (e, disputeId) => {
+    e.preventDefault();
+    try {
+      await admin.resolveDispute(disputeId, { decision: decisionText, winnerId });
+      showToast('Dispute resolved');
+      setResolvingDisputeId(null);
       loadData();
     } catch (err) {
       showToast(err.message);
@@ -142,6 +161,74 @@ export default function Admin() {
       </section>
 
       <section className="glass-card animate-fade-up delay-3" style={{ padding: '24px', marginTop: '32px' }}>
+        <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>Disputes</h2>
+        {disputes.length > 0 ? (
+          disputes.map(d => (
+            <div key={d.id} className="match-card" style={{ marginBottom: '12px', padding: '16px', border: '1px solid var(--glass-border-subtle)', borderRadius: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <p><strong>Dispute #{d.id.slice(-6)}</strong> &middot; <span className={`badge ${d.status === 'RESOLVED' ? 'badge--success' : ''}`}>{d.status.replace('_', ' ')}</span></p>
+                  <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Created by {d.creator.name} &middot; Deadline: {new Date(d.deadline).toLocaleDateString()}</p>
+                </div>
+                {d.status === 'UNDER_REVIEW' && resolvingDisputeId !== d.id && (
+                  <button className="primary-cta" onClick={() => {
+                    setResolvingDisputeId(d.id);
+                    setDecisionText('');
+                    setWinnerId('');
+                  }}>Resolve Dispute</button>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: '16px', marginTop: '16px' }}>
+                <div style={{ flex: 1, padding: '12px', background: 'var(--glass-bg-subtle)', borderRadius: '8px' }}>
+                  <strong>{d.activeMatch.user1.name}'s Stance</strong>
+                  <p style={{ fontSize: '14px', marginTop: '8px', color: d.user1Stance ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+                    {d.user1Stance || 'No stance submitted.'}
+                  </p>
+                </div>
+                <div style={{ flex: 1, padding: '12px', background: 'var(--glass-bg-subtle)', borderRadius: '8px' }}>
+                  <strong>{d.activeMatch.user2.name}'s Stance</strong>
+                  <p style={{ fontSize: '14px', marginTop: '8px', color: d.user2Stance ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+                    {d.user2Stance || 'No stance submitted.'}
+                  </p>
+                </div>
+              </div>
+
+              {d.status === 'RESOLVED' && (
+                <div style={{ marginTop: '16px', padding: '12px', borderLeft: '4px solid var(--brand-green)' }}>
+                  <strong>Admin Decision:</strong> {d.decision}
+                  {d.winner && <p style={{ margin: '4px 0 0', fontSize: '14px' }}>Winner: <strong>{d.winner.name}</strong></p>}
+                </div>
+              )}
+
+              {resolvingDisputeId === d.id && (
+                <form onSubmit={(e) => handleResolveDispute(e, d.id)} style={{ marginTop: '16px', borderTop: '1px solid var(--glass-border)', paddingTop: '16px' }}>
+                  <div className="form-group">
+                    <label>Decision</label>
+                    <textarea required value={decisionText} onChange={(e) => setDecisionText(e.target.value)} rows="3" placeholder="Explain the resolution..."></textarea>
+                  </div>
+                  <div className="form-group">
+                    <label>Winner (Optional)</label>
+                    <select value={winnerId} onChange={(e) => setWinnerId(e.target.value)}>
+                      <option value="">None (Dismissed / Mutual)</option>
+                      <option value={d.activeMatch.user1Id}>{d.activeMatch.user1.name}</option>
+                      <option value={d.activeMatch.user2Id}>{d.activeMatch.user2.name}</option>
+                    </select>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                    <button type="button" className="btn-secondary" onClick={() => setResolvingDisputeId(null)}>Cancel</button>
+                    <button type="submit" className="primary-cta">Submit Resolution</button>
+                  </div>
+                </form>
+              )}
+            </div>
+          ))
+        ) : (
+          <p className="empty-state">No disputes found.</p>
+        )}
+      </section>
+
+      <section className="glass-card animate-fade-up delay-4" style={{ padding: '24px', marginTop: '32px' }}>
         <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>Moderation Queue</h2>
         {flags.length > 0 ? (
           flags.map(f => (

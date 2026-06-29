@@ -25,6 +25,7 @@ const msgLimiter = rateLimit({
 });
 
 async function getConversation(userId, convId) {
+  console.log(`[getConversation] userId: "${userId}", convId: "${convId}"`);
   return prisma.conversation.findFirst({
     where: {
       id: convId,
@@ -92,28 +93,34 @@ router.post('/', authenticate, async (req, res) => {
 });
 
 router.get('/:conversationId/messages', authenticate, async (req, res) => {
-  const conv = await getConversation(req.user.id, req.params.conversationId);
+  const convId = req.params.conversationId;
+  const userId = req.user.id;
+
+  const [conv, messages] = await Promise.all([
+    getConversation(userId, convId),
+    prisma.message.findMany({
+      where: { 
+        conversationId: convId,
+        NOT: { deletedFor: { has: userId } }
+      },
+      include: { replyTo: true, sender: { select: { id: true, name: true, avatarUrl: true } } },
+      orderBy: { createdAt: 'asc' }
+    })
+  ]);
+
   if (!conv) return apiError(res, 403, 'No active conversation');
 
-  const messages = await prisma.message.findMany({
-    where: { 
-      conversationId: conv.id,
-      NOT: { deletedFor: { has: req.user.id } }
-    },
-    include: { replyTo: true, sender: { select: { id: true, name: true, avatarUrl: true } } },
-    orderBy: { createdAt: 'asc' }
-  });
-
-  await prisma.message.updateMany({
+  // Fire and forget read update
+  prisma.message.updateMany({
     where: {
       conversationId: conv.id,
-      senderId: { not: req.user.id },
+      senderId: { not: userId },
       isRead: false,
     },
     data: { isRead: true, readAt: new Date() },
-  });
+  }).catch(err => console.error('Error updating read status:', err));
 
-  return apiSuccess(res, { messages, partner: conv.user1Id === req.user.id ? conv.user2 : conv.user1 });
+  return apiSuccess(res, { messages, partner: conv.user1Id === userId ? conv.user2 : conv.user1 });
 });
 
 router.post('/:conversationId/messages', authenticate, msgLimiter, upload.single('file'), async (req, res) => {

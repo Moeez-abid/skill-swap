@@ -34,10 +34,10 @@ function Avatar({ user, size = 40 }) {
   );
 }
 
-export default function SkillCard({ skill }) {
+export default function SkillCard({ skill, actions }) {
   return (
-    <article className="skill-card glass-card animate-fade-up">
-      <Link to={`/skill-detail?id=${skill.id}`} className="skill-card__link">
+    <article className="skill-card glass-card animate-fade-up" style={{ display: 'flex', flexDirection: 'column' }}>
+      <Link to={`/skill-detail?id=${skill.id}`} className="skill-card__link" style={{ flex: 1 }}>
         <div className="skill-card__cover">
           {skill.coverImageUrl ? (
             <img src={getImageUrl(skill.coverImageUrl)} alt="" style={{ objectFit: 'cover', width: '100%', height: '100%' }} />
@@ -68,6 +68,11 @@ export default function SkillCard({ skill }) {
           </div>
         </div>
       </Link>
+      {actions && (
+        <div style={{ padding: '0 16px 16px', display: 'flex', gap: '8px', zIndex: 2, position: 'relative' }}>
+          {actions}
+        </div>
+      )}
     </article>
   );
 }

@@ -31,6 +31,14 @@ export default function Messages() {
   const [threadLoading, setThreadLoading] = useState(false);
   const [threadError, setThreadError] = useState(false);
 
+  const activeConversationIdRef = useRef(activeConversationId);
+  useEffect(() => {
+    activeConversationIdRef.current = activeConversationId;
+  }, [activeConversationId]);
+
+  // We need to keep a ref to the latest loadThread function to avoid stale closures in Pusher callbacks
+  const loadThreadRef = useRef(() => {});
+
   const [messageInput, setMessageInput] = useState('');
   const [file, setFile] = useState(null);
   const fileInputRef = useRef(null);
@@ -69,16 +77,13 @@ export default function Messages() {
     setTimeout(() => setToastMsg(''), 3500);
   };
 
+  const loadConversationsRef = useRef(() => {});
+
   const loadConversations = async () => {
     try {
       const res = await messages.conversations();
       setConversations(res.conversations);
       setConvError(false);
-      
-      // If no active conversation but we have some, set the first one
-      if (!activeConversationId && res.conversations.length > 0) {
-        setSearchParams({ conversation: res.conversations[0].conversationId });
-      }
     } catch (e) {
       setConvError(true);
     } finally {
@@ -86,26 +91,59 @@ export default function Messages() {
     }
   };
 
+  loadConversationsRef.current = loadConversations;
+
+  const msgCacheRef = useRef({});
+
   const loadThread = async () => {
     if (!activeConversationId) return;
-    setThreadLoading(true);
+    
+    // Stale-while-revalidate pattern for instant UI
+    if (msgCacheRef.current[activeConversationId]) {
+      setThreadMsgs(msgCacheRef.current[activeConversationId].messages);
+      setPartner(msgCacheRef.current[activeConversationId].partner);
+    } else {
+      setThreadMsgs([]); // Clear to avoid showing wrong chat
+      setThreadLoading(true);
+    }
+
     try {
       const res = await messages.list(activeConversationId);
       setThreadMsgs(res.messages);
       setPartner(res.partner);
       setThreadError(false);
-      // Scroll to bottom
+      
+      // Update cache
+      msgCacheRef.current[activeConversationId] = res;
+
       setTimeout(() => {
         if (messageListRef.current) {
           messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
         }
       }, 50);
     } catch (e) {
-      setThreadError(true);
+      console.error('Error in loadThread:', e);
+      setThreadError(e.message || 'Could not load messages');
     } finally {
       setThreadLoading(false);
     }
   };
+
+  loadThreadRef.current = loadThread;
+
+  useEffect(() => {
+    if (activeConversationId) {
+      loadThreadRef.current();
+      setReplyingTo(null);
+      setSelectedMessages(new Set());
+    }
+  }, [activeConversationId]);
+
+  useEffect(() => {
+    if (!convLoading && conversations.length > 0 && !activeConversationId) {
+      setSearchParams({ conversation: conversations[0].id });
+    }
+  }, [conversations, activeConversationId, setSearchParams, convLoading]);
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -115,31 +153,31 @@ export default function Messages() {
     loadConversations();
     
     const unsubNew = subscribeToUserEvents(currentUser.id, 'new-message', (data) => {
-      loadConversations();
-      if (data.conversationId === activeConversationId) {
-        loadThread();
+      loadConversationsRef.current();
+      if (data.conversationId === activeConversationIdRef.current) {
+        loadThreadRef.current();
       } else {
         showToast('New message received!');
       }
     });
 
     const unsubDelMsg = subscribeToUserEvents(currentUser.id, 'message-deleted', (data) => {
-      loadConversations();
-      if (data.conversationId === activeConversationId) {
-        loadThread();
+      loadConversationsRef.current();
+      if (data.conversationId === activeConversationIdRef.current) {
+        loadThreadRef.current();
       }
     });
 
     const unsubBulkDelMsg = subscribeToUserEvents(currentUser.id, 'messages-deleted', (data) => {
-      loadConversations();
-      if (data.conversationId === activeConversationId) {
-        loadThread();
+      loadConversationsRef.current();
+      if (data.conversationId === activeConversationIdRef.current) {
+        loadThreadRef.current();
       }
     });
 
     const unsubDelConv = subscribeToUserEvents(currentUser.id, 'conversation-deleted', (data) => {
-      loadConversations();
-      if (data.conversationId === activeConversationId) {
+      loadConversationsRef.current();
+      if (data.conversationId === activeConversationIdRef.current) {
         setSearchParams({});
       }
     });
@@ -153,15 +191,7 @@ export default function Messages() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
 
-  useEffect(() => {
-    if (activeConversationId) {
-      setThreadMsgs([]);
-      loadThread();
-      setReplyingTo(null);
-      setSelectedMessages(new Set());
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeConversationId]);
+
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -290,12 +320,15 @@ export default function Messages() {
 
   const handleDeleteMessage = async (messageId, forEveryone = false) => {
     requestConfirm('Delete Message', `Are you sure you want to delete this message${forEveryone ? ' for everyone' : ' for yourself'}? This cannot be undone.`, async () => {
+      // Optimistic loading state
+      setThreadMsgs(prev => prev.map(m => m.id === messageId ? { ...m, isDeleting: true } : m));
       try {
         await messages.deleteMessage(activeConversationId, messageId, forEveryone);
         loadThread();
         loadConversations();
       } catch (err) {
         showToast(err.message);
+        loadThread(); // Rollback
       }
     });
   };
@@ -309,6 +342,8 @@ export default function Messages() {
 
   const handleBulkDelete = () => {
     requestConfirm('Delete Selected', `Are you sure you want to delete ${selectedMessages.size} selected message(s)?`, async () => {
+      // Optimistic loading state
+      setThreadMsgs(prev => prev.map(m => selectedMessages.has(m.id) ? { ...m, isDeleting: true } : m));
       try {
         await messages.bulkDeleteMessages(Array.from(selectedMessages));
         setSelectedMessages(new Set());
@@ -316,6 +351,7 @@ export default function Messages() {
         loadConversations();
       } catch (err) {
         showToast(err.message);
+        loadThread(); // Rollback
       }
     });
   };
@@ -350,10 +386,10 @@ export default function Messages() {
             ) : (
               conversations.map(c => (
                 <button 
-                  key={c.conversationId} 
+                  key={c.id} 
                   type="button" 
-                  className={`conversation-item ${c.conversationId === activeConversationId ? 'active' : ''}`} 
-                  onClick={() => setSearchParams({ conversation: c.conversationId })}
+                  className={`conversation-item ${c.id === activeConversationId ? 'active' : ''}`} 
+                  onClick={() => setSearchParams({ conversation: c.id })}
                 >
                   <Avatar user={c.partner} size={36} />
                   <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
@@ -375,7 +411,7 @@ export default function Messages() {
           ) : threadLoading && threadMsgs.length === 0 ? (
             <p className="loading">Loading thread...</p>
           ) : threadError ? (
-            <p className="empty-state">Could not load messages</p>
+            <p className="empty-state">{typeof threadError === 'string' ? threadError : 'Could not load messages'}</p>
           ) : (
             <>
               <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', background: 'var(--glass-bg)', borderTopLeftRadius: '16px', borderTopRightRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
@@ -408,7 +444,7 @@ export default function Messages() {
                       )}
                       <div 
                         className={`message-bubble message-bubble--${sent ? 'sent' : 'received'}`} 
-                        style={{ position: 'relative', width: '100%', maxWidth: '100%', marginBottom: 0, opacity: isSelecting && !isSelected ? 0.7 : 1 }}
+                        style={{ position: 'relative', width: '100%', maxWidth: '100%', marginBottom: 0, opacity: m.isDeleting ? 0.5 : (isSelecting && !isSelected ? 0.7 : 1) }}
                         onDoubleClick={() => setReplyingTo(m)}
                       >
                         {m.replyTo && (
@@ -424,12 +460,12 @@ export default function Messages() {
                         <div className="message-meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
                           <span>
                             {new Date(m.createdAt).toLocaleTimeString()}
-                            {sent && !m.id.startsWith('temp-') && m.isRead ? ' · Read' : ''}
+                            {m.isDeleting ? ' · Deleting...' : (sent && !m.id.startsWith('temp-') && m.isRead ? ' · Read' : '')}
                             {m.id.startsWith('temp-') && ' · Sending...'}
                           </span>
                         </div>
 
-                        {(isHovered || menuConfig.id === m.id) && !isSelecting && !m.id.startsWith('temp-') && (
+                        {(isHovered || menuConfig.id === m.id) && !isSelecting && !m.id.startsWith('temp-') && !m.isDeleting && (
                           <div style={{ position: 'absolute', top: '8px', right: sent ? '100%' : '8px', paddingRight: sent ? '12px' : '0', zIndex: menuConfig.id === m.id ? 20 : 1 }}>
                             <button 
                               type="button" 

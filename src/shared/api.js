@@ -47,6 +47,15 @@ export async function cachedApi(path, options = {}) {
   return data;
 }
 
+export function clearApiCache(prefix = '') {
+  const keys = Object.keys(sessionStorage);
+  keys.forEach(k => {
+    if (k.startsWith('ss_cache_' + prefix)) {
+      sessionStorage.removeItem(k);
+    }
+  });
+}
+
 export const auth = {
   login: (email, password) => api('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
   register: (email, password, name) => api('/auth/register', { method: 'POST', body: JSON.stringify({ email, password, name }) }),
@@ -58,11 +67,34 @@ export const skills = {
   list: (params) => cachedApi(`/skills?${new URLSearchParams(params)}`),
   featured: () => cachedApi('/skills/featured'),
   get: (id) => cachedApi(`/skills/${id}`),
-  create: (formData) => api('/skills', { method: 'POST', body: formData }),
+  create: async (formData) => {
+    const res = await api('/skills', { method: 'POST', body: formData });
+    clearApiCache('/skills');
+    clearApiCache('/dashboard');
+    return res;
+  },
+  update: async (id, formData) => {
+    const res = await api(`/skills/${id}`, { method: 'PATCH', body: formData });
+    clearApiCache('/skills');
+    clearApiCache('/dashboard');
+    return res;
+  },
+  delete: async (id) => {
+    const res = await api(`/skills/${id}`, { method: 'DELETE' });
+    clearApiCache('/skills');
+    clearApiCache('/dashboard');
+    return res;
+  },
 };
 
 export const categories = {
   list: () => cachedApi('/categories'),
+};
+
+export const notifications = {
+  list: () => api('/notifications'),
+  markRead: (id) => api(`/notifications/${id}/read`, { method: 'PATCH' }),
+  markAllRead: () => api('/notifications/read-all', { method: 'PATCH' }),
 };
 
 export const stats = {
@@ -70,55 +102,137 @@ export const stats = {
 };
 
 export const matches = {
-  list: (direction) => api(`/matches?direction=${direction || 'all'}`), // Don't cache real-time state
-  active: (status) => api(`/matches/active${status ? `?status=${status}` : ''}`),
-  create: (data) => api('/matches', { method: 'POST', body: JSON.stringify(data) }),
-  updateStatus: (id, status) => api(`/matches/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
-  complete: (id) => api(`/matches/active/${id}/complete`, { method: 'PATCH' }),
+  list: (direction) => cachedApi(`/matches?direction=${direction || 'all'}`),
+  active: (status) => cachedApi(`/matches/active${status ? `?status=${status}` : ''}`),
+  create: async (data) => {
+    const res = await api('/matches', { method: 'POST', body: JSON.stringify(data) });
+    clearApiCache('/matches');
+    clearApiCache('/dashboard');
+    return res;
+  },
+  updateStatus: async (id, status) => {
+    const res = await api(`/matches/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
+    clearApiCache('/matches');
+    clearApiCache('/dashboard');
+    return res;
+  },
+  complete: async (id) => {
+    const res = await api(`/matches/active/${id}/complete`, { method: 'PATCH' });
+    clearApiCache('/matches');
+    clearApiCache('/dashboard');
+    return res;
+  },
 };
 
 export const messages = {
-  conversations: () => api('/messages/conversations'), // Real-time
+  conversations: () => api('/messages/conversations'), // Keep real-time
   createConversation: (partnerId) => api('/messages/conversations', { method: 'POST', body: JSON.stringify({ partnerId }) }),
   deleteConversation: (conversationId) => api(`/messages/conversations/${conversationId}`, { method: 'DELETE' }),
-  list: (conversationId) => api(`/messages/${conversationId}/messages`),
+  list: (conversationId) => api(`/messages/${conversationId}/messages`), // We use our custom SWR cache in component
   send: (conversationId, formData) => api(`/messages/${conversationId}/messages`, { method: 'POST', body: formData }),
   deleteMessage: (conversationId, messageId, forEveryone = false) => api(`/messages/${conversationId}/messages/${messageId}?forEveryone=${forEveryone}`, { method: 'DELETE' }),
   bulkDeleteMessages: (messageIds, forEveryone = false) => api(`/messages/bulk-delete?forEveryone=${forEveryone}`, { method: 'POST', body: JSON.stringify({ messageIds }) }),
 };
 
 export const sessions = {
-  list: (matchId) => api(`/sessions/match/${matchId}`),
-  create: (matchId, data) => api(`/sessions/match/${matchId}`, { method: 'POST', body: JSON.stringify(data) }),
-  respond: (id, data) => api(`/sessions/${id}/respond`, { method: 'PATCH', body: JSON.stringify(data) }),
+  list: (matchId) => cachedApi(`/sessions/match/${matchId}`),
+  create: async (matchId, data) => {
+    const res = await api(`/sessions/match/${matchId}`, { method: 'POST', body: JSON.stringify(data) });
+    clearApiCache('/sessions');
+    clearApiCache('/dashboard');
+    return res;
+  },
+  update: async (id, data) => {
+    const res = await api(`/sessions/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+    clearApiCache('/sessions');
+    clearApiCache('/dashboard');
+    return res;
+  },
+  respond: async (id, data) => {
+    const res = await api(`/sessions/${id}/respond`, { method: 'PATCH', body: JSON.stringify(data) });
+    clearApiCache('/sessions');
+    clearApiCache('/dashboard');
+    return res;
+  },
 };
 
 export const dashboard = {
-  get: () => api('/dashboard'), // Fast changing state, maybe don't cache, or use cache for initial load. We will use standard api for now.
+  get: () => cachedApi('/dashboard'),
 };
 
 export const users = {
-  list: () => api('/users'),
-  profile: (id) => api(`/users/${id}/profile`),
-  update: (data) => api('/users/me', { method: 'PATCH', body: JSON.stringify(data) }),
-  uploadAvatar: (formData) => api('/users/me/avatar', { method: 'POST', body: formData }),
+  list: () => cachedApi('/users'),
+  profile: (id) => cachedApi(`/users/${id}/profile`),
+  update: async (data) => {
+    const res = await api('/users/me', { method: 'PATCH', body: JSON.stringify(data) });
+    clearApiCache('/users');
+    clearApiCache('/dashboard');
+    return res;
+  },
+  uploadAvatar: async (formData) => {
+    const res = await api('/users/me/avatar', { method: 'POST', body: formData });
+    clearApiCache('/users');
+    clearApiCache('/dashboard');
+    return res;
+  },
   updatePassword: (data) => api('/users/me/password', { method: 'PATCH', body: JSON.stringify(data) }),
   deleteAccount: () => api('/users/me', { method: 'DELETE' }),
 };
 
 export const reviews = {
-  create: (sessionId, data) => api(`/reviews/session/${sessionId}`, { method: 'POST', body: JSON.stringify(data) }),
-  createMatchReview: (matchId, data) => api(`/reviews/match/${matchId}`, { method: 'POST', body: JSON.stringify(data) }),
-  forUser: (userId) => api(`/reviews/user/${userId}`),
+  create: async (sessionId, data) => {
+    const res = await api(`/reviews/session/${sessionId}`, { method: 'POST', body: JSON.stringify(data) });
+    clearApiCache('/reviews');
+    clearApiCache('/users');
+    clearApiCache('/dashboard');
+    return res;
+  },
+  createMatchReview: async (matchId, data) => {
+    const res = await api(`/reviews/match/${matchId}`, { method: 'POST', body: JSON.stringify(data) });
+    clearApiCache('/reviews');
+    clearApiCache('/users');
+    clearApiCache('/dashboard');
+    return res;
+  },
+  forUser: (userId) => cachedApi(`/reviews/user/${userId}`),
 };
 
 export const admin = {
-  analytics: () => api('/admin/analytics'),
-  users: () => api('/admin/users'),
-  moderation: () => api('/admin/moderation'),
-  resolveFlag: (id, status) => api(`/admin/moderation/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
-  suspendUser: (id, reason) => api(`/admin/users/${id}/suspend`, { method: 'PATCH', body: JSON.stringify({ reason }) }),
-  audit: () => api('/admin/audit'),
+  analytics: () => cachedApi('/admin/analytics'),
+  users: () => cachedApi('/admin/users'),
+  moderation: () => cachedApi('/admin/moderation'),
+  resolveFlag: async (id, status) => {
+    const res = await api(`/admin/moderation/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) });
+    clearApiCache('/admin');
+    return res;
+  },
+  suspendUser: async (id, reason) => {
+    const res = await api(`/admin/users/${id}/suspend`, { method: 'PATCH', body: JSON.stringify({ reason }) });
+    clearApiCache('/admin');
+    clearApiCache('/users');
+    return res;
+  },
+  audit: () => cachedApi('/admin/audit'),
+  disputes: () => cachedApi('/admin/disputes'),
+  resolveDispute: async (id, data) => {
+    const res = await api(`/admin/disputes/${id}/resolve`, { method: 'POST', body: JSON.stringify(data) });
+    clearApiCache('/admin');
+    clearApiCache('/matches');
+    return res;
+  },
+};
+
+export const disputes = {
+  create: async (matchId) => {
+    const res = await api(`/disputes/match/${matchId}`, { method: 'POST' });
+    clearApiCache('/matches');
+    return res;
+  },
+  submitStance: async (id, stance) => {
+    const res = await api(`/disputes/${id}/stance`, { method: 'POST', body: JSON.stringify({ stance }) });
+    clearApiCache('/matches');
+    return res;
+  },
 };
 
 import Pusher from 'pusher-js';
@@ -141,6 +255,6 @@ export function subscribeToUserEvents(userId, eventName, callback) {
   channel.bind(eventName, callback);
   return () => {
     channel.unbind(eventName, callback);
-    pusher.unsubscribe(`user-${userId}`);
+    // Removed pusher.unsubscribe to prevent breaking other active listeners on the same channel
   };
 }

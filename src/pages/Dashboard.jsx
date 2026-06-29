@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { dashboard, subscribeToUserEvents } from '../shared/api';
+import { dashboard, subscribeToUserEvents, skills } from '../shared/api';
 import { isLoggedIn, getUser } from '../shared/auth';
+import SkillCard from '../components/SkillCard';
 
 function Avatar({ user, size = 36 }) {
   const initials = (user?.name || '?').split(' ').map((n) => n[0]).join('').slice(0, 2);
@@ -17,14 +18,38 @@ function Avatar({ user, size = 36 }) {
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const carouselRef = useRef(null);
   const [data, setData] = useState(null);
+  const [mySkills, setMySkills] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
+  const scrollCarousel = (direction) => {
+    if (carouselRef.current) {
+      carouselRef.current.scrollBy({ left: direction * 320, behavior: 'smooth' });
+    }
+  };
+
+  const handleDeleteSkill = async (id) => {
+    if (window.confirm('Are you sure you want to permanently delete this skill?')) {
+      try {
+        await skills.delete(id);
+        loadDashboard();
+      } catch (e) {
+        alert(e.message || 'Failed to delete skill');
+      }
+    }
+  };
+
   const loadDashboard = async () => {
     try {
-      const res = await dashboard.get();
+      const user = getUser();
+      const [res, skillsRes] = await Promise.all([
+        dashboard.get(),
+        skills.list({ provider: user.id })
+      ]);
       setData(res.dashboard);
+      setMySkills(skillsRes.skills || []);
       setError(false);
     } catch (e) {
       setError(true);
@@ -55,9 +80,12 @@ export default function Dashboard() {
 
   return (
     <div style={{ paddingTop: '100px', paddingBottom: '64px' }}>
-      <div className="page-header animate-fade-up">
-        <h1 className="page-title">Dashboard</h1>
-        <p className="page-subtitle">Your personalized overview — skills, matches, sessions, and messages.</p>
+      <div className="page-header animate-fade-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+        <div>
+          <h1 className="page-title">Dashboard</h1>
+          <p className="page-subtitle">Your personalized overview — skills, matches, sessions, and messages.</p>
+        </div>
+        <button className="primary-cta" onClick={() => navigate('/create-skill')}>List a Skill</button>
       </div>
       
       {loading || !data ? (
@@ -127,6 +155,34 @@ export default function Dashboard() {
           <Link to="/messages" className="btn-secondary" style={{ marginTop: '16px', display: 'inline-flex' }}>
             Open Messages
           </Link>
+        </section>
+
+        <section className="glass-card" style={{ padding: '24px', marginTop: '24px', gridColumn: '1 / -1', overflow: 'hidden' }}>
+          <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>My Skills</h2>
+          {mySkills.length > 0 ? (
+            <div className="carousel">
+              <div id="my-skills-carousel" className="carousel__track" role="list" ref={carouselRef}>
+                {mySkills.map((s, i) => (
+                  <SkillCard 
+                    key={s.id} 
+                    skill={s} 
+                    actions={
+                      <>
+                        <button className="btn-secondary" style={{ flex: 1 }} onClick={() => navigate(`/create-skill?id=${s.id}`)}>Edit</button>
+                        <button className="btn-secondary" style={{ flex: 1, color: 'var(--brand-red)', borderColor: 'var(--brand-red)' }} onClick={() => handleDeleteSkill(s.id)}>Delete</button>
+                      </>
+                    }
+                  />
+                ))}
+              </div>
+              <div className="carousel__controls">
+                <button type="button" className="carousel__btn" onClick={() => scrollCarousel(-1)} aria-label="Previous skills">&larr;</button>
+                <button type="button" className="carousel__btn" onClick={() => scrollCarousel(1)} aria-label="Next skills">&rarr;</button>
+              </div>
+            </div>
+          ) : (
+            <p className="empty-state">You haven't listed any skills yet</p>
+          )}
         </section>
       </div>
 

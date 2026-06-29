@@ -60,6 +60,21 @@ enum FlagTargetType {
   USER
 }
 
+enum NotificationType {
+  MESSAGE
+  MATCH_REQUEST
+  MATCH_ACCEPTED
+  SESSION_PROPOSED
+  SESSION_UPDATED
+  SYSTEM
+}
+
+enum DisputeStatus {
+  PENDING_STANCES
+  UNDER_REVIEW
+  RESOLVED
+}
+
 model User {
   id                    String             @id @default(cuid())
   email                 String             @unique
@@ -99,8 +114,12 @@ model User {
   flagsCreated          Flag[]             @relation("FlagsCreated")
   auditLogs             AuditLog[]         @relation("AuditActor")
   auditLogsTarget       AuditLog[]         @relation("AuditTarget")
+  disputesCreated       Dispute[]          @relation("DisputeCreator")
+  disputesWon           Dispute[]          @relation("DisputeWinner")
   conversationsAsUser1  Conversation[]     @relation("ConversationUser1")
   conversationsAsUser2  Conversation[]     @relation("ConversationUser2")
+
+  notifications         Notification[]     @relation("UserNotifications")
 
   @@index([email])
   @@index([role])
@@ -145,6 +164,7 @@ model Skill {
   reviewCount      Int                @default(0)
   isFeatured       Boolean            @default(false)
   isFlagged        Boolean            @default(false)
+  isDeleted        Boolean            @default(false)
   providerId       String
   categoryId       String
   subcategoryId    String
@@ -208,6 +228,8 @@ model MatchRequest {
   receiverId     String
   offeredSkillId String
   wantedSkillId  String
+  offeredSkillSnapshot Json?
+  wantedSkillSnapshot  Json?
   expiresAt      DateTime?
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
@@ -237,6 +259,7 @@ model ActiveMatch {
   conversation   Conversation?
   sessions       Session[]
   reviews        Review[]
+  dispute        Dispute?
 
   @@index([user1Id])
   @@index([user2Id])
@@ -295,6 +318,7 @@ model Session {
   status          SessionStatus @default(PROPOSED)
   counterStart    DateTime?
   counterEnd      DateTime?
+  reminderSent    Boolean       @default(false)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
@@ -362,4 +386,44 @@ model AuditLog {
 
   @@index([actorId])
   @@index([createdAt])
+}
+
+model Dispute {
+  id             String        @id @default(cuid())
+  activeMatchId  String        @unique
+  creatorId      String
+  status         DisputeStatus @default(PENDING_STANCES)
+  deadline       DateTime
+  
+  user1Stance    String?
+  user2Stance    String?
+  
+  decision       String?
+  winnerId       String?
+
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  activeMatch    ActiveMatch   @relation(fields: [activeMatchId], references: [id], onDelete: Cascade)
+  creator        User          @relation("DisputeCreator", fields: [creatorId], references: [id])
+  winner         User?         @relation("DisputeWinner", fields: [winnerId], references: [id])
+
+  @@index([activeMatchId])
+  @@index([status])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  content   String
+  linkUrl   String?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user      User             @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([isRead])
 }

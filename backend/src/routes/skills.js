@@ -20,7 +20,10 @@ const skillInclude = {
 };
 
 function buildSkillWhere(query) {
-  const where = { provider: { deletedAt: null, isSuspended: false } };
+  const where = { 
+    isDeleted: false,
+    provider: { deletedAt: null, isSuspended: false } 
+  };
   if (query.provider) where.providerId = query.provider;
   if (query.excludeProvider) where.providerId = { not: query.excludeProvider };
   if (query.category) where.category = { slug: query.category };
@@ -186,5 +189,107 @@ function formatSkill(skill) {
     tags: skill.tags?.map((st) => st.tag.name) || [],
   };
 }
+
+router.patch('/:id', authenticate, upload.single('coverImage'), async (req, res) => {
+  const existingSkill = await prisma.skill.findUnique({
+    where: { id: req.params.id },
+    include: { tags: true }
+  });
+
+  if (!existingSkill) return apiError(res, 404, 'Skill not found');
+  if (existingSkill.providerId !== req.user.id) return apiError(res, 403, 'You can only edit your own skills');
+
+  const body = { ...req.body };
+  
+  if (body.tags && typeof body.tags === 'string') {
+    try { body.tags = JSON.parse(body.tags); } catch { body.tags = body.tags.split(',').map((t) => t.trim()).filter(Boolean); }
+  }
+  if (body.schedules && typeof body.schedules === 'string') {
+    try { body.schedules = JSON.parse(body.schedules); } catch { body.schedules = undefined; }
+  }
+  if (body.sessionDurations && typeof body.sessionDurations === 'string') {
+    try { body.sessionDurations = JSON.parse(body.sessionDurations); } catch { body.sessionDurations = undefined; }
+  }
+
+  // Use partial schema validation for updates if needed, or simply let the DB handle constraints
+  let coverImageUrl = existingSkill.coverImageUrl;
+
+  if (req.file) {
+    const result = await uploadImage(req.file.buffer);
+    if (result && result.secure_url) {
+      coverImageUrl = result.secure_url;
+    } else {
+      const uploadDir = path.join(process.cwd(), 'uploads');
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      const filename = uniqueSuffix + '-' + req.file.originalname;
+      fs.writeFileSync(path.join(uploadDir, filename), req.file.buffer);
+      coverImageUrl = `${process.env.API_URL || 'http://localhost:3001'}/uploads/${filename}`;
+    }
+  }
+
+  let tagsUpdate = undefined;
+  if (body.tags && Array.isArray(body.tags)) {
+    const tagRecords = await upsertTags(body.tags);
+    // Delete existing connections
+    await prisma.skillTag.deleteMany({ where: { skillId: existingSkill.id } });
+    tagsUpdate = { create: tagRecords.map((tagId) => ({ tagId })) };
+  }
+
+  const updateData = {};
+  if (body.title) updateData.title = sanitizeString(body.title);
+  if (body.level) updateData.level = body.level;
+  if (body.shortDescription) updateData.shortDescription = sanitizeString(body.shortDescription);
+  if (body.fullDescription) updateData.fullDescription = sanitizeString(body.fullDescription);
+  if (body.learningOutcomes) updateData.learningOutcomes = sanitizeString(body.learningOutcomes);
+  if (body.prerequisites !== undefined) updateData.prerequisites = body.prerequisites ? sanitizeString(body.prerequisites) : null;
+  if (body.sessionDurations) updateData.sessionDurations = body.sessionDurations;
+  if (body.availability) updateData.availability = body.availability;
+  if (body.categoryId) updateData.categoryId = body.categoryId;
+  if (body.subcategoryId) updateData.subcategoryId = body.subcategoryId;
+  if (coverImageUrl !== existingSkill.coverImageUrl) updateData.coverImageUrl = coverImageUrl;
+  if (tagsUpdate) updateData.tags = tagsUpdate;
+
+  // For simplicity, we are not updating schedules in PATCH. To update schedules, it would be complex (delete/recreate)
+  // so we'll leave that out of the MVP edit or add it later if required.
+
+  const updatedSkill = await prisma.skill.update({
+    where: { id: existingSkill.id },
+    data: updateData,
+    include: skillInclude
+  });
+
+  return apiSuccess(res, { skill: formatSkill(updatedSkill) });
+});
+
+router.delete('/:id', authenticate, async (req, res) => {
+  const existingSkill = await prisma.skill.findUnique({
+    where: { id: req.params.id },
+    include: {
+      offeredInRequests: { select: { id: true }, take: 1 },
+      wantedInRequests: { select: { id: true }, take: 1 }
+    }
+  });
+
+  if (!existingSkill) return apiError(res, 404, 'Skill not found');
+  if (existingSkill.providerId !== req.user.id) return apiError(res, 403, 'You can only delete your own skills');
+
+  const isInUse = existingSkill.offeredInRequests.length > 0 || existingSkill.wantedInRequests.length > 0;
+
+  if (isInUse) {
+    await prisma.skill.update({
+      where: { id: existingSkill.id },
+      data: { isDeleted: true }
+    });
+  } else {
+    await prisma.skill.delete({
+      where: { id: existingSkill.id }
+    });
+  }
+
+  return apiSuccess(res, { message: 'Skill deleted successfully' });
+});
 
 export default router;
