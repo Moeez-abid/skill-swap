@@ -21,6 +21,8 @@ export default function Admin() {
   const [decisionText, setDecisionText] = useState('');
   const [winnerId, setWinnerId] = useState('');
 
+  const [activeTab, setActiveTab] = useState('analytics');
+
   const showToast = (msg) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(''), 3500);
@@ -129,7 +131,17 @@ export default function Admin() {
         <p className="loading">Loading admin panel…</p>
       ) : (
         <>
-      <div className="admin-grid animate-fade-up delay-1" style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
+      <div className="tabs admin-tabs animate-fade-up delay-1" style={{ marginBottom: '24px', display: 'flex', gap: '16px', overflowX: 'auto', borderBottom: '1px solid var(--glass-border)', paddingBottom: '8px' }}>
+        <button className={`tab ${activeTab === 'analytics' ? 'tab--active' : ''}`} style={{ background: 'none', border: 'none', padding: '8px 16px', cursor: 'pointer', color: activeTab === 'analytics' ? 'var(--text-primary)' : 'var(--text-secondary)', borderBottom: activeTab === 'analytics' ? '2px solid var(--brand-blue)' : 'none', fontWeight: activeTab === 'analytics' ? 600 : 400 }} onClick={() => setActiveTab('analytics')}>Overview</button>
+        <button className={`tab ${activeTab === 'users' ? 'tab--active' : ''}`} style={{ background: 'none', border: 'none', padding: '8px 16px', cursor: 'pointer', color: activeTab === 'users' ? 'var(--text-primary)' : 'var(--text-secondary)', borderBottom: activeTab === 'users' ? '2px solid var(--brand-blue)' : 'none', fontWeight: activeTab === 'users' ? 600 : 400 }} onClick={() => setActiveTab('users')}>Users</button>
+        <button className={`tab ${activeTab === 'disputes' ? 'tab--active' : ''}`} style={{ background: 'none', border: 'none', padding: '8px 16px', cursor: 'pointer', color: activeTab === 'disputes' ? 'var(--text-primary)' : 'var(--text-secondary)', borderBottom: activeTab === 'disputes' ? '2px solid var(--brand-blue)' : 'none', fontWeight: activeTab === 'disputes' ? 600 : 400 }} onClick={() => setActiveTab('disputes')}>Disputes</button>
+        <button className={`tab ${activeTab === 'moderation' ? 'tab--active' : ''}`} style={{ background: 'none', border: 'none', padding: '8px 16px', cursor: 'pointer', color: activeTab === 'moderation' ? 'var(--text-primary)' : 'var(--text-secondary)', borderBottom: activeTab === 'moderation' ? '2px solid var(--brand-blue)' : 'none', fontWeight: activeTab === 'moderation' ? 600 : 400 }} onClick={() => setActiveTab('moderation')}>Moderation</button>
+        <button className={`tab ${activeTab === 'verifications' ? 'tab--active' : ''}`} style={{ background: 'none', border: 'none', padding: '8px 16px', cursor: 'pointer', color: activeTab === 'verifications' ? 'var(--text-primary)' : 'var(--text-secondary)', borderBottom: activeTab === 'verifications' ? '2px solid var(--brand-blue)' : 'none', fontWeight: activeTab === 'verifications' ? 600 : 400 }} onClick={() => setActiveTab('verifications')}>Verifications</button>
+        <button className={`tab ${activeTab === 'audit' ? 'tab--active' : ''}`} style={{ background: 'none', border: 'none', padding: '8px 16px', cursor: 'pointer', color: activeTab === 'audit' ? 'var(--text-primary)' : 'var(--text-secondary)', borderBottom: activeTab === 'audit' ? '2px solid var(--brand-blue)' : 'none', fontWeight: activeTab === 'audit' ? 600 : 400 }} onClick={() => setActiveTab('audit')}>Audit Logs</button>
+      </div>
+
+      {activeTab === 'analytics' && (
+      <div className="admin-grid animate-fade-up delay-2" style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
         <div className="stat-card glass-card">
           <div className="stat-card__value">{analytics.users.total}</div>
           <div className="stat-card__label">Total Users (+{analytics.users.growth30d} / 30d)</div>
@@ -151,7 +163,9 @@ export default function Admin() {
           <div className="stat-card__label">Pending Flags</div>
         </div>
       </div>
+      )}
 
+      {activeTab === 'users' && (
       <section className="glass-card animate-fade-up delay-2" style={{ padding: '24px', marginTop: '32px' }}>
         <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>User Management</h2>
         <div className="admin-table-wrap" style={{ overflowX: 'auto' }}>
@@ -185,8 +199,10 @@ export default function Admin() {
           </table>
         </div>
       </section>
+      )}
 
-      <section className="glass-card animate-fade-up delay-3" style={{ padding: '24px', marginTop: '32px' }}>
+      {activeTab === 'disputes' && (
+      <section className="glass-card animate-fade-up delay-2" style={{ padding: '24px', marginTop: '32px' }}>
         <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>Disputes</h2>
         {disputes.length > 0 ? (
           disputes.map(d => (
@@ -253,8 +269,10 @@ export default function Admin() {
           <p className="empty-state">No disputes found.</p>
         )}
       </section>
+      )}
 
-      <section className="glass-card animate-fade-up delay-4" style={{ padding: '24px', marginTop: '32px' }}>
+      {activeTab === 'moderation' && (
+      <section className="glass-card animate-fade-up delay-2" style={{ padding: '24px', marginTop: '32px' }}>
         <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>Moderation Queue</h2>
         {flags.length > 0 ? (
           flags.map(f => (
@@ -271,8 +289,10 @@ export default function Admin() {
           <p className="empty-state">Queue empty</p>
         )}
       </section>
+      )}
 
-      <section className="glass-card animate-fade-up delay-4" style={{ padding: '24px', marginTop: '32px' }}>
+      {activeTab === 'verifications' && (
+      <section className="glass-card animate-fade-up delay-2" style={{ padding: '24px', marginTop: '32px' }}>
         <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>Verification Requests</h2>
         {verifications.length > 0 ? (
           verifications.map(v => (
@@ -292,8 +312,10 @@ export default function Admin() {
           <p className="empty-state">No pending verifications</p>
         )}
       </section>
+      )}
 
-      <section className="glass-card animate-fade-up delay-4" style={{ padding: '24px', marginTop: '32px' }}>
+      {activeTab === 'audit' && (
+      <section className="glass-card animate-fade-up delay-2" style={{ padding: '24px', marginTop: '32px' }}>
         <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>System Audit Logs</h2>
         <div className="admin-table-wrap" style={{ overflowX: 'auto', maxHeight: '400px' }}>
           <table className="admin-table" style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
@@ -319,6 +341,7 @@ export default function Admin() {
           {auditLogs.length === 0 && <p className="empty-state">No audit logs found</p>}
         </div>
       </section>
+      )}
 
       {toastMsg && (
         <div className="toast toast--info toast--visible" role="status">
