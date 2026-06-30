@@ -139,11 +139,7 @@ export default function Messages() {
     }
   }, [activeConversationId]);
 
-  useEffect(() => {
-    if (!convLoading && conversations.length > 0 && !activeConversationId && window.innerWidth >= 900) {
-      setSearchParams({ conversation: conversations[0].id });
-    }
-  }, [conversations, activeConversationId, setSearchParams, convLoading]);
+
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -416,7 +412,11 @@ export default function Messages() {
             <>
               <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', background: 'var(--glass-bg)', borderTopLeftRadius: '16px', borderTopRightRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <button className="mobile-back-btn" onClick={() => setSearchParams({})} aria-label="Back to messages">
+                  <button type="button" className="mobile-back-btn" onClick={() => {
+                    const newParams = new URLSearchParams(searchParams);
+                    newParams.delete('conversation');
+                    setSearchParams(newParams);
+                  }} aria-label="Back to messages">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
                   </button>
                   <Avatar user={partner} size={36} /> <strong style={{ fontSize: '1.05rem' }}>{partner?.name}</strong>
