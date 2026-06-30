@@ -140,7 +140,7 @@ export default function Messages() {
   }, [activeConversationId]);
 
   useEffect(() => {
-    if (!convLoading && conversations.length > 0 && !activeConversationId) {
+    if (!convLoading && conversations.length > 0 && !activeConversationId && window.innerWidth >= 900) {
       setSearchParams({ conversation: conversations[0].id });
     }
   }, [conversations, activeConversationId, setSearchParams, convLoading]);
