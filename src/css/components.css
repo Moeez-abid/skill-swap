@@ -522,12 +522,12 @@ select option {
 .form-row {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 0;
 }
 
 @media (min-width: 640px) {
-  .form-row { flex-direction: row; }
-  .form-row > .form-group { flex: 1; min-width: 0; margin-bottom: 0; }
+  .form-row { flex-direction: row; gap: 16px; }
+  .form-row > .form-group { flex: 1; min-width: 0; }
 }
 
 .form-error { color: #dc2626; font-size: 14px; margin-top: 12px; }
