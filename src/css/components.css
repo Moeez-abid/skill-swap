@@ -469,7 +469,7 @@ dialog[open] {
 }
 
 .form-card { max-width: 720px; margin: 0 auto; padding: 32px; }
-.form-group { margin-bottom: 20px; }
+.form-group { margin-bottom: 20px; min-width: 0; }
 
 .form-group label {
   display: block;
@@ -483,6 +483,8 @@ dialog[open] {
 .form-group select,
 .form-group textarea {
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: 12px 14px;
   border-radius: 10px;
   border: 1px solid var(--glass-border);
@@ -512,12 +514,12 @@ select option {
 
 .form-row {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
 }
 
 @media (min-width: 640px) {
-  .form-row { grid-template-columns: 1fr 1fr; }
+  .form-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 }
 
 .form-error { color: #dc2626; font-size: 14px; margin-top: 12px; }
