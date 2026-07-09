@@ -294,7 +294,7 @@ export default function Blogs() {
         ) : (
           <>
             <article className="glass-card" style={{ padding: '32px', marginBottom: '32px' }}>
-              <h1 style={{ fontFamily: 'Fustat, sans-serif', fontSize: '32px', marginBottom: '16px', color: 'var(--text-primary)' }}>
+              <h1 className="page-title" style={{ marginBottom: '16px' }}>
                 {currentPost.title}
               </h1>
 
@@ -392,10 +392,10 @@ export default function Blogs() {
   // --- LIST VIEW ---
   return (
     <div className="container animate-fade-up" style={{ paddingTop: '120px', minHeight: 'calc(100vh - 200px)', paddingBottom: '60px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-        <div>
-          <div className="section-title" style={{ marginBottom: '8px' }}>Community Blogs</div>
-          <p style={{ color: 'var(--text-secondary)', margin: 0 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
+        <div className="page-header" style={{ marginBottom: 0 }}>
+          <h1 className="page-title">Community Blogs</h1>
+          <p className="page-subtitle">
             Read peer articles and sharing experiences on learning and teaching.
           </p>
         </div>
