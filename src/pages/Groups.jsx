@@ -169,106 +169,105 @@ export default function Groups() {
 
   return (
     <>
-      <div className="animate-fade-up" style={{ paddingTop: '100px', paddingBottom: '64px', height: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column' }}>
-      <div className="page-header" style={{ marginBottom: '24px', flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1 className="page-title">Community Groups</h1>
-          <p className="page-subtitle">Join community channels, meet other peers, and chat in real-time.</p>
-        </div>
-        <button onClick={() => setIsCreating(true)} className="primary-cta">
-          + Create Group
-        </button>
-      </div>
-
-      {error && <div className="form-error" style={{ marginBottom: '16px', flexShrink: 0 }}>{error}</div>}
-
-      <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '24px', flexGrow: 1, minHeight: 0 }}>
+      <div style={{ 
+        position: 'fixed', 
+        top: '110px', 
+        bottom: '24px', 
+        left: '50%', 
+        transform: 'translateX(-50%)', 
+        width: '90%', 
+        maxWidth: '1500px', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        overflow: 'hidden',
+        zIndex: 40 
+      }}>
+        {error && <div className="form-error" style={{ marginBottom: '16px', flexShrink: 0 }}>{error}</div>}
         
-        {/* SIDEBAR: Group list */}
-        <div className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', minHeight: 0 }}>
-          <input
-            type="search"
-            placeholder="Search groups..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--glass-border)', background: 'var(--glass-bg)', color: 'var(--text-primary)', outline: 'none' }}
-          />
+        <div className="messages-layout animate-fade-up delay-1" style={{ flex: 1, minHeight: 0 }}>
+          {/* SIDEBAR */}
+          <aside className={`glass-card messages-sidebar ${selectedGroup ? 'hide-on-mobile' : ''}`} style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, overflow: 'hidden' }} aria-label="Groups">
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--glass-bg)', borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }}>
+              <strong style={{ fontSize: '1.05rem' }}>Community Groups</strong>
+              <button type="button" className="primary-cta" onClick={() => setIsCreating(true)} style={{ padding: '6px 12px', fontSize: '0.85rem', width: 'auto' }}>+ Create Group</button>
+            </div>
+            
+            <div style={{ padding: '12px' }}>
+              <input
+                type="search"
+                placeholder="Search groups..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--glass-border)', background: 'var(--glass-bg)', color: 'var(--text-primary)', outline: 'none' }}
+              />
+            </div>
 
-          <div style={{ flexGrow: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '4px' }}>
-            {loadingList ? (
-              <p style={{ color: 'var(--text-muted)', textAlign: 'center', margin: '20px 0' }}>Loading channels...</p>
-            ) : filteredGroups.length > 0 ? (
-              filteredGroups.map((group) => {
-                const isCurrent = selectedGroup && selectedGroup.id === group.id;
-                return (
-                  <div
-                    key={group.id}
-                    onClick={() => setSelectedGroup(group)}
-                    style={{
-                      padding: '16px',
-                      borderRadius: '12px',
-                      cursor: 'pointer',
-                      border: '1px solid',
-                      borderColor: isCurrent ? 'var(--brand-blue)' : 'var(--glass-border)',
-                      background: isCurrent ? 'rgba(59, 130, 246, 0.08)' : 'rgba(255, 255, 255, 0.01)',
-                      transition: 'background 0.2s, border-color 0.2s'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isCurrent) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isCurrent) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.01)';
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
-                      <strong style={{ fontSize: '15px', color: 'var(--text-primary)' }}>{group.name}</strong>
-                      {group.isMember && (
-                        <span style={{ fontSize: '10px', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '2px 6px', borderRadius: '10px', fontWeight: 'bold' }}>
-                          Joined
+            <div className="conversation-list" style={{ padding: '0 12px 12px 12px' }}>
+              {loadingList ? (
+                <p className="loading" style={{ color: 'var(--text-muted)', textAlign: 'center', margin: '20px 0' }}>Loading channels...</p>
+              ) : filteredGroups.length > 0 ? (
+                filteredGroups.map((group) => {
+                  const isCurrent = selectedGroup && selectedGroup.id === group.id;
+                  return (
+                    <button
+                      key={group.id}
+                      type="button"
+                      className={`conversation-item ${isCurrent ? 'active' : ''}`}
+                      onClick={() => setSelectedGroup(group)}
+                    >
+                      <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
+                          <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>{group.name}</strong>
+                          {group.isMember && (
+                            <span style={{ fontSize: '10px', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '2px 6px', borderRadius: '10px', fontWeight: 'bold' }}>
+                              Joined
+                            </span>
+                          )}
+                        </div>
+                        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 6px 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: '1.4' }}>
+                          {group.description}
+                        </p>
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                          {group.memberCount} member{group.memberCount === 1 ? '' : 's'}
                         </span>
-                      )}
+                      </div>
+                    </button>
+                  );
+                })
+              ) : (
+                <p style={{ color: 'var(--text-muted)', textAlign: 'center', margin: '20px 0', fontSize: '14px' }}>No groups found</p>
+              )}
+            </div>
+          </aside>
+
+          {/* MAIN PANEL */}
+          <section className={`message-thread glass-card messages-main ${!selectedGroup ? 'hide-on-mobile' : ''}`} aria-label="Group Chat">
+            {selectedGroup ? (
+              <>
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', background: 'var(--glass-bg)', borderTopLeftRadius: '16px', borderTopRightRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <button type="button" className="mobile-back-btn" onClick={() => setSelectedGroup(null)} aria-label="Back to groups">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    </button>
+                    <div>
+                      <strong style={{ fontSize: '1.05rem', display: 'block' }}>{selectedGroup.name}</strong>
+                      <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{selectedGroup.description}</span>
                     </div>
-                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '0 0 10px 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: '1.4' }}>
-                      {group.description}
-                    </p>
-                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                      {group.memberCount} member{group.memberCount === 1 ? '' : 's'}
-                    </span>
                   </div>
-                );
-              })
-            ) : (
-              <p style={{ color: 'var(--text-muted)', textAlign: 'center', margin: '20px 0', fontSize: '14px' }}>No groups found</p>
-            )}
-          </div>
-        </div>
-
-        {/* MAIN PANEL: Chat / Join State */}
-        <div className="glass-card" style={{ padding: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
-          {selectedGroup ? (
-            <>
-              {/* Chat Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderBottom: '1px solid var(--glass-border-subtle)', background: 'rgba(255,255,255,0.01)' }}>
-                <div>
-                  <h3 style={{ fontFamily: 'Fustat, sans-serif', fontSize: '18px', margin: '0 0 4px 0', color: 'var(--text-primary)' }}>{selectedGroup.name}</h3>
-                  <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>{selectedGroup.description}</p>
+                  {selectedGroup.isMember ? (
+                    <button onClick={() => handleLeaveGroup(selectedGroup)} className="btn-secondary" style={{ padding: '6px 10px', fontSize: '12px', color: '#ef4444', borderColor: 'rgba(239,68,68,0.3)', background: 'transparent' }}>
+                      Leave Group
+                    </button>
+                  ) : (
+                    <button onClick={() => handleJoinGroup(selectedGroup)} className="primary-cta" style={{ padding: '6px 16px', fontSize: '12px' }}>
+                      Join Group
+                    </button>
+                  )}
                 </div>
-                {selectedGroup.isMember ? (
-                  <button onClick={() => handleLeaveGroup(selectedGroup)} className="btn-secondary" style={{ color: '#ef4444', borderColor: '#ef4444', padding: '8px 16px', minHeight: 'auto' }}>
-                    Leave Group
-                  </button>
-                ) : (
-                  <button onClick={() => handleJoinGroup(selectedGroup)} className="primary-cta" style={{ padding: '8px 20px', minHeight: 'auto', fontSize: '14px' }}>
-                    Join Group
-                  </button>
-                )}
-              </div>
 
-              {/* Chat Content Body */}
-              <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-                {selectedGroup.isMember ? (
-                  <>
-                    <div style={{ flexGrow: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div className="message-list" style={{ flexGrow: 1, overflowY: 'auto' }}>
+                  {selectedGroup.isMember ? (
+                    <>
                       {loadingChat ? (
                         <p style={{ color: 'var(--text-muted)', textAlign: 'center', marginTop: '40px' }}>Loading conversation history...</p>
                       ) : messages.length > 0 ? (
@@ -287,25 +286,16 @@ export default function Groups() {
                                   </span>
                                 )
                               )}
-                              <div>
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
                                 {!isMe && (
                                   <span style={{ display: 'block', fontSize: '12px', fontWeight: '500', color: 'var(--text-secondary)', marginLeft: '4px', marginBottom: '4px' }}>
                                     {msg.sender?.name || 'Deleted User'}
                                   </span>
                                 )}
-                                <div style={{
-                                  padding: '12px 16px',
-                                  borderRadius: isMe ? '18px 18px 2px 18px' : '18px 18px 18px 2px',
-                                  background: isMe ? 'var(--brand-blue)' : 'var(--glass-bg-hover)',
-                                  color: isMe ? '#fff' : 'var(--text-primary)',
-                                  border: isMe ? 'none' : '1px solid var(--glass-border)',
-                                  fontSize: '14.5px',
-                                  lineHeight: '1.4',
-                                  wordBreak: 'break-word'
-                                }}>
+                                <div className={`message-bubble message-bubble--${isMe ? 'sent' : 'received'}`} style={{ marginBottom: 0 }}>
                                   {msg.content}
                                 </div>
-                                <span style={{ display: 'block', textAlign: isMe ? 'right' : 'left', fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px', padding: '0 4px' }}>
+                                <span style={{ display: 'block', fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px', padding: '0 4px' }}>
                                   {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </span>
                               </div>
@@ -316,46 +306,46 @@ export default function Groups() {
                         <p style={{ color: 'var(--text-muted)', textAlign: 'center', marginTop: '40px', fontStyle: 'italic' }}>No messages yet. Send a message to start the conversation!</p>
                       )}
                       <div ref={messagesEndRef} />
+                    </>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '40px', textAlign: 'center', height: '100%' }}>
+                      <div style={{ maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                        <h4 style={{ fontSize: '18px', color: 'var(--text-primary)', margin: 0 }}>Join this Conversation</h4>
+                        <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.6' }}>
+                          You are viewing the details of <strong>{selectedGroup.name}</strong>, but you are not currently a member of this channel. Click the button below to join the chat and connect!
+                        </p>
+                        <button onClick={() => handleJoinGroup(selectedGroup)} className="primary-cta" style={{ alignSelf: 'center', padding: '12px 32px' }}>
+                          Join Group
+                        </button>
+                      </div>
                     </div>
+                  )}
+                </div>
 
-                    {/* Chat Text Input footer */}
-                    <form onSubmit={handleSendMessage} style={{ padding: '20px 24px', background: 'rgba(255,255,255,0.01)', borderTop: '1px solid var(--glass-border-subtle)', display: 'flex', gap: '12px', alignItems: 'center' }}>
-                      <input
-                        type="text"
-                        placeholder="Type a message to the group..."
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        required
-                        style={{ flex: 1, padding: '12px 16px', borderRadius: '24px', border: '1px solid var(--glass-border)', background: 'var(--glass-bg)', color: 'var(--text-primary)', outline: 'none' }}
-                      />
-                      <button type="submit" className="primary-cta" style={{ borderRadius: '24px', padding: '10px 24px', fontSize: '14px', minHeight: 'auto' }}>
-                        Send
-                      </button>
-                    </form>
-                  </>
-                ) : (
-                  <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '40px', textAlign: 'center' }}>
-                    <div style={{ maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                      <h4 style={{ fontSize: '18px', color: 'var(--text-primary)', margin: 0 }}>Join this Conversation</h4>
-                      <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.6' }}>
-                        You are viewing the details of <strong>{selectedGroup.name}</strong>, but you are not currently a member of this channel. Click the button below to join the chat and connect!
-                      </p>
-                      <button onClick={() => handleJoinGroup(selectedGroup)} className="primary-cta" style={{ alignSelf: 'center', padding: '12px 32px' }}>
-                        Join Group
-                      </button>
-                    </div>
-                  </div>
+                {selectedGroup.isMember && (
+                  <form onSubmit={handleSendMessage} style={{ padding: '16px 20px', background: 'rgba(255,255,255,0.01)', borderTop: '1px solid var(--glass-border-subtle)', display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <input
+                      type="text"
+                      placeholder="Type a message to the group..."
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      required
+                      style={{ flex: 1, padding: '12px 16px', borderRadius: '24px', border: '1px solid var(--glass-border)', background: 'var(--glass-bg)', color: 'var(--text-primary)', outline: 'none' }}
+                    />
+                    <button type="submit" className="primary-cta" style={{ borderRadius: '24px', padding: '10px 24px', fontSize: '14px', minHeight: 'auto' }}>
+                      Send
+                    </button>
+                  </form>
                 )}
+              </>
+            ) : (
+              <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                <h3>No group selected</h3>
+                <p>Choose a community channel from the sidebar or create your own to begin.</p>
               </div>
-            </>
-          ) : (
-            <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-              <h3>No group selected</h3>
-              <p>Choose a community channel from the sidebar or create your own to begin.</p>
-            </div>
-          )}
+            )}
+          </section>
         </div>
-      </div>
       </div>
 
       {/* CREATE GROUP MODAL DIALOG */}
