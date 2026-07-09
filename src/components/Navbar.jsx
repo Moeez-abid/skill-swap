@@ -56,6 +56,7 @@ export default function Navbar() {
           { href: '/', label: 'Home' },
           { href: '/marketplace', label: 'Marketplace' },
           { href: '/blogs', label: 'Blogs' },
+          { href: '/groups', label: 'Groups' },
           { href: '/dashboard', label: 'Dashboard' },
           { href: '/matches', label: 'Matches' },
           { href: '/messages', label: 'Messages' },

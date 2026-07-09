@@ -290,6 +290,37 @@ export const blogs = {
   },
 };
 
+export const groups = {
+  list: () => cachedApi('/groups'),
+  create: async (data) => {
+    const res = await api('/groups', { method: 'POST', body: JSON.stringify(data) });
+    clearApiCache('/groups');
+    return res;
+  },
+  join: async (id) => {
+    const res = await api(`/groups/${id}/join`, { method: 'POST' });
+    clearApiCache('/groups');
+    return res;
+  },
+  leave: async (id) => {
+    const res = await api(`/groups/${id}/leave`, { method: 'POST' });
+    clearApiCache('/groups');
+    return res;
+  },
+  messages: (id) => api(`/groups/${id}/messages`), // Skip cache for chat messages
+  sendMessage: (id, content) => api(`/groups/${id}/messages`, { method: 'POST', body: JSON.stringify({ content }) }),
+};
+
+export function subscribeToGroupEvents(groupId, eventName, callback) {
+  const pusher = getPusher();
+  if (!pusher || !groupId) return null;
+  const channel = pusher.subscribe(`group-${groupId}`);
+  channel.bind(eventName, callback);
+  return () => {
+    channel.unbind(eventName, callback);
+  };
+}
+
 import Pusher from 'pusher-js';
 
 let pusherInstance = null;

@@ -21,6 +21,7 @@ import About from './pages/About.jsx';
 import Contact from './pages/Contact.jsx';
 import SuccessStories from './pages/SuccessStories.jsx';
 import Blogs from './pages/Blogs.jsx';
+import Groups from './pages/Groups.jsx';
 import { isAdmin } from './shared/auth.js';
 
 export default function App() {
@@ -72,6 +73,7 @@ export default function App() {
           <Route path="/reviews" element={<Reviews />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/blogs" element={<Blogs />} />
+          <Route path="/groups" element={<Groups />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/success-stories" element={<SuccessStories />} />

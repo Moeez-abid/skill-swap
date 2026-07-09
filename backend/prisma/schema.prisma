@@ -124,6 +124,9 @@ model User {
   notifications         Notification[]     @relation("UserNotifications")
   blogPosts             BlogPost[]
   blogComments          BlogComment[]
+  createdGroups         Group[]            @relation("GroupCreator")
+  groupMemberships      GroupMember[]
+  groupMessages         GroupMessage[]
 
   @@index([email])
   @@index([role])
@@ -474,5 +477,45 @@ model BlogComment {
   @@index([postId])
   @@index([authorId])
   @@index([parentId])
+  @@index([createdAt])
+}
+
+model Group {
+  id          String         @id @default(cuid())
+  name        String
+  description String
+  creatorId   String
+  creator     User           @relation("GroupCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  members     GroupMember[]
+  messages    GroupMessage[]
+
+  @@index([creatorId])
+}
+
+model GroupMember {
+  groupId  String
+  userId   String
+  joinedAt DateTime @default(now())
+  group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, userId])
+  @@index([groupId])
+  @@index([userId])
+}
+
+model GroupMessage {
+  id        String   @id @default(cuid())
+  groupId   String
+  senderId  String
+  content   String
+  createdAt DateTime @default(now())
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([groupId])
+  @@index([senderId])
   @@index([createdAt])
 }
