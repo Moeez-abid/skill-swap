@@ -243,7 +243,7 @@ export default function Blogs() {
 
   if (loading) {
     return (
-      <div className="container" style={{ paddingTop: '120px', minHeight: 'calc(100vh - 200px)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+      <div style={{ paddingTop: '100px', minHeight: 'calc(100vh - 200px)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         <p className="loading">Loading blogs...</p>
       </div>
     );
@@ -252,7 +252,7 @@ export default function Blogs() {
   // --- DETAIL VIEW ---
   if (postId && currentPost) {
     return (
-      <div className="container animate-fade-up" style={{ paddingTop: '120px', minHeight: 'calc(100vh - 200px)', paddingBottom: '60px', maxWidth: '800px' }}>
+      <div className="animate-fade-up" style={{ paddingTop: '100px', minHeight: 'calc(100vh - 200px)', paddingBottom: '64px', maxWidth: '800px', margin: '0 auto' }}>
         <button onClick={() => setSearchParams({})} className="btn nav-btn--ghost" style={{ marginBottom: '24px', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
           &larr; Back to Blogs
         </button>
@@ -391,7 +391,7 @@ export default function Blogs() {
 
   // --- LIST VIEW ---
   return (
-    <div className="container animate-fade-up" style={{ paddingTop: '120px', minHeight: 'calc(100vh - 200px)', paddingBottom: '60px' }}>
+    <div className="animate-fade-up" style={{ paddingTop: '100px', paddingBottom: '64px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
         <div className="page-header" style={{ marginBottom: 0 }}>
           <h1 className="page-title">Community Blogs</h1>
