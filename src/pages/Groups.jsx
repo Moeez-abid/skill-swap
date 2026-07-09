@@ -174,7 +174,7 @@ export default function Groups() {
           <h1 className="page-title">Community Groups</h1>
           <p className="page-subtitle">Join community channels, meet other peers, and chat in real-time.</p>
         </div>
-        <button onClick={() => setIsCreating(true)} className="btn">
+        <button onClick={() => setIsCreating(true)} className="primary-cta">
           + Create Group
         </button>
       </div>
@@ -257,7 +257,7 @@ export default function Groups() {
                     Leave Group
                   </button>
                 ) : (
-                  <button onClick={() => handleJoinGroup(selectedGroup)} className="btn" style={{ padding: '8px 20px', minHeight: 'auto' }}>
+                  <button onClick={() => handleJoinGroup(selectedGroup)} className="primary-cta" style={{ padding: '8px 20px', minHeight: 'auto', fontSize: '14px' }}>
                     Join Group
                   </button>
                 )}
@@ -390,7 +390,7 @@ export default function Groups() {
             </div>
 
             <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
-              <button type="submit" className="btn" disabled={submitting}>
+              <button type="submit" className="primary-cta" disabled={submitting}>
                 {submitting ? 'Creating...' : 'Create & Join'}
               </button>
               <button type="button" onClick={() => setIsCreating(false)} className="btn nav-btn--ghost">
