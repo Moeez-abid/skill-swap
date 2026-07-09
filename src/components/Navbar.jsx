@@ -58,7 +58,6 @@ export default function Navbar() {
           { href: '/matches', label: 'Matches' },
           { href: '/messages', label: 'Messages' },
           { href: '/sessions', label: 'Sessions' },
-          { href: '/settings', label: 'Settings' },
         ]
       : [
           { href: '/', label: 'Home' },
@@ -191,7 +190,11 @@ export default function Navbar() {
 
           <div className="mobile-sidebar-auth" style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid var(--glass-border-subtle)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {loggedIn && user ? (
-              <button type="button" onClick={(e) => { handleLogout(e); setIsMenuOpen(false); }} className="btn-secondary" style={{ width: '100%', padding: '12px' }}>Log out</button>
+              <>
+                <Link to="/profile" className="nav-btn nav-btn--ghost" onClick={() => setIsMenuOpen(false)} style={{ justifyContent: 'center' }}>My Profile</Link>
+                <Link to="/settings" className="nav-btn nav-btn--ghost" onClick={() => setIsMenuOpen(false)} style={{ justifyContent: 'center' }}>Settings</Link>
+                <button type="button" onClick={(e) => { handleLogout(e); setIsMenuOpen(false); }} className="btn-secondary" style={{ width: '100%', padding: '12px' }}>Log out</button>
+              </>
             ) : (
               <>
                 <Link to="/login" className="nav-btn nav-btn--ghost" onClick={() => setIsMenuOpen(false)} style={{ justifyContent: 'center' }}>Log in</Link>
