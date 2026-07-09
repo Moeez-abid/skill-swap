@@ -261,13 +261,33 @@ export const disputes = {
 };
 
 export const blogs = {
-  list: () => api('/blogs'),
-  get: (id) => api(`/blogs/${id}`),
-  create: (data) => api('/blogs', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id, data) => api(`/blogs/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-  delete: (id) => api(`/blogs/${id}`, { method: 'DELETE' }),
-  addComment: (id, data) => api(`/blogs/${id}/comments`, { method: 'POST', body: JSON.stringify(data) }),
-  deleteComment: (id, commentId) => api(`/blogs/${id}/comments/${commentId}`, { method: 'DELETE' }),
+  list: () => cachedApi('/blogs'),
+  get: (id) => cachedApi(`/blogs/${id}`),
+  create: async (data) => {
+    const res = await api('/blogs', { method: 'POST', body: JSON.stringify(data) });
+    clearApiCache('/blogs');
+    return res;
+  },
+  update: async (id, data) => {
+    const res = await api(`/blogs/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+    clearApiCache('/blogs');
+    return res;
+  },
+  delete: async (id) => {
+    const res = await api(`/blogs/${id}`, { method: 'DELETE' });
+    clearApiCache('/blogs');
+    return res;
+  },
+  addComment: async (id, data) => {
+    const res = await api(`/blogs/${id}/comments`, { method: 'POST', body: JSON.stringify(data) });
+    clearApiCache('/blogs');
+    return res;
+  },
+  deleteComment: async (id, commentId) => {
+    const res = await api(`/blogs/${id}/comments/${commentId}`, { method: 'DELETE' });
+    clearApiCache('/blogs');
+    return res;
+  },
 };
 
 import Pusher from 'pusher-js';
