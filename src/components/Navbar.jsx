@@ -47,13 +47,15 @@ export default function Navbar() {
   let links = [];
   if (isAdmin()) {
     links = [
-      { href: '/admin', label: 'Admin Dashboard' }
+      { href: '/admin', label: 'Admin Dashboard' },
+      { href: '/blogs', label: 'Blogs' }
     ];
   } else {
     links = loggedIn && user
       ? [
           { href: '/', label: 'Home' },
           { href: '/marketplace', label: 'Marketplace' },
+          { href: '/blogs', label: 'Blogs' },
           { href: '/dashboard', label: 'Dashboard' },
           { href: '/matches', label: 'Matches' },
           { href: '/messages', label: 'Messages' },
@@ -62,6 +64,7 @@ export default function Navbar() {
       : [
           { href: '/', label: 'Home' },
           { href: '/marketplace', label: 'Marketplace' },
+          { href: '/blogs', label: 'Blogs' },
           { href: '/about', label: 'About Us' },
           { href: '/success-stories', label: 'Success Stories' },
           { href: '/contact', label: 'Contact Us' },

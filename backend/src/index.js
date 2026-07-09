@@ -22,6 +22,7 @@ import dashboardRoutes from './routes/dashboard.js';
 import disputeRoutes from './routes/disputes.js';
 import notificationRoutes from './routes/notifications.js';
 import supportRoutes from './routes/support.js';
+import blogRoutes from './routes/blogs.js';
 
 initCloudinary();
 initPusher();
@@ -62,6 +63,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/disputes', disputeRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/support', supportRoutes);
+app.use('/api/blogs', blogRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error(err);

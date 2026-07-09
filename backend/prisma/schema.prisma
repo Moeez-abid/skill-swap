@@ -122,6 +122,8 @@ model User {
   conversationsAsUser2  Conversation[]     @relation("ConversationUser2")
 
   notifications         Notification[]     @relation("UserNotifications")
+  blogPosts             BlogPost[]
+  blogComments          BlogComment[]
 
   @@index([email])
   @@index([role])
@@ -439,5 +441,38 @@ model SupportMessage {
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
 
+  @@index([createdAt])
+}
+
+model BlogPost {
+  id        String        @id @default(cuid())
+  title     String
+  content   String
+  authorId  String
+  author    User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  comments  BlogComment[]
+
+  @@index([authorId])
+  @@index([createdAt])
+}
+
+model BlogComment {
+  id        String        @id @default(cuid())
+  content   String
+  postId    String
+  post      BlogPost      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parentId  String?
+  parent    BlogComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   BlogComment[] @relation("CommentReplies")
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([postId])
+  @@index([authorId])
+  @@index([parentId])
   @@index([createdAt])
 }

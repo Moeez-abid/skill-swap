@@ -260,6 +260,16 @@ export const disputes = {
   },
 };
 
+export const blogs = {
+  list: () => api('/blogs'),
+  get: (id) => api(`/blogs/${id}`),
+  create: (data) => api('/blogs', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id, data) => api(`/blogs/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  delete: (id) => api(`/blogs/${id}`, { method: 'DELETE' }),
+  addComment: (id, data) => api(`/blogs/${id}/comments`, { method: 'POST', body: JSON.stringify(data) }),
+  deleteComment: (id, commentId) => api(`/blogs/${id}/comments/${commentId}`, { method: 'DELETE' }),
+};
+
 import Pusher from 'pusher-js';
 
 let pusherInstance = null;
