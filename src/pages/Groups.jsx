@@ -253,7 +253,7 @@ export default function Groups() {
                   <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>{selectedGroup.description}</p>
                 </div>
                 {selectedGroup.isMember ? (
-                  <button onClick={() => handleLeaveGroup(selectedGroup)} className="btn nav-btn--ghost" style={{ color: '#ef4444', borderColor: '#ef4444', padding: '8px 16px', minHeight: 'auto' }}>
+                  <button onClick={() => handleLeaveGroup(selectedGroup)} className="btn-secondary" style={{ color: '#ef4444', borderColor: '#ef4444', padding: '8px 16px', minHeight: 'auto' }}>
                     Leave Group
                   </button>
                 ) : (
@@ -393,7 +393,7 @@ export default function Groups() {
               <button type="submit" className="primary-cta" disabled={submitting}>
                 {submitting ? 'Creating...' : 'Create & Join'}
               </button>
-              <button type="button" onClick={() => setIsCreating(false)} className="btn nav-btn--ghost">
+              <button type="button" onClick={() => setIsCreating(false)} className="btn-secondary">
                 Cancel
               </button>
             </div>
