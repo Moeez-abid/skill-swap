@@ -168,7 +168,8 @@ export default function Groups() {
   );
 
   return (
-    <div className="animate-fade-up" style={{ paddingTop: '100px', paddingBottom: '64px', height: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column' }}>
+    <>
+      <div className="animate-fade-up" style={{ paddingTop: '100px', paddingBottom: '64px', height: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column' }}>
       <div className="page-header" style={{ marginBottom: '24px', flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h1 className="page-title">Community Groups</h1>
@@ -355,6 +356,7 @@ export default function Groups() {
           )}
         </div>
       </div>
+      </div>
 
       {/* CREATE GROUP MODAL DIALOG */}
       {isCreating && (
@@ -400,6 +402,6 @@ export default function Groups() {
           </form>
         </div>
       )}
-    </div>
+    </>
   );
 }
