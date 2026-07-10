@@ -5,42 +5,42 @@
   color-scheme: light;
 
   /* Primary Accent & Buttons */
-  --brand-blue: #ea580c; /* Vivid Orange */
-  --brand-blue-hover-shadow: #f97316;
-  --brand-blue-shadow: rgba(234, 88, 12, 0.25);
-  --accent-star: #f59e0b; 
+  --brand-blue: #E92E20; /* Original Primary Red-Orange */
+  --brand-blue-hover-shadow: #F87E62;
+  --brand-blue-shadow: rgba(233, 46, 32, 0.25);
+  --accent-star: #F87E62; 
 
   /* Background & Typography */
-  --bg-page: #FAF9F8; /* Warm off-white */
-  --text-primary: #1A1512;
-  --text-secondary: #6B5E55;
-  --text-muted: #A3978F;
+  --bg-page: #F9FAFB; /* Crisp, clean very light gray */
+  --text-primary: #111827; /* Near black */
+  --text-secondary: #4B5563; /* Slate gray */
+  --text-muted: #9CA3AF; /* Muted gray */
 
   /* Glow Elements */
-  --glow-orb-1: #fdba74;
-  --glow-orb-2: #fed7aa;
+  --glow-orb-1: #FBBBB3;
+  --glow-orb-2: #F87E62;
   --glow-opacity: 0.35;
 
   /* UI Cards / Containers (True Glassmorphism) */
   --glass-bg: rgba(255, 255, 255, 0.75);
   --glass-bg-hover: rgba(255, 255, 255, 0.95);
-  --glass-bg-subtle: rgba(245, 243, 240, 0.6);
+  --glass-bg-subtle: rgba(243, 244, 246, 0.6);
   --glass-bg-btn: rgba(255, 255, 255, 0.6);
   --glass-border: rgba(0, 0, 0, 0.06);
   --glass-border-subtle: rgba(0, 0, 0, 0.03);
   --glass-border-light: rgba(255, 255, 255, 0.8);
   --glass-inset: rgba(255, 255, 255, 0.6);
   --glass-inset-strong: rgba(255, 255, 255, 0.9);
-  --glass-shadow: rgba(26, 21, 18, 0.06);
+  --glass-shadow: rgba(17, 24, 39, 0.06);
   --glass-cta-inset: rgba(255, 255, 255, 0.25);
 
   /* Gradients */
-  --orb-gradient: radial-gradient(circle at 35% 30%, rgba(250,249,248,0.2) 0%, rgba(253,186,116,0.3) 50%, transparent 100%);
-  --orb-inner-gradient: radial-gradient(circle at 40% 35%, rgba(255, 255, 255, 0.8) 0%, rgba(254, 215, 170, 0.4) 50%, transparent 80%);
+  --orb-gradient: radial-gradient(circle at 35% 30%, rgba(249,250,251,0.2) 0%, rgba(248,126,98,0.3) 50%, transparent 100%);
+  --orb-inner-gradient: radial-gradient(circle at 40% 35%, rgba(255, 255, 255, 0.8) 0%, rgba(251,187,179,0.4) 50%, transparent 80%);
   --orb-shine: rgba(255, 255, 255, 0.9);
   --orb-border: rgba(255, 255, 255, 0.5);
-  --orb-shadow-outer: rgba(234, 88, 12, 0.15);
-  --orb-shadow-inner: rgba(249, 115, 22, 0.15);
+  --orb-shadow-outer: rgba(233, 46, 32, 0.15);
+  --orb-shadow-inner: rgba(248, 126, 98, 0.15);
 
   --transition-theme: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
@@ -49,40 +49,40 @@
   color-scheme: dark;
 
   /* Primary Accent & Buttons */
-  --brand-blue: #f97316; /* Vibrant Orange */
-  --brand-blue-hover-shadow: #fdba74;
-  --brand-blue-shadow: rgba(249, 115, 22, 0.25);
-  --accent-star: #f59e0b;
+  --brand-blue: #FF4B29; /* Original Primary Red-Orange */
+  --brand-blue-hover-shadow: #E92E20;
+  --brand-blue-shadow: rgba(255, 75, 41, 0.25);
+  --accent-star: #FF4B29;
 
   /* Background & Typography */
-  --bg-page: #110A08; /* Deep espresso / warm black */
-  --text-primary: #FFF1E5; /* Soft warm white */
-  --text-secondary: #A8958B; /* Warm grey/brown */
-  --text-muted: #6B5E55;
+  --bg-page: #0A0A0A; /* Clean, professional deep neutral black */
+  --text-primary: #FFFFFF; /* Pure white */
+  --text-secondary: #A1A1AA; /* Muted slate */
+  --text-muted: #52525B; /* Darker slate */
 
   /* Glow Elements */
-  --glow-orb-1: #ea580c;
-  --glow-orb-2: #c2410c;
+  --glow-orb-1: #FF4B29;
+  --glow-orb-2: #E92E20;
   --glow-opacity: 0.15; /* Much more subtle */
 
   /* UI Cards / Containers (True Glassmorphism) */
-  --glass-bg: rgba(30, 20, 15, 0.65);
-  --glass-bg-hover: rgba(45, 30, 23, 0.75);
-  --glass-bg-subtle: rgba(20, 13, 10, 0.5);
-  --glass-bg-btn: rgba(40, 28, 22, 0.5);
-  --glass-border: rgba(255, 241, 229, 0.08);
-  --glass-border-subtle: rgba(255, 241, 229, 0.03);
-  --glass-border-light: rgba(255, 241, 229, 0.12);
-  --glass-inset: rgba(255, 241, 229, 0.03);
-  --glass-inset-strong: rgba(255, 241, 229, 0.08);
-  --glass-shadow: rgba(0, 0, 0, 0.4);
+  --glass-bg: rgba(23, 23, 23, 0.65); /* Neutral dark gray, translucent */
+  --glass-bg-hover: rgba(38, 38, 38, 0.75);
+  --glass-bg-subtle: rgba(15, 15, 15, 0.5);
+  --glass-bg-btn: rgba(30, 30, 30, 0.5);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-border-subtle: rgba(255, 255, 255, 0.03);
+  --glass-border-light: rgba(255, 255, 255, 0.12);
+  --glass-inset: rgba(255, 255, 255, 0.03);
+  --glass-inset-strong: rgba(255, 255, 255, 0.08);
+  --glass-shadow: rgba(0, 0, 0, 0.5);
   --glass-cta-inset: rgba(255, 255, 255, 0.15);
 
   /* Gradients */
-  --orb-gradient: radial-gradient(circle at 35% 30%, rgba(30,20,15,0.2) 0%, rgba(234,88,12,0.4) 50%, transparent 100%);
-  --orb-inner-gradient: radial-gradient(circle at 40% 35%, rgba(255, 255, 255, 0.1) 0%, rgba(249, 115, 22, 0.2) 50%, transparent 80%);
+  --orb-gradient: radial-gradient(circle at 35% 30%, rgba(23,23,23,0.2) 0%, rgba(255,75,41,0.4) 50%, transparent 100%);
+  --orb-inner-gradient: radial-gradient(circle at 40% 35%, rgba(255, 255, 255, 0.1) 0%, rgba(233,46,32,0.2) 50%, transparent 80%);
   --orb-shine: rgba(255, 255, 255, 0.15);
   --orb-border: rgba(255, 255, 255, 0.05);
-  --orb-shadow-outer: rgba(234, 88, 12, 0.15);
-  --orb-shadow-inner: rgba(249, 115, 22, 0.1);
+  --orb-shadow-outer: rgba(255, 75, 41, 0.15);
+  --orb-shadow-inner: rgba(233, 46, 32, 0.1);
 }
