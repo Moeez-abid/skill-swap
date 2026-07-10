@@ -78,17 +78,14 @@ export default function Home() {
         <h2 id="benefits-title" className="section-title reveal">Why Join SkillSwap?</h2>
         <div className="steps-grid">
           <article className="step-card glass-card reveal">
-            <div className="step-card__icon" aria-hidden="true" style={{ background: 'rgba(59, 130, 246, 0.1)', color: 'var(--brand-blue)' }}>🎓</div>
             <h3>Learn Without Paying</h3>
             <p>Master new skills like Python or French by trading your own expertise. No money ever changes hands.</p>
           </article>
           <article className="step-card glass-card reveal reveal-delay-1">
-            <div className="step-card__icon" aria-hidden="true" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>📈</div>
             <h3>Validate Your Expertise</h3>
             <p>Teach others to solidify your knowledge. Earn verified reviews and build a public portfolio of your skills.</p>
           </article>
           <article className="step-card glass-card reveal reveal-delay-2">
-            <div className="step-card__icon" aria-hidden="true" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>🤝</div>
             <h3>Expand Your Network</h3>
             <p>Connect directly with industry professionals through 1-on-1 video sessions and real-time chat.</p>
           </article>
