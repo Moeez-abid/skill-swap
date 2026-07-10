@@ -44,7 +44,7 @@ body {
 .glow-orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(130px);
+  filter: blur(180px);
   transition: opacity 0.4s ease, background 0.4s ease;
 }
 
