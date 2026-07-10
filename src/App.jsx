@@ -81,7 +81,7 @@ export default function App() {
         </Routes>
       </main>
 
-      <Footer />
+      {location.pathname !== '/messages' && location.pathname !== '/groups' && <Footer />}
     </>
   );
 }
