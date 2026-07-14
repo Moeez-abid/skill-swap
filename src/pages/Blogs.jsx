@@ -22,8 +22,8 @@ function CommentNode({ comment, onReply, onDelete, loggedIn, currentUser, adminU
     : '?';
 
   return (
-    <div className="comment-node" style={{ marginTop: '16px', paddingLeft: comment.parentId ? '24px' : '0px', borderLeft: comment.parentId ? '2px solid var(--glass-border)' : 'none' }}>
-      <div className="glass-card" style={{ padding: '16px', borderRadius: '12px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)' }}>
+    <div className="comment-node" style={{ marginTop: '16px', paddingLeft: comment.parentId ? '24px' : '0px', borderLeft: comment.parentId ? '2px solid var(--border)' : 'none' }}>
+      <div className="glass-card" style={{ padding: '16px', borderRadius: '12px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {comment.author?.avatarUrl ? (
@@ -54,7 +54,7 @@ function CommentNode({ comment, onReply, onDelete, loggedIn, currentUser, adminU
           <button 
             onClick={() => setActiveReplyId(isReplying ? null : comment.id)} 
             className="btn nav-btn--ghost" 
-            style={{ padding: '4px 12px', fontSize: '12px', borderRadius: '20px', minHeight: 'auto', background: 'var(--glass-bg-btn)' }}
+            style={{ padding: '4px 12px', fontSize: '12px', borderRadius: '20px', minHeight: 'auto', background: 'var(--bg-surface-raised)' }}
           >
             {isReplying ? 'Cancel' : 'Reply'}
           </button>
@@ -69,7 +69,7 @@ function CommentNode({ comment, onReply, onDelete, loggedIn, currentUser, adminU
               rows="2"
               required
               className="form-group textarea"
-              style={{ width: '100%', padding: '10px', fontSize: '13px', borderRadius: '8px', minHeight: '60px', resize: 'vertical', background: 'var(--glass-bg)', color: 'var(--text-primary)', border: '1px solid var(--glass-border)' }}
+              style={{ width: '100%', padding: '10px', fontSize: '13px', borderRadius: '8px', minHeight: '60px', resize: 'vertical', background: 'var(--bg-surface)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
             />
             <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
               <button type="submit" className="btn" style={{ padding: '6px 12px', fontSize: '12px', minHeight: 'auto' }}>Submit</button>
@@ -243,7 +243,7 @@ export default function Blogs() {
 
   if (loading) {
     return (
-      <div style={{ paddingTop: '100px', minHeight: 'calc(100vh - 200px)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+      <div style={{ paddingTop: '130px', minHeight: 'calc(100vh - 200px)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         <p className="loading">Loading blogs...</p>
       </div>
     );
@@ -252,7 +252,7 @@ export default function Blogs() {
   // --- DETAIL VIEW ---
   if (postId && currentPost) {
     return (
-      <div className="animate-fade-up" style={{ paddingTop: '100px', minHeight: 'calc(100vh - 200px)', paddingBottom: '64px', maxWidth: '800px', margin: '0 auto' }}>
+      <div className="animate-fade-up" style={{ paddingTop: '130px', minHeight: 'calc(100vh - 200px)', paddingBottom: '64px', maxWidth: '800px', margin: '0 auto' }}>
         <button onClick={() => setSearchParams({})} className="btn nav-btn--ghost" style={{ marginBottom: '24px', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
           &larr; Back to Blogs
         </button>
@@ -283,10 +283,10 @@ export default function Blogs() {
               />
             </div>
             <div style={{ display: 'flex', gap: '12px' }}>
-              <button type="submit" className="btn" disabled={submitting}>
+              <button type="submit" className="primary-cta" disabled={submitting}>
                 {submitting ? 'Saving...' : 'Save Changes'}
               </button>
-              <button type="button" onClick={cancelEdit} className="btn nav-btn--ghost">
+              <button type="button" onClick={cancelEdit} className="btn-secondary">
                 Cancel
               </button>
             </div>
@@ -298,7 +298,7 @@ export default function Blogs() {
                 {currentPost.title}
               </h1>
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', paddingBottom: '16px', borderBottom: '1px solid var(--glass-border-subtle)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', paddingBottom: '16px', borderBottom: '1px solid var(--border-subtle)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   {currentPost.author?.avatarUrl ? (
                     <img src={getImageUrl(currentPost.author.avatarUrl)} alt={currentPost.author.name} style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
@@ -317,10 +317,10 @@ export default function Blogs() {
 
                 {adminUser && (
                   <div style={{ display: 'flex', gap: '8px' }}>
-                    <button onClick={startEdit} className="btn nav-btn--ghost" style={{ padding: '6px 12px', fontSize: '13px', minHeight: 'auto' }}>
+                    <button onClick={startEdit} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '13px', minHeight: 'auto' }}>
                       Edit
                     </button>
-                    <button onClick={handleDeletePost} className="btn nav-btn--ghost" style={{ padding: '6px 12px', fontSize: '13px', minHeight: 'auto', color: '#ef4444' }}>
+                    <button onClick={handleDeletePost} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '13px', minHeight: 'auto', color: '#ef4444', borderColor: '#ef4444' }}>
                       Delete
                     </button>
                   </div>
@@ -351,14 +351,14 @@ export default function Blogs() {
                       rows="3"
                     />
                   </div>
-                  <button type="submit" className="btn" disabled={submitting}>
+                  <button type="submit" className="primary-cta" disabled={submitting}>
                     {submitting ? 'Posting...' : 'Post Comment'}
                   </button>
                 </form>
               ) : (
-                <div style={{ padding: '16px', borderRadius: '8px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--glass-border)', marginBottom: '32px', textAlign: 'center' }}>
+                <div style={{ padding: '16px', borderRadius: '8px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', marginBottom: '32px', textAlign: 'center' }}>
                   <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '14px' }}>
-                    You must <Link to="/login" style={{ color: 'var(--brand-blue)', fontWeight: '600' }}>log in</Link> to reply or comment on this article.
+                    You must <Link to="/login" style={{ color: 'var(--accent)', fontWeight: '600' }}>log in</Link> to reply or comment on this article.
                   </p>
                 </div>
               )}
@@ -391,7 +391,7 @@ export default function Blogs() {
 
   // --- LIST VIEW ---
   return (
-    <div className="animate-fade-up" style={{ paddingTop: '100px', paddingBottom: '64px' }}>
+    <div className="animate-fade-up" style={{ paddingTop: '130px', paddingBottom: '64px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
         <div className="page-header" style={{ marginBottom: 0 }}>
           <h1 className="page-title">Community Blogs</h1>
@@ -400,7 +400,7 @@ export default function Blogs() {
           </p>
         </div>
         {adminUser && !isCreating && (
-          <button onClick={() => setIsCreating(true)} className="btn">
+          <button onClick={() => setIsCreating(true)} className="primary-cta">
             Create Blog Post
           </button>
         )}
@@ -434,10 +434,10 @@ export default function Blogs() {
             />
           </div>
           <div style={{ display: 'flex', gap: '12px' }}>
-            <button type="submit" className="btn" disabled={submitting}>
+            <button type="submit" className="primary-cta" disabled={submitting}>
               {submitting ? 'Publishing...' : 'Publish Post'}
             </button>
-            <button type="button" onClick={cancelEdit} className="btn nav-btn--ghost">
+            <button type="button" onClick={cancelEdit} className="btn-secondary">
               Cancel
             </button>
           </div>
@@ -478,7 +478,7 @@ export default function Blogs() {
                   {snippet}
                 </p>
 
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto', paddingTop: '12px', borderTop: '1px solid var(--glass-border-subtle)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto', paddingTop: '12px', borderTop: '1px solid var(--border-subtle)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {post.author?.avatarUrl ? (
                       <img src={getImageUrl(post.author.avatarUrl)} alt={post.author.name} style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }} />
@@ -489,7 +489,7 @@ export default function Blogs() {
                     )}
                     <span style={{ fontSize: '13px', fontWeight: '500', color: 'var(--text-primary)' }}>{post.author?.name}</span>
                   </div>
-                  <span style={{ fontSize: '13px', color: 'var(--brand-blue)', fontWeight: '500' }}>
+                  <span style={{ fontSize: '13px', color: 'var(--accent)', fontWeight: '500' }}>
                     {post._count?.comments || 0} comment{post._count?.comments === 1 ? '' : 's'}
                   </span>
                 </div>

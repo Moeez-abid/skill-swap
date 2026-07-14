@@ -1,11 +1,11 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma.js';
-import { authenticate, requireAdmin } from '../middleware/auth.js';
+import { authenticate, requireRole } from '../middleware/auth.js';
 import { apiError, apiSuccess } from '../utils/helpers.js';
 
 const router = Router();
 
-router.use(authenticate, requireAdmin);
+router.use(authenticate, requireRole(['SUPER_ADMIN', 'MANAGER', 'MAINTENANCE_ADMIN']));
 
 router.get('/analytics', async (_req, res) => {
   const now = new Date();
@@ -39,7 +39,7 @@ router.get('/users', async (req, res) => {
   const users = await prisma.user.findMany({
     where: { deletedAt: null },
     select: {
-      id: true, email: true, name: true, role: true, isSuspended: true,
+      id: true, email: true, name: true, role: true, isBanned: true,
       createdAt: true, _count: { select: { skills: true } },
     },
     orderBy: { createdAt: 'desc' },
@@ -48,23 +48,23 @@ router.get('/users', async (req, res) => {
   return apiSuccess(res, { users });
 });
 
-router.patch('/users/:id/suspend', async (req, res) => {
+router.patch('/users/:id/ban', requireRole(['SUPER_ADMIN', 'MANAGER']), async (req, res) => {
   const { reason } = req.body;
   const user = await prisma.user.update({
     where: { id: req.params.id },
-    data: { isSuspended: true, suspendedAt: new Date(), suspendedReason: reason || 'Policy violation' },
+    data: { isBanned: true, bannedAt: new Date(), banReason: reason || 'Policy violation' },
   });
 
   await prisma.auditLog.create({
     data: {
-      action: 'USER_SUSPENDED',
+      action: 'USER_BANNED',
       actorId: req.user.id,
       targetId: user.id,
       metadata: { reason },
     },
   });
 
-  return apiSuccess(res, { user: { id: user.id, isSuspended: true } });
+  return apiSuccess(res, { user: { id: user.id, isBanned: true } });
 });
 
 router.get('/moderation', async (_req, res) => {

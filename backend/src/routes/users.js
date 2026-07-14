@@ -14,7 +14,7 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 *
 
 router.get('/', authenticate, async (req, res) => {
   const usersList = await prisma.user.findMany({
-    where: { id: { not: req.user.id }, deletedAt: null, isSuspended: false },
+    where: { id: { not: req.user.id }, deletedAt: null, isBanned: false },
     select: { id: true, name: true, avatarUrl: true },
     orderBy: { name: 'asc' }
   });
@@ -24,7 +24,7 @@ router.get('/', authenticate, async (req, res) => {
 router.get('/:id/profile', async (req, res) => {
   const [user, completedSwaps] = await Promise.all([
     prisma.user.findFirst({
-      where: { id: req.params.id, deletedAt: null, isSuspended: false },
+      where: { id: req.params.id, deletedAt: null, isBanned: false },
       select: {
         id: true, name: true, headline: true, bio: true, location: true, avatarUrl: true,
         linkedinUrl: true, githubUrl: true, portfolioUrl: true,
@@ -149,6 +149,53 @@ router.patch('/me/verify', authenticate, async (req, res) => {
     select: { id: true, name: true, verificationRequested: true, isVerified: true }
   });
   return apiSuccess(res, { user });
+});
+
+router.post('/:id/block', authenticate, async (req, res) => {
+  if (req.user.id === req.params.id) {
+    return apiError(res, 400, 'You cannot block yourself');
+  }
+
+  const { reason } = req.body;
+  try {
+    const block = await prisma.block.create({
+      data: {
+        blockerId: req.user.id,
+        blockedId: req.params.id,
+        reason: reason || null,
+      }
+    });
+    return apiSuccess(res, { block, message: 'User blocked successfully' });
+  } catch (err) {
+    if (err.code === 'P2002') return apiError(res, 400, 'User is already blocked');
+    console.error(err);
+    return apiError(res, 500, 'Failed to block user');
+  }
+});
+
+router.post('/:id/flag', authenticate, async (req, res) => {
+  if (req.user.id === req.params.id) {
+    return apiError(res, 400, 'You cannot report yourself');
+  }
+
+  const { reason, description } = req.body;
+  if (!reason) return apiError(res, 400, 'Reason is required');
+
+  try {
+    const flag = await prisma.flag.create({
+      data: {
+        reporterId: req.user.id,
+        targetType: 'USER',
+        targetId: req.params.id,
+        reason,
+        description: description || null,
+      }
+    });
+    return apiSuccess(res, { flag, message: 'User reported successfully' });
+  } catch (err) {
+    console.error(err);
+    return apiError(res, 500, 'Failed to report user');
+  }
 });
 
 export default router;

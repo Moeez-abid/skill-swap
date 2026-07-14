@@ -187,7 +187,7 @@ export default function Groups() {
         <div className="messages-layout animate-fade-up delay-1" style={{ flex: 1, minHeight: 0 }}>
           {/* SIDEBAR */}
           <aside className={`glass-card messages-sidebar ${selectedGroup ? 'hide-on-mobile' : ''}`} style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, overflow: 'hidden' }} aria-label="Groups">
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--glass-bg)', borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-surface)', borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }}>
               <strong style={{ fontSize: '1.05rem' }}>Community Groups</strong>
               <button type="button" className="primary-cta" onClick={() => setIsCreating(true)} style={{ padding: '6px 12px', fontSize: '0.85rem', width: 'auto' }}>+ Create Group</button>
             </div>
@@ -198,7 +198,7 @@ export default function Groups() {
                 placeholder="Search groups..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--glass-border)', background: 'var(--glass-bg)', color: 'var(--text-primary)', outline: 'none' }}
+                style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-primary)', outline: 'none' }}
               />
             </div>
 
@@ -244,7 +244,7 @@ export default function Groups() {
           <section className={`message-thread glass-card messages-main ${!selectedGroup ? 'hide-on-mobile' : ''}`} aria-label="Group Chat">
             {selectedGroup ? (
               <>
-                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', background: 'var(--glass-bg)', borderTopLeftRadius: '16px', borderTopRightRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', background: 'var(--bg-surface)', borderTopLeftRadius: '16px', borderTopRightRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <button type="button" className="mobile-back-btn" onClick={() => setSelectedGroup(null)} aria-label="Back to groups">
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
@@ -323,14 +323,14 @@ export default function Groups() {
                 </div>
 
                 {selectedGroup.isMember && (
-                  <form onSubmit={handleSendMessage} style={{ padding: '16px 20px', background: 'rgba(255,255,255,0.01)', borderTop: '1px solid var(--glass-border-subtle)', display: 'flex', gap: '12px', alignItems: 'center' }}>
+                  <form onSubmit={handleSendMessage} style={{ padding: '16px 20px', background: 'rgba(255,255,255,0.01)', borderTop: '1px solid var(--border-subtle)', display: 'flex', gap: '12px', alignItems: 'center' }}>
                     <input
                       type="text"
                       placeholder="Type a message to the group..."
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
                       required
-                      style={{ flex: 1, padding: '12px 16px', borderRadius: '24px', border: '1px solid var(--glass-border)', background: 'var(--glass-bg)', color: 'var(--text-primary)', outline: 'none' }}
+                      style={{ flex: 1, padding: '12px 16px', borderRadius: '24px', border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-primary)', outline: 'none' }}
                     />
                     <button type="submit" className="primary-cta" style={{ borderRadius: '24px', padding: '10px 24px', fontSize: '14px', minHeight: 'auto' }}>
                       Send

@@ -132,7 +132,7 @@ export default function CreateSkill() {
   };
 
   return (
-    <div style={{ paddingTop: '100px', paddingBottom: '64px' }}>
+    <div style={{ paddingTop: '130px', paddingBottom: '64px' }}>
       <div className="page-header animate-fade-up">
         <h1 className="page-title">{editId ? 'Edit Skill' : 'List a Skill'}</h1>
         <p className="page-subtitle">

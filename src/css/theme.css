@@ -1,88 +1,118 @@
-/* Shared theme tokens — SkillSwap Premium Theme */
+/* SkillSwap — Design Tokens (Zinc + Burnt Orange) */
 
 :root,
 [data-theme="light"] {
   color-scheme: light;
 
-  /* Primary Accent & Buttons */
-  --brand-blue: #E92E20; /* Original Primary Red-Orange */
-  --brand-blue-hover-shadow: #F87E62;
-  --brand-blue-shadow: rgba(233, 46, 32, 0.25);
-  --accent-star: #F87E62; 
+  /* Accent (Burnt Orange) */
+  --accent: #E8530E;
+  --accent-hover: #D14A0B;
+  --accent-subtle: rgba(232, 83, 14, 0.08);
+  --accent-shadow: rgba(232, 83, 14, 0.15);
+  --accent-star: #F59E0B;
 
-  /* Background & Typography */
-  --bg-page: #F9FAFB; /* Crisp, clean very light gray */
-  --text-primary: #111827; /* Near black */
-  --text-secondary: #4B5563; /* Slate gray */
-  --text-muted: #9CA3AF; /* Muted gray */
+  /* Surfaces */
+  --bg-page: #FFFFFF;
+  --bg-surface: #FFFFFF;
+  --bg-surface-raised: #F4F4F5;
+  --bg-surface-inset: #FAFAFA;
 
-  /* Glow Elements */
-  --glow-orb-1: #FBBBB3;
-  --glow-orb-2: #F87E62;
-  --glow-opacity: 0.35;
+  /* Borders */
+  --border: #E4E4E7;
+  --border-subtle: #F4F4F5;
+  --border-hover: #D4D4D8;
 
-  /* UI Cards / Containers (True Glassmorphism) */
-  --glass-bg: rgba(255, 255, 255, 0.75);
-  --glass-bg-hover: rgba(255, 255, 255, 0.95);
-  --glass-bg-subtle: rgba(243, 244, 246, 0.6);
-  --glass-bg-btn: rgba(255, 255, 255, 0.6);
-  --glass-border: rgba(0, 0, 0, 0.06);
-  --glass-border-subtle: rgba(0, 0, 0, 0.03);
-  --glass-border-light: rgba(255, 255, 255, 0.8);
-  --glass-inset: rgba(255, 255, 255, 0.6);
-  --glass-inset-strong: rgba(255, 255, 255, 0.9);
-  --glass-shadow: rgba(17, 24, 39, 0.06);
-  --glass-cta-inset: rgba(255, 255, 255, 0.25);
+  /* Text */
+  --text-primary: #09090B;
+  --text-secondary: #71717A;
+  --text-muted: #A1A1AA;
 
-  /* Gradients */
-  --orb-gradient: radial-gradient(circle at 35% 30%, rgba(249,250,251,0.2) 0%, rgba(248,126,98,0.3) 50%, transparent 100%);
-  --orb-inner-gradient: radial-gradient(circle at 40% 35%, rgba(255, 255, 255, 0.8) 0%, rgba(251,187,179,0.4) 50%, transparent 80%);
-  --orb-shine: rgba(255, 255, 255, 0.9);
-  --orb-border: rgba(255, 255, 255, 0.5);
-  --orb-shadow-outer: rgba(233, 46, 32, 0.15);
-  --orb-shadow-inner: rgba(248, 126, 98, 0.15);
+  /* Semantic */
+  --brand-green: #16A34A;
+  --brand-orange: #E8530E;
 
-  --transition-theme: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.06), 0 4px 6px rgba(0, 0, 0, 0.04);
+
+  /* Transition */
+  --transition-fast: 0.15s ease;
+  --transition-theme: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+
+  /* Legacy aliases (for components not yet migrated) */
+  --brand-blue: #E8530E;
+  --brand-blue-hover-shadow: #D14A0B;
+  --brand-blue-shadow: rgba(232, 83, 14, 0.15);
+  --glass-bg: #FFFFFF;
+  --glass-bg-hover: #F4F4F5;
+  --glass-bg-subtle: #FAFAFA;
+  --glass-bg-btn: #F4F4F5;
+  --glass-border: #E4E4E7;
+  --glass-border-subtle: #F4F4F5;
+  --glass-border-light: #E4E4E7;
+  --glass-inset: transparent;
+  --glass-inset-strong: transparent;
+  --glass-shadow: rgba(0, 0, 0, 0.04);
+  --glass-cta-inset: transparent;
+  --bg-layer: #FFFFFF;
+  --orb-shadow-outer: rgba(232, 83, 14, 0.08);
+  --orb-shadow-inner: rgba(232, 83, 14, 0.06);
 }
 
 [data-theme="dark"] {
   color-scheme: dark;
 
-  /* Primary Accent & Buttons */
-  --brand-blue: #FF4B29; /* Original Primary Red-Orange */
-  --brand-blue-hover-shadow: #E92E20;
-  --brand-blue-shadow: rgba(255, 75, 41, 0.25);
-  --accent-star: #FF4B29;
+  /* Accent (Burnt Orange — slightly brighter for dark) */
+  --accent: #F06623;
+  --accent-hover: #E8530E;
+  --accent-subtle: rgba(240, 102, 35, 0.1);
+  --accent-shadow: rgba(240, 102, 35, 0.2);
+  --accent-star: #FBBF24;
 
-  /* Background & Typography */
-  --bg-page: #0A0A0A; /* Clean, professional deep neutral black */
-  --text-primary: #FFFFFF; /* Pure white */
-  --text-secondary: #A1A1AA; /* Muted slate */
-  --text-muted: #52525B; /* Darker slate */
+  /* Surfaces */
+  --bg-page: #09090B;
+  --bg-surface: #18181B;
+  --bg-surface-raised: #27272A;
+  --bg-surface-inset: #111113;
 
-  /* Glow Elements */
-  --glow-orb-1: #FF4B29;
-  --glow-orb-2: #E92E20;
-  --glow-opacity: 0.15; /* Much more subtle */
+  /* Borders */
+  --border: #27272A;
+  --border-subtle: #1C1C1F;
+  --border-hover: #3F3F46;
 
-  /* UI Cards / Containers (True Glassmorphism) */
-  --glass-bg: rgba(23, 23, 23, 0.65); /* Neutral dark gray, translucent */
-  --glass-bg-hover: rgba(38, 38, 38, 0.75);
-  --glass-bg-subtle: rgba(15, 15, 15, 0.5);
-  --glass-bg-btn: rgba(30, 30, 30, 0.5);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-border-subtle: rgba(255, 255, 255, 0.03);
-  --glass-border-light: rgba(255, 255, 255, 0.12);
-  --glass-inset: rgba(255, 255, 255, 0.03);
-  --glass-inset-strong: rgba(255, 255, 255, 0.08);
-  --glass-shadow: rgba(0, 0, 0, 0.5);
-  --glass-cta-inset: rgba(255, 255, 255, 0.15);
+  /* Text */
+  --text-primary: #FAFAFA;
+  --text-secondary: #A1A1AA;
+  --text-muted: #52525B;
 
-  /* Gradients */
-  --orb-gradient: radial-gradient(circle at 35% 30%, rgba(23,23,23,0.2) 0%, rgba(255,75,41,0.4) 50%, transparent 100%);
-  --orb-inner-gradient: radial-gradient(circle at 40% 35%, rgba(255, 255, 255, 0.1) 0%, rgba(233,46,32,0.2) 50%, transparent 80%);
-  --orb-shine: rgba(255, 255, 255, 0.15);
-  --orb-border: rgba(255, 255, 255, 0.05);
-  --orb-shadow-outer: rgba(255, 75, 41, 0.15);
-  --orb-shadow-inner: rgba(233, 46, 32, 0.1);
+  /* Semantic */
+  --brand-green: #22C55E;
+  --brand-orange: #F06623;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.25), 0 2px 4px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.3), 0 4px 6px rgba(0, 0, 0, 0.2);
+
+  /* Legacy aliases */
+  --brand-blue: #F06623;
+  --brand-blue-hover-shadow: #E8530E;
+  --brand-blue-shadow: rgba(240, 102, 35, 0.2);
+  --glass-bg: #18181B;
+  --glass-bg-hover: #27272A;
+  --glass-bg-subtle: #111113;
+  --glass-bg-btn: #27272A;
+  --glass-border: #27272A;
+  --glass-border-subtle: #1C1C1F;
+  --glass-border-light: #3F3F46;
+  --glass-inset: transparent;
+  --glass-inset-strong: transparent;
+  --glass-shadow: rgba(0, 0, 0, 0.3);
+  --glass-cta-inset: transparent;
+  --bg-layer: #18181B;
+  --orb-shadow-outer: rgba(240, 102, 35, 0.1);
+  --orb-shadow-inner: rgba(240, 102, 35, 0.08);
 }

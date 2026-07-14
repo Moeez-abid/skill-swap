@@ -122,11 +122,11 @@ export default function SkillDetail() {
     }
   };
 
-  if (loading) return <div className="main-container" style={{ paddingTop: '100px', paddingBottom: '64px' }}><p className="loading">Loading skill…</p></div>;
-  if (error || !skill) return <div className="main-container" style={{ paddingTop: '100px', paddingBottom: '64px' }}><div className="empty-state"><h3>Skill not found</h3></div></div>;
+  if (loading) return <div className="main-container" style={{ paddingTop: '130px', paddingBottom: '64px' }}><p className="loading">Loading skill…</p></div>;
+  if (error || !skill) return <div className="main-container" style={{ paddingTop: '130px', paddingBottom: '64px' }}><div className="empty-state"><h3>Skill not found</h3></div></div>;
 
   return (
-    <div style={{ paddingTop: '100px', paddingBottom: '64px' }}>
+    <div style={{ paddingTop: '130px', paddingBottom: '64px' }}>
       <div className="detail-layout">
         <article className="detail-main glass-card animate-fade-up">
           {skill.coverImageUrl && (

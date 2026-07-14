@@ -76,10 +76,10 @@ export default function Dashboard() {
     };
   }, [navigate]);
 
-  if (error) return <div style={{ paddingTop: '100px', paddingBottom: '64px' }}><div className="empty-state"><h3>Dashboard unavailable</h3><p>Start the backend to load your dashboard.</p></div></div>;
+  if (error) return <div style={{ paddingTop: '130px', paddingBottom: '64px' }}><div className="empty-state"><h3>Dashboard unavailable</h3><p>Start the backend to load your dashboard.</p></div></div>;
 
   return (
-    <div style={{ paddingTop: '100px', paddingBottom: '64px' }}>
+    <div style={{ paddingTop: '130px', paddingBottom: '64px' }}>
       <div className="page-header animate-fade-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div>
           <h1 className="page-title">Dashboard</h1>
@@ -109,7 +109,7 @@ export default function Dashboard() {
             <div className="stat-card__label">Avg Rating</div>
           </div>
           {pendingActions > 0 && (
-            <div className="stat-card glass-card" style={{ borderColor: 'var(--brand-blue)' }}>
+            <div className="stat-card glass-card" style={{ borderColor: 'var(--accent)' }}>
               <div className="stat-card__value">{pendingActions}</div>
               <div className="stat-card__label">Pending Requests</div>
             </div>
@@ -141,7 +141,7 @@ export default function Dashboard() {
           <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>Recent Unread Messages</h2>
           {unreadMessages.length > 0 ? (
             unreadMessages.map((m, i) => (
-              <div key={i} style={{ display: 'flex', gap: '12px', padding: '12px 0', borderBottom: '1px solid var(--glass-border-subtle)' }}>
+              <div key={i} style={{ display: 'flex', gap: '12px', padding: '12px 0', borderBottom: '1px solid var(--border-subtle)' }}>
                 <Avatar user={m.sender} size={36} />
                 <div>
                   <strong>{m.sender.name}</strong>

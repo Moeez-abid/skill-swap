@@ -113,54 +113,66 @@ export default function Marketplace() {
   };
 
   return (
-    <div style={{ paddingTop: '100px', paddingBottom: '64px' }}>
-      <div className="page-header animate-fade-up">
-        <h1 className="page-title">Skills Marketplace</h1>
-        <p className="page-subtitle">Browse skills offered by the community. Search, filter by category and level, then request a swap.</p>
-      </div>
+    <div style={{ paddingTop: '130px', paddingBottom: '64px' }}>
+      <section className="hero-search-area glass-card animate-fade-up">
+        <h2>What do you want to learn today?</h2>
+        <p>Discover experts ready to swap skills. Connect, learn, and grow together.</p>
+        
+        <form onSubmit={handleSearchSubmit} className="hero-search-input-group">
+          <svg className="search-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input 
+            type="text" 
+            placeholder="e.g. Advanced React, Conversational French, 3D Modeling..." 
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+          />
+          <button type="submit" className="primary-cta">Search</button>
+        </form>
+        
+        <div className="filter-chips">
+          <span className="filter-chip-label">Categories:</span>
+          <button 
+            type="button" 
+            className={`filter-chip ${category === '' ? 'active' : ''}`}
+            onClick={() => handleCategoryChange({ target: { value: '' } })}
+          >
+            All
+          </button>
+          {categories.map(c => (
+            <button 
+              key={c.slug}
+              type="button" 
+              className={`filter-chip ${category === c.slug ? 'active' : ''}`}
+              onClick={() => handleCategoryChange({ target: { value: c.slug } })}
+            >
+              {c.name}
+            </button>
+          ))}
+        </div>
+      </section>
 
-      <form onSubmit={handleSearchSubmit} className="glass-card animate-fade-up delay-1" style={{ display: 'flex', padding: '6px', borderRadius: '12px', marginBottom: '20px', boxShadow: '0 4px 20px var(--glass-shadow)' }}>
-        <input 
-          type="search" 
-          placeholder="What skill are you looking for?" 
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          style={{ flex: 1, border: 'none', background: 'transparent', fontSize: '1rem', padding: '12px 16px', color: 'var(--text-primary)', outline: 'none', boxShadow: 'none' }} 
-        />
-        <button type="submit" className="primary-cta" style={{ padding: '0 24px', fontSize: '0.95rem', borderRadius: '8px' }}>Search</button>
-      </form>
-      
-      <div className="filters-bar glass-card animate-fade-up delay-2">
-        <label>Category 
-          <select value={category} onChange={handleCategoryChange}>
-            <option value="">All categories</option>
-            {categories.map(c => (
-              <option key={c.slug} value={c.slug}>{c.name}</option>
-            ))}
-          </select>
-        </label>
-        <label>Level 
-          <select value={level} onChange={handleLevelChange}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', gap: '16px' }}>
+          <select value={level} onChange={handleLevelChange} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', padding: '8px 16px', borderRadius: '8px', color: 'var(--text-primary)' }}>
             <option value="">All levels</option>
             <option value="BEGINNER">Beginner</option>
             <option value="INTERMEDIATE">Intermediate</option>
             <option value="ADVANCED">Advanced</option>
           </select>
-        </label>
-        <label>Sort by 
-          <select value={sort} onChange={handleSortChange}>
+          <select value={sort} onChange={handleSortChange} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', padding: '8px 16px', borderRadius: '8px', color: 'var(--text-primary)' }}>
             <option value="newest">Newest</option>
             <option value="popular">Most Popular</option>
             <option value="rating">Highest Rated</option>
             <option value="alpha">Alphabetical</option>
           </select>
-        </label>
-        <Link to="/create-skill" className="primary-cta" style={{ marginLeft: 'auto' }}>+ List a Skill</Link>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <p className="results-count" style={{ margin: 0 }}>
+            {pagination.total} skill{pagination.total !== 1 ? 's' : ''} found
+          </p>
+          <Link to="/create-skill" className="primary-cta" style={{ padding: '8px 16px', fontSize: '0.9rem' }}>+ List a Skill</Link>
+        </div>
       </div>
-      
-      <p className="results-count animate-fade-up delay-3">
-        {pagination.total} skill{pagination.total !== 1 ? 's' : ''} found
-      </p>
       
       <div className="skills-grid">
         {loading ? (

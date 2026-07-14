@@ -13,7 +13,7 @@ export function initNodeGraph(canvasId) {
   // Get theme color (Aigocy Primary Red) or default to red
   const getThemeColor = () => {
     const rootStyles = getComputedStyle(document.documentElement);
-    return rootStyles.getPropertyValue('--brand-blue').trim() || '#E92E20';
+    return rootStyles.getPropertyValue('--accent').trim() || '#E8530E';
   };
 
   let nodes = [];

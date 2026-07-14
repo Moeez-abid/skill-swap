@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SkillSwap - Active Exchanges</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "error": "#ba1a1a",
+                        "secondary-container": "#e1d4fd",
+                        "on-surface": "#1d1b20",
+                        "inverse-surface": "#322f35",
+                        "on-background": "#1d1b20",
+                        "on-primary-fixed-variant": "#4f378a",
+                        "surface": "#fdf7ff",
+                        "surface-container-highest": "#e6e0e9",
+                        "on-secondary": "#ffffff",
+                        "background": "#fdf7ff",
+                        "surface-tint": "#6750a4",
+                        "on-tertiary-fixed-variant": "#594400",
+                        "on-secondary-container": "#645a7d",
+                        "on-secondary-fixed-variant": "#4b4263",
+                        "tertiary-fixed-dim": "#e7c365",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#cdc0e9",
+                        "tertiary-fixed": "#ffdf93",
+                        "surface-container": "#f2ecf4",
+                        "outline-variant": "#cbc4d2",
+                        "on-primary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-dim": "#ded8e0",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed": "#1f1635",
+                        "on-tertiary-fixed": "#241a00",
+                        "secondary": "#63597c",
+                        "surface-bright": "#fdf7ff",
+                        "on-error": "#ffffff",
+                        "surface-container-high": "#ece6ee",
+                        "primary-fixed-dim": "#cfbcff",
+                        "inverse-primary": "#cfbcff",
+                        "on-tertiary-container": "#503d00",
+                        "on-primary-fixed": "#22005d",
+                        "on-surface-variant": "#494551",
+                        "surface-container-low": "#f8f2fa",
+                        "primary-fixed": "#e9ddff",
+                        "primary": "#4f378a",
+                        "tertiary-container": "#c9a74d",
+                        "inverse-on-surface": "#f5eff7",
+                        "primary-container": "#6750a4",
+                        "surface-variant": "#e6e0e9",
+                        "on-tertiary": "#ffffff",
+                        "outline": "#7a7582",
+                        "on-primary-container": "#e0d2ff",
+                        "secondary-fixed": "#e9ddff",
+                        "tertiary": "#765b00"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "sidebar-width": "280px",
+                        "container-max": "1440px",
+                        "gutter": "24px",
+                        "margin-desktop": "64px",
+                        "unit": "8px"
+                    },
+                    fontFamily: {
+                        "label-md": ["Plus Jakarta Sans"],
+                        "body-md": ["Plus Jakarta Sans"],
+                        "display-lg": ["Plus Jakarta Sans"],
+                        "body-lg": ["Plus Jakarta Sans"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "headline-lg": ["Plus Jakarta Sans"],
+                        "label-sm": ["Plus Jakarta Sans"]
+                    },
+                    fontSize: {
+                        "label-md": ["14px", { lineHeight: "1.2", letterSpacing: "0.01em", fontWeight: "600" }],
+                        "body-md": ["16px", { lineHeight: "1.6", fontWeight: "400" }],
+                        "display-lg": ["48px", { lineHeight: "1.2", letterSpacing: "-0.02em", fontWeight: "800" }],
+                        "body-lg": ["18px", { lineHeight: "1.6", fontWeight: "400" }],
+                        "headline-md": ["24px", { lineHeight: "1.4", fontWeight: "700" }],
+                        "headline-lg": ["32px", { lineHeight: "1.3", letterSpacing: "-0.01em", fontWeight: "700" }],
+                        "label-sm": ["12px", { lineHeight: "1.2", fontWeight: "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: theme('colors.background');
+            background-image: radial-gradient(at 0% 0%, rgba(207, 188, 255, 0.15) 0px, transparent 50%),
+                              radial-gradient(at 100% 100%, rgba(233, 221, 255, 0.15) 0px, transparent 50%);
+            background-attachment: fixed;
+        }
+        
+        /* Glassmorphic utilities */
+        .glass-panel {
+            background-color: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(203, 196, 210, 0.3); /* outline-variant */
+        }
+        
+        .glass-panel-elevated {
+            background-color: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(203, 196, 210, 0.4);
+            box-shadow: 0 10px 30px -10px rgba(79, 55, 138, 0.05); /* primary tint shadow */
+        }
+
+        .ghost-button {
+            background-color: transparent;
+            border: 1px solid theme('colors.outline-variant');
+            transition: all 0.2s ease;
+        }
+        .ghost-button:hover {
+            background-color: rgba(79, 55, 138, 0.05); /* primary/5 */
+            border-color: theme('colors.primary');
+        }
+
+        /* Custom Scrollbar for inner areas if needed */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: theme('colors.surface-variant');
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: theme('colors.outline-variant');
+        }
+    </style>
+</head>
+<body class="text-on-surface antialiased min-h-screen overflow-x-hidden">
+<!-- TopNavBar -->
+<nav class="fixed top-0 right-0 w-[calc(100%-280px)] h-16 bg-surface/70 dark:bg-on-surface/70 backdrop-blur-md z-40 border-b border-white/10 flex items-center justify-between px-margin-desktop transition-all duration-300">
+<!-- Search -->
+<div class="flex items-center flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" style="font-variation-settings: 'FILL' 0;">search</span>
+<input class="w-full bg-surface-container/50 border border-outline-variant/30 rounded-full py-2 pl-10 pr-4 font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all backdrop-blur-sm" placeholder="Search skills, users, or communities..." type="text"/>
+</div>
+</div>
+<!-- Right Actions -->
+<div class="flex items-center gap-gutter">
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-surface-variant/50 text-on-surface-variant hover:text-primary transition-colors cursor-pointer relative group">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full border-2 border-surface"></span>
+</button>
+<button class="p-2 rounded-full hover:bg-surface-variant/50 text-on-surface-variant hover:text-primary transition-colors cursor-pointer group">
+<span class="material-symbols-outlined">help</span>
+</button>
+</div>
+<div class="h-8 w-px bg-outline-variant/30 mx-2"></div>
+<button class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+<div class="text-right hidden lg:block">
+<div class="font-label-md text-label-md text-on-surface">Alex Mercer</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">Senior Dev</div>
+</div>
+<img alt="Account settings" class="w-10 h-10 rounded-full object-cover border border-outline-variant/50" data-alt="A professional portrait of a modern tech worker in a softly lit glass-walled office, reflecting a bright light-mode aesthetic. The individual is facing forward, conveying confidence and approachability, suitable for a professional network avatar." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJU1ECl9QHVkXcQ9IGx36lB5rgEc-1cKpThK5FlRBWh77-S0O3W_76ItoavHm0UPBEd8FdLE-uCggeAyugVCL1Tf83w6Yl0j3Pw9KmqT5-0NNWpPu_HVApIT4VY5L6CdGZhc0UOh-mjiFKBCIjtp73vGSDk83ZLwcHIN2VSyBXTuh9xWM1zBnhHSTqEb538DJO8Z37WmuPIBze_BA_a3BM9yNpgkukHU8wHscoakiNIqtS36h6oNpIbgO56JaT5UcgSTmxFmk6feGm"/>
+</button>
+</div>
+</nav>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-screen w-sidebar-width bg-surface/80 dark:bg-on-surface/80 backdrop-blur-xl border-r border-white/10 dark:border-white/5 shadow-sm z-50 flex flex-col h-full py-gutter">
+<!-- Brand Header -->
+<div class="px-6 mb-8 flex items-center gap-4">
+<div class="w-10 h-10 rounded-xl bg-primary-container flex items-center justify-center text-on-primary-container shadow-sm border border-primary/20">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">swap_calls</span>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim tracking-tight">SkillSwap</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Expert Network</p>
+</div>
+</div>
+<!-- Navigation Links -->
+<nav class="flex-1 px-4 space-y-2">
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-white/10 dark:hover:bg-white/5 transition-all scale-98 active:scale-95 group font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors">explore</span>
+                Discover
+            </a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-primary dark:text-primary-fixed-dim border-l-4 border-primary dark:border-primary-fixed-dim bg-primary/5 transition-all scale-98 active:scale-95 group font-label-md text-label-md relative overflow-hidden" href="#">
+<div class="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-50"></div>
+<span class="material-symbols-outlined relative z-10" style="font-variation-settings: 'FILL' 1;">swap_horiz</span>
+<span class="relative z-10">Exchange</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-white/10 dark:hover:bg-white/5 transition-all scale-98 active:scale-95 group font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors">groups</span>
+                Communities
+            </a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-white/10 dark:hover:bg-white/5 transition-all scale-98 active:scale-95 group font-label-md text-label-md justify-between" href="#">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors">chat</span>
+                    Messages
+                </div>
+<span class="bg-primary text-on-primary font-label-sm text-label-sm px-2 py-0.5 rounded-full">3</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-white/10 dark:hover:bg-white/5 transition-all scale-98 active:scale-95 group font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors">person</span>
+                Profile
+            </a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-white/10 dark:hover:bg-white/5 transition-all scale-98 active:scale-95 group font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors">settings</span>
+                Settings
+            </a>
+</nav>
+<!-- CTA Bottom -->
+<div class="px-6 mt-auto">
+<button class="w-full py-3 bg-primary text-on-primary font-label-md text-label-md rounded-xl shadow-sm hover:shadow-md hover:bg-primary/90 transition-all flex items-center justify-center gap-2 scale-98 active:scale-95">
+<span class="material-symbols-outlined text-[20px]">add</span>
+                Create Post
+            </button>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-sidebar-width pt-16 min-h-screen flex flex-col">
+<div class="flex-1 max-w-container-max mx-auto w-full p-margin-desktop">
+<!-- Page Header -->
+<header class="mb-gutter flex justify-between items-end">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-2">Active Exchanges</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Manage your ongoing skill swaps and mentorship sessions.</p>
+</div>
+<div class="flex gap-4">
+<div class="flex items-center bg-surface-container rounded-lg p-1 border border-outline-variant/30">
+<button class="px-4 py-1.5 rounded-md bg-surface shadow-sm text-primary font-label-sm text-label-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">grid_view</span>
+                            Cards
+                        </button>
+<button class="px-4 py-1.5 rounded-md text-on-surface-variant hover:text-on-surface font-label-sm text-label-sm flex items-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-[18px]">view_list</span>
+                            List
+                        </button>
+</div>
+<button class="ghost-button flex items-center gap-2 px-4 py-2 rounded-lg font-label-md text-label-md text-on-surface">
+<span class="material-symbols-outlined text-[20px]">filter_list</span>
+                        Filter
+                    </button>
+</div>
+</header>
+<!-- Action Needed Section (High Priority Bento Item) -->
+<section class="mb-12">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 1;">error</span>
+<h3 class="font-headline-md text-headline-md text-on-surface">Action Needed</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<!-- Alert Card 1 -->
+<div class="glass-panel-elevated rounded-2xl p-6 relative overflow-hidden group">
+<div class="absolute top-0 left-0 w-1 h-full bg-error"></div>
+<div class="flex items-start justify-between">
+<div class="flex gap-4">
+<img alt="User avatar" class="w-12 h-12 rounded-full object-cover border-2 border-surface" data-alt="A confident young professional woman with glasses, smiling subtly, in a bright, modern cafe setting. The lighting is soft and natural, emphasizing a clean, light-mode design aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBtgXt_sKl10_uvoVWVFpr5gPh0Yl2hoLrCcl_pApWNmwQQYNvl8NSdvglc4j3ejZ8u28LN0kM02OAxzzrYBnQGbF6bMH311cxpHp9t-vGvldLHwdWyAvFwWEUQ8qEDn_F7y03hOSKlWf_2RPS3JEKMfqmNVBsBewcoDDr3RbFDBIkjPBIVKcLaT6Idis4mW65abmLbE1wijt3PP9zvUerqUdEzpd25tgRN6ZixnN6GRVhFB4YlnoRnbAx6BynDJo1FoBsZEMmo1AMI"/>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface mb-1">Session Proposal from Sarah J.</h4>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4">Sarah proposed Friday 2:00 PM EST for "React Hooks Deep Dive".</p>
+<div class="flex gap-3">
+<button class="bg-primary text-on-primary font-label-sm text-label-sm px-5 py-2 rounded-lg hover:opacity-90 transition-opacity">Accept Time</button>
+<button class="ghost-button text-on-surface font-label-sm text-label-sm px-5 py-2 rounded-lg">Propose New</button>
+</div>
+</div>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container px-3 py-1 rounded-full">2h ago</span>
+</div>
+</div>
+<!-- Alert Card 2 -->
+<div class="glass-panel-elevated rounded-2xl p-6 relative overflow-hidden group">
+<div class="absolute top-0 left-0 w-1 h-full bg-tertiary"></div>
+<div class="flex items-start justify-between">
+<div class="flex gap-4">
+<img alt="User avatar" class="w-12 h-12 rounded-full object-cover border-2 border-surface" data-alt="A close-up portrait of a thoughtful man in his 30s, wearing a casual sweater, set against a blurred out co-working space background. The visual style is premium, clean, and well-lit." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAlrsaZsizVSSu8mbkTwgHQAXJiXg3ZQTB5ohgq9yX2JmOtzkZ1tEdmlNstLsF6OxPeF-IRUcOiMNnYDt4lNgnddhGLmwAatu2VExkhAOtMtxp-YAo-fW9klmOEgbl37Nqa9bn5LllxdlRJX7VovY5BvM-lSXeP2HLqkYf4MhnH0jEe__ojxrCBVGOetD7WrSsPb_yPTSuy1EigL1T_hF859L6EytfLH9HG4OPtX-aG70RdEGsKmxEpDVbxkHqr41TNTLYsG5aV3aeB"/>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface mb-1">Feedback Requested by David M.</h4>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4">Please rate your last session on "Advanced Python Data Structures".</p>
+<button class="bg-tertiary text-on-tertiary font-label-sm text-label-sm px-5 py-2 rounded-lg hover:opacity-90 transition-opacity">Leave Review</button>
+</div>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container px-3 py-1 rounded-full">1d ago</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Active Swaps Grid -->
+<section>
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">sync</span>
+<h3 class="font-headline-md text-headline-md text-on-surface">In Progress</h3>
+</div>
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-gutter">
+<!-- Swap Card 1 -->
+<div class="glass-panel rounded-2xl p-6 hover:shadow-lg transition-shadow duration-300 flex flex-col h-full border-l-4 border-l-primary/50 hover:border-l-primary">
+<!-- Top Row: User Info & Status -->
+<div class="flex justify-between items-start mb-6">
+<div class="flex items-center gap-4">
+<div class="relative">
+<img alt="Partner Avatar" class="w-14 h-14 rounded-xl object-cover border border-outline-variant/50" data-alt="A portrait of a creative professional in a bright, modern studio. The lighting is crisp and the background is softly out of focus, fitting a premium digital platform aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBphbmg2XF6M-nwat9KGbkJd3o_fxaNXX0MZbbDujLtXarOAOjCNtPGUJP1fgArK8JGEqTap95F9twtYfw6bxbFY_hwwyF6peHG0G1V9HUQkpVEqNkmm-fir9E8ApvVRLsmt7thAzFHEWhrGYqo0WJmVB6wL9q4TEHU1JgATn16V0_MwuwEOWabxuFK51io94G9WqHs_n1RuSLZUxCKT_2o6aKwuFJEzyd_Wy_ENuS2DpZWKmDD8hYpteZiSjFpbDYzR_55EO61CpTc"/>
+<div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-surface"></div>
+</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm font-bold text-on-surface leading-tight">Elena Rostova</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Senior UI/UX Designer at Figma</p>
+</div>
+</div>
+<div class="flex flex-col items-end gap-2">
+<span class="bg-secondary-container text-on-secondary-container font-label-sm text-label-sm px-3 py-1 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">bolt</span>
+                                    Active
+                                </span>
+<span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+                                    Next: Tomorrow, 10 AM
+                                </span>
+</div>
+</div>
+<!-- Middle Row: The Swap Equation -->
+<div class="bg-surface-container-lowest/50 rounded-xl p-4 border border-outline-variant/20 mb-6 flex items-center justify-between">
+<!-- You Teach -->
+<div class="flex-1 flex flex-col gap-2">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">You Teach</span>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined">data_object</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Advanced React &amp; State</p>
+<div class="flex gap-1 mt-1">
+<span class="w-8 h-1 bg-primary rounded-full"></span>
+<span class="w-8 h-1 bg-primary rounded-full"></span>
+<span class="w-8 h-1 bg-primary rounded-full"></span>
+</div>
+</div>
+</div>
+</div>
+<!-- Icon -->
+<div class="px-4 text-outline-variant flex flex-col items-center">
+<div class="h-8 w-px bg-outline-variant/30 mb-2"></div>
+<span class="material-symbols-outlined bg-surface rounded-full p-1 border border-outline-variant/30" style="font-variation-settings: 'FILL' 1;">swap_horiz</span>
+<div class="h-8 w-px bg-outline-variant/30 mt-2"></div>
+</div>
+<!-- You Learn -->
+<div class="flex-1 flex flex-col gap-2 items-end text-right">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">You Learn</span>
+<div class="flex items-center gap-3 flex-row-reverse">
+<div class="w-10 h-10 rounded-lg bg-pink-50 text-pink-600 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined">design_services</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Figma Auto-Layout Pro</p>
+<div class="flex gap-1 justify-end mt-1">
+<span class="w-8 h-1 bg-secondary rounded-full"></span>
+<span class="w-8 h-1 bg-secondary rounded-full"></span>
+<span class="w-8 h-1 bg-surface-variant rounded-full"></span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Row: Progress & Actions -->
+<div class="mt-auto pt-4 border-t border-outline-variant/20 flex flex-col gap-4">
+<!-- Progress Bar -->
+<div>
+<div class="flex justify-between font-label-sm text-label-sm mb-2">
+<span class="text-on-surface-variant">Milestone 3 of 5</span>
+<span class="text-primary font-bold">60%</span>
+</div>
+<div class="h-2 w-full bg-surface-variant rounded-full overflow-hidden flex">
+<div class="h-full bg-gradient-to-r from-primary to-primary-container w-[60%] relative">
+<div class="absolute inset-0 bg-white/20 w-full h-full animate-[pulse_2s_ease-in-out_infinite]"></div>
+</div>
+</div>
+</div>
+<!-- Actions -->
+<div class="flex gap-3 mt-2">
+<button class="flex-1 bg-primary text-on-primary font-label-md text-label-md py-2.5 rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">video_camera_front</span>
+                                    Join Call
+                                </button>
+<button class="ghost-button flex-1 text-on-surface font-label-md text-label-md py-2.5 rounded-lg flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[20px]">calendar_month</span>
+                                    Reschedule
+                                </button>
+<button class="ghost-button px-4 text-on-surface-variant rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Swap Card 2 -->
+<div class="glass-panel rounded-2xl p-6 hover:shadow-lg transition-shadow duration-300 flex flex-col h-full border-l-4 border-l-secondary/50 hover:border-l-secondary">
+<!-- Top Row: User Info & Status -->
+<div class="flex justify-between items-start mb-6">
+<div class="flex items-center gap-4">
+<div class="relative">
+<img alt="Partner Avatar" class="w-14 h-14 rounded-xl object-cover border border-outline-variant/50" data-alt="A portrait of an expressive language teacher in a cozy, sunlit room with bookshelves. The lighting is warm yet maintains a clean, modern aesthetic suitable for a professional platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCZRBx8H1aiFM3gDAtwb5aS0WDVMxCrgrYd_P9ElibGyvrx-dmjfZvw6W_g0WB56nCyste-v2KwHdvnh_o3iO6PMWcvvYBVOQ99gzEW7FpGOGxtydZdlCXPs_RmmC5NBbttCP_u0uDB-zJ7mKJYB2_AQ4Tl90BHKYPWo2mVwMw2qK0hsyNkod6-nhKo4j_tmjy4gwIxg27qyvADKEANC6eofU58Wyv1dBgZzdO4zEwXG2deHNWidVPi4Tixu7oJnanZlX92Q-kJSmpF"/>
+<div class="absolute -bottom-1 -right-1 w-4 h-4 bg-surface-variant rounded-full border-2 border-surface flex items-center justify-center">
+<div class="w-2 h-2 bg-outline rounded-full"></div>
+</div>
+</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm font-bold text-on-surface leading-tight">Mateo Silva</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Native Spanish Speaker &amp; Translator</p>
+</div>
+</div>
+<div class="flex flex-col items-end gap-2">
+<span class="bg-surface-variant text-on-surface-variant font-label-sm text-label-sm px-3 py-1 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">pause_circle</span>
+                                    Paused
+                                </span>
+</div>
+</div>
+<!-- Middle Row: The Swap Equation -->
+<div class="bg-surface-container-lowest/50 rounded-xl p-4 border border-outline-variant/20 mb-6 flex items-center justify-between opacity-80">
+<!-- You Teach -->
+<div class="flex-1 flex flex-col gap-2">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">You Teach</span>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined">record_voice_over</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Conversational English</p>
+<div class="flex gap-1 mt-1">
+<span class="w-8 h-1 bg-secondary rounded-full"></span>
+<span class="w-8 h-1 bg-secondary rounded-full"></span>
+<span class="w-8 h-1 bg-secondary rounded-full"></span>
+</div>
+</div>
+</div>
+</div>
+<!-- Icon -->
+<div class="px-4 text-outline-variant flex flex-col items-center">
+<div class="h-8 w-px bg-outline-variant/30 mb-2"></div>
+<span class="material-symbols-outlined bg-surface rounded-full p-1 border border-outline-variant/30">swap_horiz</span>
+<div class="h-8 w-px bg-outline-variant/30 mt-2"></div>
+</div>
+<!-- You Learn -->
+<div class="flex-1 flex flex-col gap-2 items-end text-right">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">You Learn</span>
+<div class="flex items-center gap-3 flex-row-reverse">
+<div class="w-10 h-10 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined">translate</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Business Spanish</p>
+<div class="flex gap-1 justify-end mt-1">
+<span class="w-8 h-1 bg-tertiary rounded-full"></span>
+<span class="w-8 h-1 bg-tertiary rounded-full"></span>
+<span class="w-8 h-1 bg-surface-variant rounded-full"></span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Row: Progress & Actions -->
+<div class="mt-auto pt-4 border-t border-outline-variant/20 flex flex-col gap-4">
+<!-- Progress Bar -->
+<div class="opacity-80">
+<div class="flex justify-between font-label-sm text-label-sm mb-2">
+<span class="text-on-surface-variant">Milestone 1 of 4</span>
+<span class="text-secondary font-bold">25%</span>
+</div>
+<div class="h-2 w-full bg-surface-variant rounded-full overflow-hidden flex">
+<div class="h-full bg-secondary w-[25%] relative grayscale-[30%]">
+</div>
+</div>
+</div>
+<!-- Actions -->
+<div class="flex gap-3 mt-2">
+<button class="flex-1 bg-surface-variant text-on-surface-variant font-label-md text-label-md py-2.5 rounded-lg hover:bg-surface-dim transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[20px]">play_arrow</span>
+                                    Resume Swap
+                                </button>
+<button class="ghost-button flex-1 text-on-surface font-label-md text-label-md py-2.5 rounded-lg flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[20px]">chat</span>
+                                    Message
+                                </button>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Footer -->
+<footer class="w-full py-gutter flex justify-between items-center px-margin-desktop bg-transparent border-t border-outline-variant/20 mt-12">
+<div class="font-label-sm text-label-sm text-outline">
+                © 2024 SkillSwap Network
+            </div>
+<div class="flex gap-6">
+<a class="font-label-sm text-label-sm text-outline hover:text-on-surface transition-colors underline-offset-4 hover:underline" href="#">Privacy</a>
+<a class="font-label-sm text-label-sm text-outline hover:text-on-surface transition-colors underline-offset-4 hover:underline" href="#">Terms</a>
+<a class="font-label-sm text-label-sm text-outline hover:text-on-surface transition-colors underline-offset-4 hover:underline" href="#">Support</a>
+<a class="font-label-sm text-label-sm text-outline hover:text-on-surface transition-colors underline-offset-4 hover:underline" href="#">API</a>
+</div>
+</footer>
+</main>
+</body></html>

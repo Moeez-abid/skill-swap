@@ -232,7 +232,7 @@ export default function Sessions() {
   const pastSessions = sessionsList.filter(s => new Date(s.scheduledEnd) <= now && s.status !== 'DECLINED' && s.status !== 'CANCELLED');
 
   return (
-    <div style={{ paddingTop: '100px', paddingBottom: '64px' }}>
+    <div style={{ paddingTop: '130px', paddingBottom: '64px' }}>
       <div className="page-header animate-fade-up">
         <h1 className="page-title">Sessions</h1>
         <p className="page-subtitle">Book sessions with matched partners. Times display in your local timezone.</p>
@@ -440,7 +440,7 @@ export default function Sessions() {
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                       <span className="badge badge--success">Completed</span>
                       {myReview ? (
-                        <span className="badge" style={{ background: 'var(--brand-blue)', color: 'white' }}>Feedback submitted</span>
+                        <span className="badge" style={{ background: 'var(--accent)', color: 'white' }}>Feedback submitted</span>
                       ) : (
                         !isReviewing && (
                           <button className="btn-secondary" onClick={() => {
@@ -462,7 +462,7 @@ export default function Sessions() {
                   {isReviewing && (
                     <form
                       onSubmit={(e) => handleFeedbackSubmit(e, s.id)}
-                      style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--glass-border-subtle)' }}
+                      style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--border-subtle)' }}
                     >
                       <h4 style={{ marginBottom: '12px', fontSize: '14px' }}>Provide Feedback</h4>
                       <div className="form-row">

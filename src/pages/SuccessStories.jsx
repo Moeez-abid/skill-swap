@@ -44,31 +44,33 @@ export default function SuccessStories() {
   }, []);
 
   return (
-    <div className="container animate-fade-up" style={{ paddingTop: '120px', minHeight: 'calc(100vh - 200px)', paddingBottom: '40px' }}>
-      <div className="section-title">Success Stories</div>
-      <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginBottom: '40px', maxWidth: '600px', margin: '0 auto 40px auto' }}>
-        See how our community members are achieving their goals through peer-to-peer knowledge exchange.
-      </p>
+    <div style={{ paddingTop: '130px', paddingBottom: '64px', maxWidth: '1000px', margin: '0 auto' }}>
+      <div className="page-header animate-fade-up" style={{ textAlign: 'center', marginBottom: '48px' }}>
+        <h1 className="page-title">Success Stories</h1>
+        <p className="page-subtitle" style={{ maxWidth: '600px', lineHeight: '1.6', margin: '16px auto 0' }}>
+          See how our community members are achieving their goals through peer-to-peer knowledge exchange.
+        </p>
+      </div>
 
       {loading ? (
         <p className="loading">Loading stories...</p>
       ) : stories.length > 0 ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
           {stories.map(story => (
-            <div key={story.id} className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ fontStyle: 'italic', color: 'var(--text-primary)', lineHeight: '1.6' }}>
+            <div key={story.id} className="glass-card animate-fade-up delay-1" style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ fontStyle: 'italic', color: 'var(--text-primary)', lineHeight: '1.7' }}>
                 "{story.quote}"
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid var(--glass-border-subtle)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: 'auto', paddingTop: '24px', borderTop: '1px solid var(--border-subtle)' }}>
                 {story.isImageUrl ? (
-                  <img src={story.avatar} alt={story.name} className="avatar" style={{ width: '40px', height: '40px', objectFit: 'cover' }} />
+                  <img src={story.avatar} alt={story.name} className="avatar" style={{ width: '48px', height: '48px', objectFit: 'cover' }} />
                 ) : (
-                  <div className="avatar avatar--initials" style={{ width: '40px', height: '40px', fontSize: '16px' }}>
+                  <div className="avatar avatar--initials" style={{ width: '48px', height: '48px', fontSize: '18px' }}>
                     {story.avatar}
                   </div>
                 )}
                 <div>
-                  <strong style={{ display: 'block', color: 'var(--text-primary)' }}>{story.name}</strong>
+                  <strong style={{ display: 'block', color: 'var(--text-primary)', fontSize: '1.05rem', marginBottom: '4px' }}>{story.name}</strong>
                   <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Learned {story.learned}</span>
                 </div>
               </div>

@@ -22,7 +22,7 @@ const skillInclude = {
 function buildSkillWhere(query) {
   const where = { 
     isDeleted: false,
-    provider: { deletedAt: null, isSuspended: false } 
+    provider: { deletedAt: null, isBanned: false } 
   };
   if (query.provider) where.providerId = query.provider;
   if (query.excludeProvider) where.providerId = { not: query.excludeProvider };
@@ -76,7 +76,7 @@ router.get('/', optionalAuth, async (req, res) => {
 });
 
 router.get('/featured', optionalAuth, async (req, res) => {
-  const where = { provider: { deletedAt: null, isSuspended: false } };
+  const where = { provider: { deletedAt: null, isBanned: false } };
   if (req.user) {
     where.providerId = { not: req.user.id };
   }

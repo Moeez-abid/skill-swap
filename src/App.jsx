@@ -22,6 +22,7 @@ import Contact from './pages/Contact.jsx';
 import SuccessStories from './pages/SuccessStories.jsx';
 import Blogs from './pages/Blogs.jsx';
 import Groups from './pages/Groups.jsx';
+import Banned from './pages/Banned.jsx';
 import { isAdmin } from './shared/auth.js';
 
 export default function App() {
@@ -30,7 +31,7 @@ export default function App() {
 
   useEffect(() => {
     // Route guarding for Admin isolation
-    if (isAdmin() && location.pathname !== '/admin' && location.pathname !== '/login') {
+    if (isAdmin() && location.pathname !== '/admin' && location.pathname !== '/login' && location.pathname !== '/blogs') {
       navigate('/admin', { replace: true });
     } else if (!isAdmin() && location.pathname === '/admin') {
       navigate('/', { replace: true });
@@ -77,6 +78,7 @@ export default function App() {
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/success-stories" element={<SuccessStories />} />
+          <Route path="/banned" element={<Banned />} />
           <Route path="*" element={<div className="empty-state"><h3>Page not found</h3></div>} />
         </Routes>
       </main>

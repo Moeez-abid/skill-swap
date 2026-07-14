@@ -61,7 +61,7 @@ export default function Reviews() {
   };
 
   return (
-    <div style={{ paddingTop: '100px', paddingBottom: '64px' }}>
+    <div style={{ paddingTop: '130px', paddingBottom: '64px' }}>
       <div className="page-header">
         <h1 className="page-title">Mutual Reviews</h1>
         <p className="page-subtitle">Blind review system &mdash; feedback reveals only after both parties submit. Locked 48 hours after submission.</p>

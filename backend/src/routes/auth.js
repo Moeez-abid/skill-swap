@@ -37,7 +37,7 @@ router.post('/login', authLimiter, validate(loginSchema), async (req, res) => {
   const user = await prisma.user.findFirst({
     where: { email: email.toLowerCase(), deletedAt: null },
   });
-  if (!user || user.isSuspended) return apiError(res, 401, 'Invalid credentials');
+  if (!user || user.isBanned) return apiError(res, 401, 'Invalid credentials');
 
   if (!user.passwordHash) return apiError(res, 401, 'Please log in with Google');
 
@@ -82,7 +82,7 @@ router.post('/google', authLimiter, async (req, res) => {
       });
     }
 
-    if (user.isSuspended) return apiError(res, 401, 'Account suspended');
+    if (user.isBanned) return apiError(res, 401, 'Account suspended');
 
     const token = signToken({ userId: user.id });
     return apiSuccess(res, {

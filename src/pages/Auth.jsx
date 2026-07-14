@@ -89,7 +89,7 @@ export default function Auth({ isRegister = false }) {
   };
 
   return (
-    <div style={{ paddingTop: '100px', paddingBottom: '64px' }}>
+    <div style={{ paddingTop: '130px', paddingBottom: '64px' }}>
       <form className="form-card glass-card animate-fade-up" onSubmit={handleSubmit}>
         <h1 className="page-title animate-fade-up delay-1">{isRegister ? 'Join the Community' : 'Welcome back'}</h1>
         <p className="page-subtitle animate-fade-up delay-1" style={{ marginBottom: '24px' }}>

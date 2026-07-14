@@ -78,16 +78,16 @@ export default function Home() {
         <h2 id="benefits-title" className="section-title reveal">Why Join SkillSwap?</h2>
         <div className="steps-grid">
           <article className="step-card glass-card reveal">
-            <h3>Learn Without Paying</h3>
-            <p>Master new skills like Python or French by trading your own expertise. No money ever changes hands.</p>
+            <h3>Learn & Share Practical Skills</h3>
+            <p>Learn practical skills from people with real experience, and share your own knowledge to make a positive impact.</p>
           </article>
           <article className="step-card glass-card reveal reveal-delay-1">
-            <h3>Validate Your Expertise</h3>
-            <p>Teach others to solidify your knowledge. Earn verified reviews and build a public portfolio of your skills.</p>
+            <h3>Connect & Network</h3>
+            <p>Connect with learners and skilled professionals from different backgrounds to grow both personally and professionally.</p>
           </article>
           <article className="step-card glass-card reveal reveal-delay-2">
-            <h3>Expand Your Network</h3>
-            <p>Connect directly with industry professionals through 1-on-1 video sessions and real-time chat.</p>
+            <h3>Simple & Secure Platform</h3>
+            <p>Enjoy a simple, secure, and easy-to-use platform designed specifically for meaningful, peer-to-peer learning.</p>
           </article>
         </div>
       </section>
@@ -97,18 +97,18 @@ export default function Home() {
         <div className="steps-grid">
           <article className="step-card glass-card reveal">
             <div className="step-card__icon" aria-hidden="true">1</div>
-            <h3>List</h3>
-            <p>Create a profile and list skills you can teach and skills you want to learn.</p>
+            <h3>Setup & List</h3>
+            <p>Create your account and tell others what you can teach or what you'd like to learn.</p>
           </article>
           <article className="step-card glass-card reveal reveal-delay-1">
             <div className="step-card__icon" aria-hidden="true">2</div>
-            <h3>Match</h3>
-            <p>Send swap requests to users whose skills complement yours. Accept incoming offers.</p>
+            <h3>Connect & Match</h3>
+            <p>Connect with people who share your interests and find the perfect knowledge exchange partner.</p>
           </article>
           <article className="step-card glass-card reveal reveal-delay-2">
             <div className="step-card__icon" aria-hidden="true">3</div>
-            <h3>Learn</h3>
-            <p>Schedule sessions, chat in real time, and leave mutual reviews after each swap.</p>
+            <h3>Learn & Grow</h3>
+            <p>Learn, teach, and exchange knowledge through meaningful sessions while helping others grow their skills.</p>
           </article>
         </div>
       </section>

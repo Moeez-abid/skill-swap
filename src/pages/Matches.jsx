@@ -145,7 +145,7 @@ export default function Matches() {
               }}>File Dispute</button>
             </div>
           ) : (
-            <div style={{ background: 'var(--glass-bg-subtle)', padding: '16px', borderRadius: '12px', border: '1px solid var(--glass-border-subtle)', marginTop: '8px' }}>
+            <div style={{ background: 'var(--bg-surface-raised)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-subtle)', marginTop: '8px' }}>
               <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', display: 'flex', justifyContent: 'space-between' }}>
                 Dispute Status
                 <span className={`badge ${dispute.status === 'RESOLVED' ? 'badge--success' : ''}`}>{dispute.status.replace('_', ' ')}</span>
@@ -192,6 +192,7 @@ export default function Matches() {
     }
 
     if (activeTab === 'past') {
+      const partner = r.partner || {};
       const myReview = r.reviews?.find(rev => rev.reviewerId === currentUser?.id);
       const partnerReview = r.reviews?.find(rev => rev.reviewerId !== currentUser?.id);
       const isReviewing = reviewingMatchId === r.id;
@@ -199,7 +200,7 @@ export default function Matches() {
       return (
         <div className="match-card__actions" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
           {myReview ? (
-            <span className="badge" style={{ background: 'var(--brand-blue)', color: 'white', alignSelf: 'flex-start' }}>Review Submitted</span>
+            <span className="badge" style={{ background: 'var(--accent)', color: 'white', alignSelf: 'flex-start' }}>Review Submitted</span>
           ) : !isReviewing ? (
             <button className="btn-secondary" style={{ alignSelf: 'flex-start' }} onClick={() => {
               setReviewingMatchId(r.id);
@@ -212,11 +213,11 @@ export default function Matches() {
           ) : null}
 
           {partnerReview && !partnerReview.isRevealed && !myReview && (
-            <p style={{ fontSize: '13px', color: 'var(--brand-blue)', marginTop: '8px' }}>{partner.name} has submitted their review! Submit yours to see it.</p>
+            <p style={{ fontSize: '13px', color: 'var(--accent)', marginTop: '8px' }}>{partner.name} has submitted their review! Submit yours to see it.</p>
           )}
 
           {partnerReview && partnerReview.isRevealed && (
-            <div style={{ marginTop: '16px', padding: '16px', background: 'var(--glass-bg-subtle)', borderRadius: '12px', border: '1px solid var(--glass-border-subtle)' }}>
+            <div style={{ marginTop: '16px', padding: '16px', background: 'var(--bg-surface-raised)', borderRadius: '12px', border: '1px solid var(--border-subtle)' }}>
               <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', display: 'flex', justifyContent: 'space-between' }}>
                 Partner's Review
                 <span className="badge badge--success">★ {partnerReview.ratingOverall}/5 Overall</span>
@@ -226,7 +227,7 @@ export default function Matches() {
           )}
 
           {isReviewing && (
-            <form onSubmit={(e) => handleReviewSubmit(e, r.id)} style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--glass-border-subtle)' }}>
+            <form onSubmit={(e) => handleReviewSubmit(e, r.id)} style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--border-subtle)' }}>
               <h4 style={{ marginBottom: '12px', fontSize: '14px' }}>Provide Match Review</h4>
               <div className="form-row">
                 <div className="form-group">
@@ -274,74 +275,133 @@ export default function Matches() {
   };
 
   return (
-    <div style={{ paddingTop: '100px', paddingBottom: '64px' }}>
-      <div className="page-header animate-fade-up">
-        <h1 className="page-title">Matches</h1>
-        <p className="page-subtitle">Manage your requests, active skill swaps, and past matches.</p>
-      </div>
+    <div style={{ paddingTop: '130px', paddingBottom: '64px' }}>
+      <header style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+        <div>
+          <h1 className="page-title" style={{ margin: 0 }}>Active Exchanges</h1>
+          <p className="page-subtitle" style={{ margin: '8px 0 0' }}>Manage your skill swaps, requests, and mentorship sessions.</p>
+        </div>
+        <div className="tabs animate-fade-up" role="tablist" style={{ margin: 0 }}>
+          <button className={`tab ${activeTab === 'active' ? 'active' : ''}`} onClick={() => setActiveTab('active')} role="tab">Active</button>
+          <button className={`tab ${activeTab === 'requests' ? 'active' : ''}`} onClick={() => setActiveTab('requests')} role="tab">Requests</button>
+          <button className={`tab ${activeTab === 'past' ? 'active' : ''}`} onClick={() => setActiveTab('past')} role="tab">Past</button>
+        </div>
+      </header>
 
-      <div className="tabs animate-fade-up delay-1" role="tablist">
-        <button
-          className={`tab ${activeTab === 'active' ? 'active' : ''}`}
-          onClick={() => setActiveTab('active')}
-          role="tab"
-        >
-          Active
-        </button>
-        <button
-          className={`tab ${activeTab === 'requests' ? 'active' : ''}`}
-          onClick={() => setActiveTab('requests')}
-          role="tab"
-        >
-          Requests
-        </button>
-        <button
-          className={`tab ${activeTab === 'past' ? 'active' : ''}`}
-          onClick={() => setActiveTab('past')}
-          role="tab"
-        >
-          Past & Reviews
-        </button>
-      </div>
-
-      <div className="match-list">
-        {loading ? (
-          <p className="loading animate-fade-up delay-2">Loading…</p>
-        ) : error ? (
-          <div className="empty-state animate-fade-up delay-2"><h3>Unable to load matches</h3></div>
-        ) : items.length === 0 ? (
-          <div className="empty-state animate-fade-up delay-2"><h3>No {activeTab === 'requests' ? 'Requests' : activeTab === 'active' ? 'Active Matches' : 'Past Matches'}</h3></div>
-        ) : (
-          items.map((r, i) => {
-            const partner = activeTab === 'requests'
-              ? (r.direction === 'incoming' ? r.sender : r.receiver)
-              : r.partner;
-            const offeredSkill = activeTab === 'requests' ? r.offeredSkill : r.matchRequest?.offeredSkill;
-            const wantedSkill = activeTab === 'requests' ? r.wantedSkill : r.matchRequest?.wantedSkill;
-            const statusLabel = activeTab === 'requests' ? r.status : (r.isActive ? 'ACTIVE' : 'COMPLETED');
-
-            return (
-              <article key={r.id} className={`match-card glass-card animate-fade-up delay-${Math.min(i + 1, 5)}`}>
-                <div className="match-card__header">
-                  <div>
-                    <Avatar user={partner} size={40} />
+      {loading ? (
+        <p className="loading animate-fade-up delay-2">Loading…</p>
+      ) : error ? (
+        <div className="empty-state animate-fade-up delay-2"><h3>Unable to load matches</h3></div>
+      ) : items.length === 0 ? (
+        <div className="empty-state animate-fade-up delay-2">
+          <h3>No {activeTab === 'requests' ? 'Requests' : activeTab === 'active' ? 'Active Matches' : 'Past Matches'}</h3>
+        </div>
+      ) : activeTab === 'requests' || activeTab === 'past' ? (
+        <section className="mb-12 animate-fade-up delay-1">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <h3 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>Action Needed</h3>
+          </div>
+          <div className="bento-grid">
+            {items.map((r, i) => {
+              const partner = activeTab === 'requests' ? (r.direction === 'incoming' ? r.sender : r.receiver) : r.partner;
+              const isUrgent = activeTab === 'requests' && r.direction === 'incoming';
+              
+              return (
+                <div key={r.id} className={`glass-card bento-card ${isUrgent ? 'urgent' : 'warning'}`}>
+                  <div className="bento-card-content">
+                    <div className="bento-card-main">
+                      <Avatar user={partner} size={48} />
+                      <div style={{ flex: 1 }}>
+                        <h4>{activeTab === 'requests' ? `Request from ${partner?.name}` : `Past match with ${partner?.name}`}</h4>
+                        <p>{activeTab === 'requests' ? r.message || 'No message provided.' : 'Session completed.'}</p>
+                        {renderActions(r)}
+                      </div>
+                    </div>
+                    {activeTab === 'requests' && <span className="bento-time">{r.direction}</span>}
                   </div>
-                  <span className="badge">{statusLabel}</span>
                 </div>
-                <p>
-                  <strong>{partner?.name || 'Unknown User'}</strong>
-                  {activeTab === 'requests' && <span> &middot; {r.direction}</span>}
-                </p>
-                <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: '8px 0' }}>
-                  Offers: <em>{offeredSkill?.title || 'Unknown Skill'}</em> &harr; Wants: <em>{wantedSkill?.title || 'Unknown Skill'}</em>
-                </p>
-                {activeTab === 'requests' && <p style={{ fontSize: '14px' }}>{r.message}</p>}
-                {renderActions(r)}
-              </article>
-            );
-          })
-        )}
-      </div>
+              );
+            })}
+          </div>
+        </section>
+      ) : (
+        <section className="animate-fade-up delay-1">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+            <h3 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>In Progress</h3>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }}>
+            {items.map((r, i) => {
+              const partner = r.partner;
+              const offeredSkill = r.matchRequest?.offeredSkill;
+              const wantedSkill = r.matchRequest?.wantedSkill;
+              
+              return (
+                <div key={r.id} className="glass-card swap-card">
+                  <div className="swap-header">
+                    <div className="swap-user">
+                      <div className="swap-user-avatar-wrap">
+                        <Avatar user={partner} size={56} />
+                        <div className="status-dot"></div>
+                      </div>
+                      <div>
+                        <h4>{partner?.name || 'Unknown User'}</h4>
+                        <p>SkillSwap Member</p>
+                      </div>
+                    </div>
+                    <div className="swap-status-col">
+                      <span className="swap-badge-active">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                        Active
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="swap-equation">
+                    <div className="swap-equation-side left">
+                      <span className="swap-equation-label">You Teach</span>
+                      <div className="swap-equation-subject">
+                        <div className="swap-icon-box teach"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg></div>
+                        <div>
+                          <p className="swap-equation-title">{offeredSkill?.title || 'Skill'}</p>
+                          <div style={{ display: 'flex', gap: '4px', marginTop: '4px' }}>
+                            <span style={{ width: '24px', height: '4px', background: 'var(--accent)', borderRadius: '99px' }}></span>
+                            <span style={{ width: '24px', height: '4px', background: 'var(--accent)', borderRadius: '99px' }}></span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="swap-equation-divider">
+                      <div className="swap-equation-divider-line"></div>
+                      <div className="swap-equation-divider-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"></path></svg></div>
+                      <div className="swap-equation-divider-line"></div>
+                    </div>
+
+                    <div className="swap-equation-side right">
+                      <span className="swap-equation-label">You Learn</span>
+                      <div className="swap-equation-subject">
+                        <div className="swap-icon-box learn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg></div>
+                        <div>
+                          <p className="swap-equation-title">{wantedSkill?.title || 'Skill'}</p>
+                          <div style={{ display: 'flex', gap: '4px', marginTop: '4px', justifyContent: 'flex-end' }}>
+                            <span style={{ width: '24px', height: '4px', background: '#ec4899', borderRadius: '99px' }}></span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="swap-progress-section">
+                    {renderActions(r)}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {toastMsg && (
         <div className="toast toast--info toast--visible" role="status">

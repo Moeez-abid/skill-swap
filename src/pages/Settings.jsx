@@ -157,7 +157,7 @@ export default function Settings() {
   };
 
   return (
-    <div style={{ paddingTop: '100px', paddingBottom: '64px' }}>
+    <div style={{ paddingTop: '130px', paddingBottom: '64px' }}>
       <div className="page-header">
         <h1 className="page-title">Settings</h1>
         <p className="page-subtitle">Update your profile, notifications, and account security.</p>

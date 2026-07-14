@@ -368,7 +368,7 @@ export default function Messages() {
     }}>
       <div className="messages-layout animate-fade-up delay-1" style={{ flex: 1, minHeight: 0 }}>
         <aside className={`glass-card messages-sidebar ${activeConversationId ? 'hide-on-mobile' : ''}`} style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, overflow: 'hidden' }} aria-label="Conversations">
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--glass-bg)', borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }}>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-surface)', borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }}>
             <strong style={{ fontSize: '1.05rem' }}>Messages</strong>
             <button type="button" className="primary-cta" onClick={openNewChatModal} style={{ padding: '6px 12px', fontSize: '0.85rem', width: 'auto' }}>New Chat</button>
           </div>
@@ -410,7 +410,7 @@ export default function Messages() {
             <p className="empty-state">{typeof threadError === 'string' ? threadError : 'Could not load messages'}</p>
           ) : (
             <>
-              <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', background: 'var(--glass-bg)', borderTopLeftRadius: '16px', borderTopRightRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+              <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', background: 'var(--bg-surface)', borderTopLeftRadius: '16px', borderTopRightRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <button type="button" className="mobile-back-btn" onClick={() => {
                     const newParams = new URLSearchParams(searchParams);
@@ -484,7 +484,7 @@ export default function Messages() {
                                   });
                                 }
                               }}
-                              style={{ background: 'var(--glass-bg-subtle)', border: '1px solid var(--glass-border-subtle)', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-primary)' }}
+                              style={{ background: 'var(--bg-surface-raised)', border: '1px solid var(--border-subtle)', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-primary)' }}
                             >
                               ⋮
                             </button>
@@ -497,7 +497,7 @@ export default function Messages() {
                                   [menuConfig.isUp ? 'marginBottom' : 'marginTop']: '4px',
                                   [sent ? 'right' : 'left']: sent ? '12px' : 0, 
                                   background: 'var(--bg-page)', 
-                                  border: '1px solid var(--glass-border)', 
+                                  border: '1px solid var(--border)', 
                                   borderRadius: '8px', 
                                   boxShadow: '0 8px 24px rgba(0,0,0,0.4)', 
                                   zIndex: 1001, 
@@ -522,7 +522,7 @@ export default function Messages() {
               </div>
               
               {selectedMessages.size > 0 ? (
-                <div style={{ padding: '16px 24px', background: 'var(--glass-bg)', borderTop: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ padding: '16px 24px', background: 'var(--bg-surface)', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '14px', fontWeight: 'bold' }}>{selectedMessages.size} selected</span>
                   <div style={{ display: 'flex', gap: '12px' }}>
                     <button type="button" className="btn-secondary" onClick={() => setSelectedMessages(new Set())}>Cancel</button>
@@ -532,9 +532,9 @@ export default function Messages() {
               ) : (
                 <form className="message-compose" onSubmit={handleSendMessage} style={{ display: 'flex', flexDirection: 'column', padding: '16px 24px' }}>
                   {replyingTo && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--glass-bg-subtle)', padding: '8px 12px', borderRadius: '8px 8px 0 0', border: '1px solid var(--glass-border-subtle)', borderBottom: 'none', fontSize: '13px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-surface-raised)', padding: '8px 12px', borderRadius: '8px 8px 0 0', border: '1px solid var(--border-subtle)', borderBottom: 'none', fontSize: '13px' }}>
                       <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        <strong style={{ color: 'var(--brand-blue)' }}>Replying to {replyingTo.senderId === currentUser.id ? 'yourself' : partner?.name}:</strong> {replyingTo.content || replyingTo.fileName}
+                        <strong style={{ color: 'var(--accent)' }}>Replying to {replyingTo.senderId === currentUser.id ? 'yourself' : partner?.name}:</strong> {replyingTo.content || replyingTo.fileName}
                       </div>
                       <button type="button" onClick={() => setReplyingTo(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', padding: '4px' }}>✕</button>
                     </div>
@@ -547,7 +547,7 @@ export default function Messages() {
                       aria-label="Message" 
                       value={messageInput}
                       onChange={(e) => setMessageInput(e.target.value)}
-                      style={{ borderRadius: '24px', flex: 1, padding: '12px 16px', border: '1px solid var(--glass-border)', background: 'var(--bg-page)', color: 'var(--text-primary)' }}
+                      style={{ borderRadius: '24px', flex: 1, padding: '12px 16px', border: '1px solid var(--border)', background: 'var(--bg-page)', color: 'var(--text-primary)' }}
                     />
                     <label className="btn-secondary" style={{ cursor: 'pointer', borderRadius: '50%', width: '48px', height: '48px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       📎
@@ -568,7 +568,7 @@ export default function Messages() {
         </section>
       </div>
 
-      <dialog ref={modalRef} className="glass-card" style={{ padding: '24px', borderRadius: '12px', border: '1px solid var(--glass-border)', width: '100%', maxWidth: '400px', margin: 'auto' }}>
+      <dialog ref={modalRef} className="glass-card" style={{ padding: '24px', borderRadius: '12px', border: '1px solid var(--border)', width: '100%', maxWidth: '400px', margin: 'auto' }}>
         <h2 style={{ marginTop: 0 }}>Start a new chat</h2>
         <div className="form-group" style={{ marginTop: '16px' }}>
           <label htmlFor="user-select">Select User</label>
@@ -589,7 +589,7 @@ export default function Messages() {
         </div>
       </dialog>
 
-      <dialog ref={confirmModalRef} className="glass-card" style={{ padding: '24px', borderRadius: '12px', border: '1px solid var(--glass-border)', width: '100%', maxWidth: '400px', margin: 'auto' }}>
+      <dialog ref={confirmModalRef} className="glass-card" style={{ padding: '24px', borderRadius: '12px', border: '1px solid var(--border)', width: '100%', maxWidth: '400px', margin: 'auto' }}>
         <h2 style={{ marginTop: 0, marginBottom: '16px', fontSize: '1.25rem' }}>{confirmData.title}</h2>
         <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>{confirmData.message}</p>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>

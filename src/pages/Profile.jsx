@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { users, getImageUrl } from '../shared/api';
 import { getUser } from '../shared/auth';
@@ -38,6 +38,12 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
+  const blockDialogRef = useRef(null);
+  const reportDialogRef = useRef(null);
+  const [reportForm, setReportForm] = useState({ reason: '', details: '' });
+  const [blockError, setBlockError] = useState('');
+  const [reportMessage, setReportMessage] = useState({ type: '', text: '' });
+
   useEffect(() => {
     if (!userId) {
       setError(true);
@@ -61,10 +67,46 @@ export default function Profile() {
 
   const isOwner = loggedInUser?.id === profile?.id;
 
-  if (error) return <div style={{ paddingTop: '100px', paddingBottom: '64px' }}><div className="empty-state"><h3>Profile not found</h3></div></div>;
+  const confirmBlock = async () => {
+    setBlockError('');
+    try {
+      await users.blockUser(profile.id, 'User blocked from profile');
+      blockDialogRef.current?.close();
+      window.location.href = '/';
+    } catch (err) {
+      if (err.message.toLowerCase().includes('auth') || !loggedInUser) {
+        window.location.href = '/login';
+      } else {
+        setBlockError(err.message);
+      }
+    }
+  };
+
+  const submitReport = async (e) => {
+    e.preventDefault();
+    if (!reportForm.reason) return;
+    setReportMessage({ type: '', text: '' });
+    try {
+      await users.reportUser(profile.id, reportForm.reason, reportForm.details);
+      setReportMessage({ type: 'success', text: 'User reported successfully.' });
+      setTimeout(() => {
+        reportDialogRef.current?.close();
+        setReportForm({ reason: '', details: '' });
+        setReportMessage({ type: '', text: '' });
+      }, 2000);
+    } catch (err) {
+      if (err.message.toLowerCase().includes('auth') || !loggedInUser) {
+        window.location.href = '/login';
+      } else {
+        setReportMessage({ type: 'error', text: err.message });
+      }
+    }
+  };
+
+  if (error) return <div style={{ paddingTop: '130px', paddingBottom: '64px' }}><div className="empty-state"><h3>Profile not found</h3></div></div>;
 
   return (
-    <div style={{ paddingTop: '100px', paddingBottom: '64px' }}>
+    <div style={{ paddingTop: '130px', paddingBottom: '64px' }}>
       {loading || !profile ? (
         <p className="loading">Loading profile…</p>
       ) : (
@@ -75,7 +117,7 @@ export default function Profile() {
           <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {profile.name}
             {profile.isVerified && (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--brand-blue)' }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--accent)' }}>
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                 <polyline points="22 4 12 14.01 9 11.01"></polyline>
               </svg>
@@ -110,6 +152,16 @@ export default function Profile() {
             <div className="profile-stat"><strong>{profile.stats.completedSwaps}</strong><span>Completed Swaps</span></div>
             <div className="profile-stat"><strong>{profile.stats.avgRating || '—'}</strong><span>Avg Rating</span></div>
           </div>
+          {!isOwner && (
+            <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
+              <button className="btn-secondary" style={{ fontSize: '12px', padding: '4px 12px' }} onClick={() => reportDialogRef.current?.showModal()}>
+                Report User
+              </button>
+              <button className="btn-secondary" style={{ fontSize: '12px', padding: '4px 12px', color: '#ef4444', borderColor: '#ef4444' }} onClick={() => blockDialogRef.current?.showModal()}>
+                Block User
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
@@ -165,6 +217,61 @@ export default function Profile() {
           <p className="empty-state">No reviews yet</p>
         )}
       </section>
+
+      <dialog ref={blockDialogRef} className="glass-card" style={{ border: 'none', padding: '32px', maxWidth: '400px', width: '100%', margin: 'auto', borderRadius: '16px' }}>
+        <h3 style={{ marginTop: 0, color: 'var(--text-primary)', fontSize: '1.25rem', marginBottom: '8px' }}>Block User</h3>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', lineHeight: '1.6' }}>
+          Are you sure you want to block {profile.name}? You will no longer be able to interact with them, and they will not see your profile or skills.
+        </p>
+        {blockError && <div style={{ padding: '12px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: '8px', marginBottom: '24px', fontSize: '14px' }}>{blockError}</div>}
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+          <button type="button" className="btn-secondary" onClick={() => blockDialogRef.current?.close()}>Cancel</button>
+          <button type="button" className="primary-cta" style={{ background: '#ef4444', borderColor: '#ef4444' }} onClick={confirmBlock}>Confirm Block</button>
+        </div>
+      </dialog>
+
+      <dialog ref={reportDialogRef} className="glass-card" style={{ border: 'none', padding: '32px', maxWidth: '400px', width: '100%', margin: 'auto', borderRadius: '16px' }}>
+        <h3 style={{ marginTop: 0, color: 'var(--text-primary)', fontSize: '1.25rem', marginBottom: '8px' }}>Report User</h3>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', lineHeight: '1.6' }}>
+          Please provide details about your report. This will be reviewed by an administrator.
+        </p>
+        {reportMessage.text && (
+          <div style={{ padding: '12px', background: reportMessage.type === 'error' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(34, 197, 94, 0.1)', color: reportMessage.type === 'error' ? '#ef4444' : '#22c55e', borderRadius: '8px', marginBottom: '24px', fontSize: '14px' }}>
+            {reportMessage.text}
+          </div>
+        )}
+        <form onSubmit={submitReport} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Reason</label>
+            <select 
+              required 
+              value={reportForm.reason} 
+              onChange={(e) => setReportForm({ ...reportForm, reason: e.target.value })}
+              style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-primary)' }}
+            >
+              <option value="">Select a reason</option>
+              <option value="Spam">Spam or Misleading</option>
+              <option value="Harassment">Harassment or Abuse</option>
+              <option value="Inappropriate Content">Inappropriate Content</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Additional Details (Optional)</label>
+            <textarea 
+              rows="3" 
+              value={reportForm.details} 
+              onChange={(e) => setReportForm({ ...reportForm, details: e.target.value })}
+              style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-primary)', resize: 'vertical' }}
+              placeholder="Provide more context..."
+            ></textarea>
+          </div>
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}>
+            <button type="button" className="btn-secondary" onClick={() => reportDialogRef.current?.close()}>Cancel</button>
+            <button type="submit" className="primary-cta">Submit Report</button>
+          </div>
+        </form>
+      </dialog>
       </>
       )}
     </div>

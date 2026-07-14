@@ -69,10 +69,12 @@ export default function Admin() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
 
-  const handleSuspend = async (userId) => {
+  const handleBan = async (userId) => {
+    const reason = window.prompt('Reason for ban:');
+    if (reason === null) return;
     try {
-      await admin.suspendUser(userId, 'Admin action');
-      showToast('User suspended');
+      await admin.banUser(userId, reason);
+      showToast('User banned');
       loadData();
     } catch (err) {
       showToast(err.message);
@@ -130,10 +132,10 @@ export default function Admin() {
     }
   };
 
-  if (error) return <div style={{ paddingTop: '100px', paddingBottom: '64px' }}><div className="empty-state"><h3>Admin panel unavailable</h3></div></div>;
+  if (error) return <div style={{ paddingTop: '130px', paddingBottom: '64px' }}><div className="empty-state"><h3>Admin panel unavailable</h3></div></div>;
 
   return (
-    <div style={{ paddingTop: '100px', paddingBottom: '64px' }}>
+    <div style={{ paddingTop: '130px', paddingBottom: '64px' }}>
       <div className="page-header">
         <h1 className="page-title">Admin Panel</h1>
         <p className="page-subtitle">Platform analytics, user management, and moderation queue.</p>
@@ -143,17 +145,17 @@ export default function Admin() {
         <p className="loading">Loading admin panel…</p>
       ) : (
         <>
-      <div className="tabs admin-tabs animate-fade-up delay-1" style={{ marginBottom: '24px', display: 'flex', gap: '16px', overflowX: 'auto', borderBottom: '1px solid var(--glass-border)', paddingBottom: '8px' }}>
-        <button className={`tab ${activeTab === 'analytics' ? 'tab--active' : ''}`} style={{ background: 'none', border: 'none', padding: '8px 16px', cursor: 'pointer', color: activeTab === 'analytics' ? 'var(--text-primary)' : 'var(--text-secondary)', borderBottom: activeTab === 'analytics' ? '2px solid var(--brand-blue)' : 'none', fontWeight: activeTab === 'analytics' ? 600 : 400 }} onClick={() => setActiveTab('analytics')}>Overview</button>
-        <button className={`tab ${activeTab === 'users' ? 'tab--active' : ''}`} style={{ background: 'none', border: 'none', padding: '8px 16px', cursor: 'pointer', color: activeTab === 'users' ? 'var(--text-primary)' : 'var(--text-secondary)', borderBottom: activeTab === 'users' ? '2px solid var(--brand-blue)' : 'none', fontWeight: activeTab === 'users' ? 600 : 400 }} onClick={() => setActiveTab('users')}>Users</button>
-        <button className={`tab ${activeTab === 'disputes' ? 'tab--active' : ''}`} style={{ background: 'none', border: 'none', padding: '8px 16px', cursor: 'pointer', color: activeTab === 'disputes' ? 'var(--text-primary)' : 'var(--text-secondary)', borderBottom: activeTab === 'disputes' ? '2px solid var(--brand-blue)' : 'none', fontWeight: activeTab === 'disputes' ? 600 : 400 }} onClick={() => setActiveTab('disputes')}>Disputes</button>
-        <button className={`tab ${activeTab === 'moderation' ? 'tab--active' : ''}`} style={{ background: 'none', border: 'none', padding: '8px 16px', cursor: 'pointer', color: activeTab === 'moderation' ? 'var(--text-primary)' : 'var(--text-secondary)', borderBottom: activeTab === 'moderation' ? '2px solid var(--brand-blue)' : 'none', fontWeight: activeTab === 'moderation' ? 600 : 400 }} onClick={() => setActiveTab('moderation')}>Moderation</button>
-        <button className={`tab ${activeTab === 'verifications' ? 'tab--active' : ''}`} style={{ background: 'none', border: 'none', padding: '8px 16px', cursor: 'pointer', color: activeTab === 'verifications' ? 'var(--text-primary)' : 'var(--text-secondary)', borderBottom: activeTab === 'verifications' ? '2px solid var(--brand-blue)' : 'none', fontWeight: activeTab === 'verifications' ? 600 : 400 }} onClick={() => setActiveTab('verifications')}>Verifications</button>
-        <button className={`tab ${activeTab === 'audit' ? 'tab--active' : ''}`} style={{ background: 'none', border: 'none', padding: '8px 16px', cursor: 'pointer', color: activeTab === 'audit' ? 'var(--text-primary)' : 'var(--text-secondary)', borderBottom: activeTab === 'audit' ? '2px solid var(--brand-blue)' : 'none', fontWeight: activeTab === 'audit' ? 600 : 400 }} onClick={() => setActiveTab('audit')}>Audit Logs</button>
-        <button className={`tab ${activeTab === 'support' ? 'tab--active' : ''}`} style={{ background: 'none', border: 'none', padding: '8px 16px', cursor: 'pointer', color: activeTab === 'support' ? 'var(--text-primary)' : 'var(--text-secondary)', borderBottom: activeTab === 'support' ? '2px solid var(--brand-blue)' : 'none', fontWeight: activeTab === 'support' ? 600 : 400 }} onClick={() => setActiveTab('support')}>
+      <div className="tabs admin-tabs animate-fade-up delay-1" style={{ marginBottom: '24px', display: 'flex', gap: '16px', overflowX: 'auto', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
+        <button className={`tab ${activeTab === 'analytics' ? 'tab--active' : ''}`} style={{ background: 'none', border: 'none', padding: '8px 16px', cursor: 'pointer', color: activeTab === 'analytics' ? 'var(--text-primary)' : 'var(--text-secondary)', borderBottom: activeTab === 'analytics' ? '2px solid var(--accent)' : 'none', fontWeight: activeTab === 'analytics' ? 600 : 400 }} onClick={() => setActiveTab('analytics')}>Overview</button>
+        <button className={`tab ${activeTab === 'users' ? 'tab--active' : ''}`} style={{ background: 'none', border: 'none', padding: '8px 16px', cursor: 'pointer', color: activeTab === 'users' ? 'var(--text-primary)' : 'var(--text-secondary)', borderBottom: activeTab === 'users' ? '2px solid var(--accent)' : 'none', fontWeight: activeTab === 'users' ? 600 : 400 }} onClick={() => setActiveTab('users')}>Users</button>
+        <button className={`tab ${activeTab === 'disputes' ? 'tab--active' : ''}`} style={{ background: 'none', border: 'none', padding: '8px 16px', cursor: 'pointer', color: activeTab === 'disputes' ? 'var(--text-primary)' : 'var(--text-secondary)', borderBottom: activeTab === 'disputes' ? '2px solid var(--accent)' : 'none', fontWeight: activeTab === 'disputes' ? 600 : 400 }} onClick={() => setActiveTab('disputes')}>Disputes</button>
+        <button className={`tab ${activeTab === 'moderation' ? 'tab--active' : ''}`} style={{ background: 'none', border: 'none', padding: '8px 16px', cursor: 'pointer', color: activeTab === 'moderation' ? 'var(--text-primary)' : 'var(--text-secondary)', borderBottom: activeTab === 'moderation' ? '2px solid var(--accent)' : 'none', fontWeight: activeTab === 'moderation' ? 600 : 400 }} onClick={() => setActiveTab('moderation')}>Moderation</button>
+        <button className={`tab ${activeTab === 'verifications' ? 'tab--active' : ''}`} style={{ background: 'none', border: 'none', padding: '8px 16px', cursor: 'pointer', color: activeTab === 'verifications' ? 'var(--text-primary)' : 'var(--text-secondary)', borderBottom: activeTab === 'verifications' ? '2px solid var(--accent)' : 'none', fontWeight: activeTab === 'verifications' ? 600 : 400 }} onClick={() => setActiveTab('verifications')}>Verifications</button>
+        <button className={`tab ${activeTab === 'audit' ? 'tab--active' : ''}`} style={{ background: 'none', border: 'none', padding: '8px 16px', cursor: 'pointer', color: activeTab === 'audit' ? 'var(--text-primary)' : 'var(--text-secondary)', borderBottom: activeTab === 'audit' ? '2px solid var(--accent)' : 'none', fontWeight: activeTab === 'audit' ? 600 : 400 }} onClick={() => setActiveTab('audit')}>Audit Logs</button>
+        <button className={`tab ${activeTab === 'support' ? 'tab--active' : ''}`} style={{ background: 'none', border: 'none', padding: '8px 16px', cursor: 'pointer', color: activeTab === 'support' ? 'var(--text-primary)' : 'var(--text-secondary)', borderBottom: activeTab === 'support' ? '2px solid var(--accent)' : 'none', fontWeight: activeTab === 'support' ? 600 : 400 }} onClick={() => setActiveTab('support')}>
           Support Inbox
           {supportMessages.filter(m => !m.isRead).length > 0 && (
-            <span style={{ background: 'var(--brand-blue)', color: '#fff', fontSize: '11px', padding: '2px 6px', borderRadius: '10px', marginLeft: '6px' }}>{supportMessages.filter(m => !m.isRead).length}</span>
+            <span style={{ background: 'var(--accent)', color: '#fff', fontSize: '11px', padding: '2px 6px', borderRadius: '10px', marginLeft: '6px' }}>{supportMessages.filter(m => !m.isRead).length}</span>
           )}
         </button>
       </div>
@@ -191,7 +193,7 @@ export default function Admin() {
           <div className="table-responsive">
           <table className="admin-table" style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid var(--glass-border)' }}>
+              <tr style={{ borderBottom: '1px solid var(--border)' }}>
                 <th style={{ padding: '12px' }}>Name</th>
                 <th style={{ padding: '12px' }}>Email</th>
                 <th style={{ padding: '12px' }}>Role</th>
@@ -201,16 +203,16 @@ export default function Admin() {
               </tr>
             </thead>
             <tbody>
-              {users.filter(u => u.role !== 'ADMIN').map(u => (
-                <tr key={u.id} style={{ borderBottom: '1px solid var(--glass-border-subtle)' }}>
+              {users.filter(u => u.role !== 'SUPER_ADMIN').map(u => (
+                <tr key={u.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                   <td style={{ padding: '12px' }}>{u.name}</td>
                   <td style={{ padding: '12px' }}>{u.email}</td>
                   <td style={{ padding: '12px' }}>{u.role}</td>
                   <td style={{ padding: '12px' }}>{u._count.skills}</td>
-                  <td style={{ padding: '12px' }}>{u.isSuspended ? 'Suspended' : 'Active'}</td>
+                  <td style={{ padding: '12px' }}>{u.isBanned ? 'Banned' : 'Active'}</td>
                   <td style={{ padding: '12px' }}>
-                    {!u.isSuspended && u.role !== 'ADMIN' && (
-                      <button className="btn-secondary" onClick={() => handleSuspend(u.id)}>Suspend</button>
+                    {!u.isBanned && u.role !== 'SUPER_ADMIN' && (
+                      <button className="btn-secondary" onClick={() => handleBan(u.id)}>Ban User</button>
                     )}
                   </td>
                 </tr>
@@ -228,7 +230,7 @@ export default function Admin() {
         <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>Disputes</h2>
         {disputes.length > 0 ? (
           disputes.map(d => (
-            <div key={d.id} className="match-card" style={{ marginBottom: '12px', padding: '16px', border: '1px solid var(--glass-border-subtle)', borderRadius: '12px' }}>
+            <div key={d.id} className="match-card" style={{ marginBottom: '12px', padding: '16px', border: '1px solid var(--border-subtle)', borderRadius: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
                   <p><strong>Dispute #{d.id.slice(-6)}</strong> &middot; <span className={`badge ${d.status === 'RESOLVED' ? 'badge--success' : ''}`}>{d.status.replace('_', ' ')}</span></p>
@@ -244,13 +246,13 @@ export default function Admin() {
               </div>
 
               <div style={{ display: 'flex', gap: '16px', marginTop: '16px' }}>
-                <div style={{ flex: 1, padding: '12px', background: 'var(--glass-bg-subtle)', borderRadius: '8px' }}>
+                <div style={{ flex: 1, padding: '12px', background: 'var(--bg-surface-raised)', borderRadius: '8px' }}>
                   <strong>{d.activeMatch.user1.name}'s Stance</strong>
                   <p style={{ fontSize: '14px', marginTop: '8px', color: d.user1Stance ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
                     {d.user1Stance || 'No stance submitted.'}
                   </p>
                 </div>
-                <div style={{ flex: 1, padding: '12px', background: 'var(--glass-bg-subtle)', borderRadius: '8px' }}>
+                <div style={{ flex: 1, padding: '12px', background: 'var(--bg-surface-raised)', borderRadius: '8px' }}>
                   <strong>{d.activeMatch.user2.name}'s Stance</strong>
                   <p style={{ fontSize: '14px', marginTop: '8px', color: d.user2Stance ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
                     {d.user2Stance || 'No stance submitted.'}
@@ -266,7 +268,7 @@ export default function Admin() {
               )}
 
               {resolvingDisputeId === d.id && (
-                <form onSubmit={(e) => handleResolveDispute(e, d.id)} style={{ marginTop: '16px', borderTop: '1px solid var(--glass-border)', paddingTop: '16px' }}>
+                <form onSubmit={(e) => handleResolveDispute(e, d.id)} style={{ marginTop: '16px', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
                   <div className="form-group">
                     <label>Decision</label>
                     <textarea required value={decisionText} onChange={(e) => setDecisionText(e.target.value)} rows="3" placeholder="Explain the resolution..."></textarea>
@@ -298,7 +300,7 @@ export default function Admin() {
         <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>Moderation Queue</h2>
         {flags.length > 0 ? (
           flags.map(f => (
-            <div key={f.id} className="match-card" style={{ marginBottom: '12px', padding: '16px', border: '1px solid var(--glass-border-subtle)', borderRadius: '12px' }}>
+            <div key={f.id} className="match-card" style={{ marginBottom: '12px', padding: '16px', border: '1px solid var(--border-subtle)', borderRadius: '12px' }}>
               <p><strong>{f.targetType}</strong> &middot; {f.reason}</p>
               <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Reported by {f.reporter.name}</p>
               <div style={{ marginTop: '8px', display: 'flex', gap: '8px' }}>
@@ -318,7 +320,7 @@ export default function Admin() {
         <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>Verification Requests</h2>
         {verifications.length > 0 ? (
           verifications.map(v => (
-            <div key={v.id} className="match-card" style={{ marginBottom: '12px', padding: '16px', border: '1px solid var(--glass-border-subtle)', borderRadius: '12px' }}>
+            <div key={v.id} className="match-card" style={{ marginBottom: '12px', padding: '16px', border: '1px solid var(--border-subtle)', borderRadius: '12px' }}>
               <p><strong>{v.name}</strong> ({v.email})</p>
               <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>
                 {v.linkedinUrl && <a href={v.linkedinUrl} target="_blank" rel="noreferrer" style={{ marginRight: '8px' }}>LinkedIn</a>}
@@ -341,7 +343,7 @@ export default function Admin() {
         <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>Support Inbox</h2>
         {supportMessages.length > 0 ? (
           supportMessages.map(msg => (
-            <div key={msg.id} className="match-card" style={{ background: 'var(--glass-bg)', marginBottom: '12px', padding: '16px', border: '1px solid var(--glass-border-subtle)', borderRadius: '12px' }}>
+            <div key={msg.id} className="match-card" style={{ background: 'var(--bg-surface)', marginBottom: '12px', padding: '16px', border: '1px solid var(--border-subtle)', borderRadius: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
                   <p><strong>{msg.name}</strong> ({msg.email})</p>
@@ -354,7 +356,7 @@ export default function Admin() {
                   <span className="badge badge--success">Read</span>
                 )}
               </div>
-              <div style={{ marginTop: '16px', padding: '12px', background: 'var(--glass-bg-subtle)', borderRadius: '8px' }}>
+              <div style={{ marginTop: '16px', padding: '12px', background: 'var(--bg-surface-raised)', borderRadius: '8px' }}>
                 <p style={{ fontSize: '14px', whiteSpace: 'pre-wrap' }}>{msg.message}</p>
               </div>
             </div>
@@ -372,7 +374,7 @@ export default function Admin() {
           <div className="table-responsive">
           <table className="admin-table" style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid var(--glass-border)', position: 'sticky', top: 0, background: 'var(--bg-layer)' }}>
+              <tr style={{ borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, background: 'var(--bg-surface)' }}>
                 <th style={{ padding: '12px' }}>Timestamp</th>
                 <th style={{ padding: '12px' }}>Admin</th>
                 <th style={{ padding: '12px' }}>Action</th>
@@ -381,7 +383,7 @@ export default function Admin() {
             </thead>
             <tbody>
               {auditLogs.map(log => (
-                <tr key={log.id} style={{ borderBottom: '1px solid var(--glass-border-subtle)' }}>
+                <tr key={log.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                   <td style={{ padding: '12px', fontSize: '13px' }}>{new Date(log.createdAt).toLocaleString()}</td>
                   <td style={{ padding: '12px' }}>{log.actor?.name}</td>
                   <td style={{ padding: '12px' }}><span className="badge">{log.action}</span></td>

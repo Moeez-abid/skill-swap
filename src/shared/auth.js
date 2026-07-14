@@ -25,7 +25,8 @@ export function isLoggedIn() {
 }
 
 export function isAdmin() {
-  return getUser()?.role === 'ADMIN';
+  const role = getUser()?.role;
+  return role === 'SUPER_ADMIN' || role === 'MANAGER' || role === 'MAINTENANCE_ADMIN';
 }
 
 export function requireAuth(redirectTo = '/login.html') {

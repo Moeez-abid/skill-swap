@@ -140,7 +140,7 @@ export default function NotificationsDropdown() {
             position: 'absolute',
             top: '-2px',
             right: '-2px',
-            background: 'var(--brand-blue)',
+            background: 'var(--accent)',
             color: 'white',
             borderRadius: '50%',
             width: '18px',
@@ -169,14 +169,14 @@ export default function NotificationsDropdown() {
           padding: '0',
           display: 'flex',
           flexDirection: 'column',
-          background: 'var(--glass-bg)'
+          background: 'var(--bg-surface)'
         }}>
           <div style={{ 
             display: 'flex', 
             justifyContent: 'space-between', 
             alignItems: 'center', 
             padding: '16px', 
-            borderBottom: '1px solid var(--glass-border-subtle)',
+            borderBottom: '1px solid var(--border-subtle)',
             background: 'linear-gradient(to right, rgba(233, 46, 32, 0.08), transparent)',
             borderTopLeftRadius: '16px',
             borderTopRightRadius: '16px'
@@ -184,7 +184,7 @@ export default function NotificationsDropdown() {
             <h3 style={{ margin: 0, fontSize: '16px', fontFamily: 'Fustat,sans-serif', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
               Notifications
               {notifs.length > 0 && (
-                <span style={{ fontSize: '12px', background: 'var(--glass-bg-subtle)', color: 'var(--text-secondary)', padding: '2px 8px', borderRadius: '12px' }}>
+                <span style={{ fontSize: '12px', background: 'var(--bg-surface-raised)', color: 'var(--text-secondary)', padding: '2px 8px', borderRadius: '12px' }}>
                   {notifs.length}
                 </span>
               )}
@@ -192,7 +192,7 @@ export default function NotificationsDropdown() {
             {unreadCount > 0 && (
               <button 
                 onClick={handleMarkAllRead}
-                style={{ background: 'none', border: 'none', color: 'var(--brand-blue)', cursor: 'pointer', fontSize: '12px' }}
+                style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '12px' }}
               >
                 Mark all read
               </button>
@@ -213,10 +213,10 @@ export default function NotificationsDropdown() {
                     padding: '12px 16px', 
                     cursor: 'pointer',
                     background: n.isRead ? 'transparent' : 'rgba(255, 62, 0, 0.05)',
-                    borderLeft: n.isRead ? '3px solid transparent' : '3px solid var(--brand-blue)',
+                    borderLeft: n.isRead ? '3px solid transparent' : '3px solid var(--accent)',
                     transition: 'background 0.2s'
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = 'var(--glass-bg-subtle)'}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-surface-raised)'}
                   onMouseLeave={(e) => e.currentTarget.style.background = n.isRead ? 'transparent' : 'rgba(255, 62, 0, 0.05)'}
                 >
                   <div style={{ fontSize: '14px', fontWeight: n.isRead ? 'normal' : '600', marginBottom: '4px', color: 'var(--text-primary)' }}>
@@ -251,15 +251,15 @@ export default function NotificationsDropdown() {
             padding: '16px',
             alignItems: 'flex-start',
             boxShadow: '0 12px 40px rgba(0,0,0,0.12)',
-            borderLeft: '4px solid var(--brand-blue)',
-            background: 'var(--glass-bg)'
+            borderLeft: '4px solid var(--accent)',
+            background: 'var(--bg-surface)'
           }}
           onClick={() => {
             handleNotificationClick(toast);
             setToast(null);
           }}
         >
-          <div style={{ background: 'rgba(233, 46, 32, 0.1)', padding: '10px', borderRadius: '50%', color: 'var(--brand-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: 'rgba(233, 46, 32, 0.1)', padding: '10px', borderRadius: '50%', color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
               <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>

@@ -22,21 +22,24 @@ export default function Contact() {
   };
 
   return (
-    <div className="container animate-fade-up" style={{ paddingTop: '120px', minHeight: 'calc(100vh - 200px)' }}>
-      <div className="section-title">Contact Us</div>
-      
-      <div className="glass-card" style={{ maxWidth: '600px', margin: '0 auto', padding: '32px' }}>
-        <p style={{ marginBottom: '24px', color: 'var(--text-secondary)', textAlign: 'center' }}>
+    <div style={{ paddingTop: '130px', paddingBottom: '64px', maxWidth: '1000px', margin: '0 auto' }}>
+      <div className="page-header animate-fade-up" style={{ textAlign: 'center', marginBottom: '48px' }}>
+        <h1 className="page-title">Contact Us</h1>
+        <p className="page-subtitle" style={{ maxWidth: '600px', lineHeight: '1.6', margin: '16px auto 0' }}>
           Have a question, suggestion, or need support? We'd love to hear from you. Fill out the form below and our team will get back to you shortly.
         </p>
-
+      </div>
+      
+      <div className="glass-card animate-fade-up delay-1" style={{ maxWidth: '600px', margin: '0 auto', padding: '40px' }}>
         {submitted ? (
-          <div className="toast toast--success" style={{ display: 'block', position: 'relative', margin: '0 auto' }}>
-            Message sent successfully! We'll be in touch soon.
+          <div style={{ textAlign: 'center', padding: '32px 16px' }}>
+            <div style={{ width: '48px', height: '48px', background: 'rgba(22, 163, 74, 0.1)', color: '#16A34A', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: '24px' }}>✓</div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '8px' }}>Message Sent</h3>
+            <p style={{ color: 'var(--text-secondary)' }}>We've received your message and will be in touch soon.</p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div className="form-group">
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div className="form-group" style={{ marginBottom: '0' }}>
               <label>Name</label>
               <input 
                 type="text" 
@@ -46,7 +49,7 @@ export default function Contact() {
                 placeholder="Your Name"
               />
             </div>
-            <div className="form-group">
+            <div className="form-group" style={{ marginBottom: '0' }}>
               <label>Email</label>
               <input 
                 type="email" 
@@ -56,7 +59,7 @@ export default function Contact() {
                 placeholder="you@example.com"
               />
             </div>
-            <div className="form-group">
+            <div className="form-group" style={{ marginBottom: '0' }}>
               <label>Message</label>
               <textarea 
                 required 
@@ -66,7 +69,7 @@ export default function Contact() {
                 placeholder="How can we help you?"
               ></textarea>
             </div>
-            <button type="submit" className="primary-cta" style={{ marginTop: '8px' }} disabled={loading}>
+            <button type="submit" className="primary-cta" style={{ marginTop: '12px', width: '100%', padding: '14px' }} disabled={loading}>
               {loading ? 'Sending...' : 'Send Message'}
             </button>
           </form>

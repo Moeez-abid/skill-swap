@@ -19,7 +19,15 @@ export async function api(path, options = {}) {
   const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
 
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || data.message || 'Request failed');
+  if (!res.ok) {
+    if (res.status === 403 && data.isBanned) {
+      localStorage.setItem('skillswap-ban-reason', data.reason || 'Your account was suspended.');
+      localStorage.removeItem('skillswap-token');
+      window.location.href = '/banned';
+      throw new Error('Account suspended');
+    }
+    throw new Error(data.error || data.message || 'Request failed');
+  }
   return data;
 }
 
@@ -187,6 +195,16 @@ export const users = {
     clearApiCache('/dashboard');
     return res;
   },
+  blockUser: async (id, reason) => {
+    const res = await api(`/users/${id}/block`, { method: 'POST', body: JSON.stringify({ reason }) });
+    clearApiCache('/users');
+    clearApiCache('/matches');
+    return res;
+  },
+  reportUser: async (id, reason, description) => {
+    const res = await api(`/users/${id}/flag`, { method: 'POST', body: JSON.stringify({ reason, description }) });
+    return res;
+  },
   updatePassword: (data) => api('/users/me/password', { method: 'PATCH', body: JSON.stringify(data) }),
   deleteAccount: () => api('/users/me', { method: 'DELETE' }),
 };
@@ -218,8 +236,8 @@ export const admin = {
     const res = await api(`/admin/moderation/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) });
     return res;
   },
-  suspendUser: async (id, reason) => {
-    const res = await api(`/admin/users/${id}/suspend`, { method: 'PATCH', body: JSON.stringify({ reason }) });
+  banUser: async (id, reason) => {
+    const res = await api(`/admin/users/${id}/ban`, { method: 'PATCH', body: JSON.stringify({ reason }) });
     clearApiCache('/users');
     return res;
   },

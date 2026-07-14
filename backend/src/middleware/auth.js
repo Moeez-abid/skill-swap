@@ -11,12 +11,22 @@ export async function authenticate(req, res, next) {
   try {
     const decoded = verifyToken(header.slice(7));
     const user = await prisma.user.findFirst({
-      where: { id: decoded.userId, deletedAt: null, isSuspended: false },
+      where: { id: decoded.userId, deletedAt: null },
       select: {
-        id: true, email: true, name: true, role: true, avatarUrl: true, timezone: true,
+        id: true, email: true, name: true, role: true, avatarUrl: true, timezone: true, isBanned: true, banReason: true,
       },
     });
+    
     if (!user) return apiError(res, 401, 'Invalid or expired token');
+    
+    if (user.isBanned) {
+      return res.status(403).json({ 
+        error: 'Account Suspended', 
+        isBanned: true, 
+        reason: user.banReason || 'Your account has been suspended by an administrator.' 
+      });
+    }
+
     req.user = user;
     next();
   } catch {
@@ -37,8 +47,17 @@ export function optionalAuth(req, res, next) {
   }
 }
 
+export function requireRole(allowedRoles) {
+  return (req, res, next) => {
+    if (!req.user || !allowedRoles.includes(req.user.role)) {
+      return apiError(res, 403, 'Insufficient permissions to perform this action');
+    }
+    next();
+  };
+}
+
 export function requireAdmin(req, res, next) {
-  if (req.user?.role !== 'ADMIN') {
+  if (req.user?.role !== 'SUPER_ADMIN') {
     return apiError(res, 403, 'Administrator access required');
   }
   next();
