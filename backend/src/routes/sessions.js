@@ -79,20 +79,25 @@ router.post('/match/:matchId', authenticate, validate(sessionSchema), async (req
 
   const partnerId = match.user1Id === req.user.id ? match.user2Id : match.user1Id;
   
-  const notification = await prisma.notification.create({
-    data: {
-      userId: partnerId,
-      type: 'SESSION_PROPOSED',
-      title: 'New Session Proposed',
-      content: `${req.user.name} proposed a new session.`,
-      linkUrl: '/sessions',
-    }
-  });
-
-  await triggerEvent(`user-${partnerId}`, 'session-proposed', { session, notification });
-
+  let notification = null;
   const partnerUser = match.user1Id === req.user.id ? match.user2 : match.user1;
+  
   if (partnerUser.notifySessions) {
+    notification = await prisma.notification.create({
+      data: {
+        userId: partnerId,
+        type: 'SESSION_PROPOSED',
+        title: 'New Session Proposed',
+        content: `${req.user.name} proposed a new session.`,
+        linkUrl: '/sessions',
+      }
+    });
+    await triggerEvent(`user-${partnerId}`, 'session-proposed', { session, notification });
+  } else {
+    await triggerEvent(`user-${partnerId}`, 'session-proposed', { session });
+  }
+
+  if (partnerUser.emailNotifySessions) {
     sendEmail({
       to: partnerUser.email,
       subject: 'New Session Proposed!',
@@ -137,19 +142,23 @@ router.patch('/:id/respond', authenticate, async (req, res) => {
   else if (action === 'decline') notificationContent = `${req.user.name} declined your session proposal.`;
   else if (action === 'counter') notificationContent = `${req.user.name} proposed a new time for your session.`;
 
-  const notification = await prisma.notification.create({
-    data: {
-      userId: session.proposerId,
-      type: 'SESSION_UPDATED',
-      title: 'Session Update',
-      content: notificationContent,
-      linkUrl: '/sessions',
-    }
-  });
-
-  await triggerEvent(`user-${session.proposerId}`, 'session-updated', { session: updated, notification });
-
+  let notification = null;
   if (session.proposer.notifySessions) {
+    notification = await prisma.notification.create({
+      data: {
+        userId: session.proposerId,
+        type: 'SESSION_UPDATED',
+        title: 'Session Update',
+        content: notificationContent,
+        linkUrl: '/sessions',
+      }
+    });
+    await triggerEvent(`user-${session.proposerId}`, 'session-updated', { session: updated, notification });
+  } else {
+    await triggerEvent(`user-${session.proposerId}`, 'session-updated', { session: updated });
+  }
+
+  if (session.proposer.emailNotifySessions) {
     sendEmail({
       to: session.proposer.email,
       subject: `Session ${data.status}`,

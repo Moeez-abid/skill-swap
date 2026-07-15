@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../lib/prisma.js';
 import { authenticate, requireRole } from '../middleware/auth.js';
 import { apiError, apiSuccess } from '../utils/helpers.js';
+import { triggerEvent } from '../lib/pusher.js';
 
 const router = Router();
 
@@ -224,6 +225,17 @@ router.patch('/verifications/:id/approve', async (req, res) => {
     }
   });
   
+
+  const notification = await prisma.notification.create({
+    data: {
+      userId: user.id,
+      type: 'SYSTEM',
+      title: 'Profile Verified',
+      message: 'Congratulations! Your profile verification request has been approved. You now have a verified badge on your profile.',
+    }
+  });
+  await triggerEvent(`user-${user.id}`, 'new_notification', notification);
+
   return apiSuccess(res, { user });
 });
 
@@ -241,6 +253,16 @@ router.patch('/verifications/:id/reject', async (req, res) => {
       metadata: { email: user.email },
     }
   });
+
+  const notification = await prisma.notification.create({
+    data: {
+      userId: user.id,
+      type: 'SYSTEM',
+      title: 'Verification Update',
+      message: 'Your profile verification request was not approved at this time. Please ensure your profile is fully complete before trying again.',
+    }
+  });
+  await triggerEvent(`user-${user.id}`, 'new_notification', notification);
   
   return apiSuccess(res, { user });
 });
@@ -254,6 +276,28 @@ router.get('/audit-logs', async (req, res) => {
     }
   });
   return apiSuccess(res, { logs });
+});
+
+router.delete('/groups/:id', requireRole(['SUPER_ADMIN', 'MANAGER']), async (req, res) => {
+  try {
+    const group = await prisma.group.findUnique({ where: { id: req.params.id } });
+    if (!group) return apiError(res, 404, 'Group not found');
+
+    await prisma.group.delete({ where: { id: req.params.id } });
+
+    await prisma.auditLog.create({
+      data: {
+        action: 'GROUP_DELETED',
+        actorId: req.user.id,
+        metadata: { groupId: req.params.id, groupName: group.name },
+      }
+    });
+
+    return apiSuccess(res, { message: 'Group deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting group:', error);
+    return apiError(res, 500, 'Internal server error');
+  }
 });
 
 export default router;

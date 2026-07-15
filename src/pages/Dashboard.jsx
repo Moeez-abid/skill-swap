@@ -80,12 +80,9 @@ export default function Dashboard() {
 
   return (
     <div style={{ paddingTop: '130px', paddingBottom: '64px' }}>
-      <div className="page-header animate-fade-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-        <div>
-          <h1 className="page-title">Dashboard</h1>
-          <p className="page-subtitle">Your personalized overview — skills, matches, sessions, and messages.</p>
-        </div>
-        <button className="primary-cta" onClick={() => navigate('/create-skill')}>List a Skill</button>
+      <div className="page-header animate-fade-up" style={{ marginBottom: '32px' }}>
+        <h1 className="page-title">Welcome back, {getUser()?.name?.split(' ')[0] || 'User'}!</h1>
+        <p className="page-subtitle" style={{ fontSize: '1.1rem' }}>Here is what's happening with your skills and swaps right now.</p>
       </div>
       
       {loading || !data ? (
@@ -95,7 +92,19 @@ export default function Dashboard() {
         return (
         <>
         <div className="dashboard-grid animate-fade-up delay-1">
-        <div className="overview-cards">
+          
+        <section className="quick-actions" style={{ gridColumn: '1 / -1', display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '16px', justifyContent: 'flex-end' }}>
+          <button className="primary-cta" style={{ flex: '0 1 auto', padding: '10px 20px', fontSize: '0.95rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} onClick={() => navigate('/marketplace')}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+            Find Skills
+          </button>
+          <button className="primary-cta" style={{ flex: '0 1 auto', padding: '10px 20px', fontSize: '0.95rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} onClick={() => navigate('/create-skill')}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            Teach a Skill
+          </button>
+        </section>
+
+        <div className="overview-cards" style={{ gridColumn: '1 / -1' }}>
           <div className="stat-card glass-card">
             <div className="stat-card__value">{overview.totalSkills}</div>
             <div className="stat-card__label">Your Skills</div>
@@ -157,33 +166,41 @@ export default function Dashboard() {
           </Link>
         </section>
 
-        <section className="glass-card" style={{ padding: '24px', marginTop: '24px', gridColumn: '1 / -1', overflow: 'hidden' }}>
-          <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>My Skills</h2>
-          {mySkills.length > 0 ? (
-            <div className="carousel">
-              <div id="my-skills-carousel" className="carousel__track" role="list" ref={carouselRef}>
-                {mySkills.map((s, i) => (
-                  <SkillCard 
-                    key={s.id} 
-                    skill={s} 
-                    actions={
-                      <>
-                        <button className="btn-secondary" style={{ flex: 1 }} onClick={() => navigate(`/create-skill?id=${s.id}`)}>Edit</button>
-                        <button className="btn-secondary" style={{ flex: 1, color: 'var(--brand-red)', borderColor: 'var(--brand-red)' }} onClick={() => handleDeleteSkill(s.id)}>Delete</button>
-                      </>
-                    }
-                  />
-                ))}
-              </div>
-              <div className="carousel__controls">
-                <button type="button" className="carousel__btn" onClick={() => scrollCarousel(-1)} aria-label="Previous skills">&larr;</button>
-                <button type="button" className="carousel__btn" onClick={() => scrollCarousel(1)} aria-label="Next skills">&rarr;</button>
-              </div>
-            </div>
-          ) : (
-            <p className="empty-state">You haven't listed any skills yet</p>
-          )}
+        <section style={{ marginBottom: '32px', marginTop: '32px', gridColumn: '1 / -1' }}>
+          <h2 className="section-title" style={{ textAlign: 'left', fontSize: '1.5rem', margin: 0, marginBottom: '16px' }}>My Skills</h2>
+          <div className="skills-grid">
+            {mySkills.length > 0 ? (
+              mySkills.map(s => (
+                <SkillCard 
+                  key={s.id} 
+                  skill={s} 
+                  actions={
+                    <div style={{ display: 'flex', gap: '8px', width: '100%', marginTop: 'auto' }}>
+                      <button 
+                        onClick={(e) => { e.preventDefault(); navigate(`/create-skill?id=${s.id}`); }}
+                        className="btn-secondary" 
+                        style={{ flex: 1, padding: '8px', fontSize: '0.85rem' }}
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        onClick={(e) => { e.preventDefault(); handleDeleteSkill(s.id); }}
+                        className="btn-secondary" 
+                        style={{ flex: 1, padding: '8px', fontSize: '0.85rem', color: '#ef4444', borderColor: '#ef4444' }}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  }
+                />
+              ))
+            ) : (
+              <p className="empty-state" style={{ gridColumn: '1 / -1', padding: '24px 0' }}>You haven't listed any skills yet.</p>
+            )}
+          </div>
         </section>
+
+
       </div>
 
       {pendingActions > 0 && (

@@ -52,20 +52,24 @@ export const startCronJobs = () => {
 
 async function notifyUser(user, session, partner) {
   // 1. Pusher In-App Notification
-  const notification = await prisma.notification.create({
-    data: {
-      userId: user.id,
-      type: 'SESSION_REMINDER',
-      title: 'Upcoming Session!',
-      content: `Your session with ${partner.name} is starting in less than an hour!`,
-      linkUrl: '/sessions',
-    }
-  });
-
-  await triggerEvent(`user-${user.id}`, 'session-reminder', { session, notification });
+  let notification = null;
+  if (user.notifySessions) {
+    notification = await prisma.notification.create({
+      data: {
+        userId: user.id,
+        type: 'SESSION_REMINDER',
+        title: 'Upcoming Session!',
+        content: `Your session with ${partner.name} is starting in less than an hour!`,
+        linkUrl: '/sessions',
+      }
+    });
+    await triggerEvent(`user-${user.id}`, 'session-reminder', { session, notification });
+  } else {
+    await triggerEvent(`user-${user.id}`, 'session-reminder', { session });
+  }
 
   // 2. Email Notification (if preferences allow)
-  if (user.notifySessions) {
+  if (user.emailNotifySessions) {
     const timeString = new Date(session.scheduledStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     await sendEmail({
       to: user.email,

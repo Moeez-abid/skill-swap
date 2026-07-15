@@ -251,10 +251,12 @@ export const admin = {
   verifications: () => api('/admin/verifications'),
   approveVerification: async (id) => {
     const res = await api(`/admin/verifications/${id}/approve`, { method: 'PATCH' });
+    clearApiCache(`/users/${id}/profile`);
     return res;
   },
   rejectVerification: async (id) => {
     const res = await api(`/admin/verifications/${id}/reject`, { method: 'PATCH' });
+    clearApiCache(`/users/${id}/profile`);
     return res;
   },
   auditLogs: () => api('/admin/audit-logs'),
@@ -263,6 +265,11 @@ export const admin = {
     const res = await api(`/support/${id}/read`, { method: 'PATCH' });
     return res;
   },
+  deleteGroup: async (id) => {
+    const res = await api(`/admin/groups/${id}`, { method: 'DELETE' });
+    clearApiCache('/groups');
+    return res;
+  }
 };
 
 export const disputes = {
@@ -325,6 +332,14 @@ export const groups = {
     clearApiCache('/groups');
     return res;
   },
+  invite: async (id, userId) => api(`/groups/${id}/invite`, { method: 'POST', body: JSON.stringify({ userId }) }),
+  getInvitations: () => api('/groups/invitations'),
+  acceptInvitation: async (id) => {
+    const res = await api(`/groups/invitations/${id}/accept`, { method: 'POST' });
+    clearApiCache('/groups');
+    return res;
+  },
+  declineInvitation: (id) => api(`/groups/invitations/${id}/decline`, { method: 'POST' }),
   messages: (id) => api(`/groups/${id}/messages`), // Skip cache for chat messages
   sendMessage: (id, content) => api(`/groups/${id}/messages`, { method: 'POST', body: JSON.stringify({ content }) }),
 };

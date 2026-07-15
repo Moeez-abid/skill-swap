@@ -78,37 +78,65 @@ export default function Home() {
         <h2 id="benefits-title" className="section-title reveal">Why Join SkillSwap?</h2>
         <div className="steps-grid">
           <article className="step-card glass-card reveal">
-            <h3>Learn & Share Practical Skills</h3>
-            <p>Learn practical skills from people with real experience, and share your own knowledge to make a positive impact.</p>
+            <h3>Learn Practical Skills</h3>
+            <p>Learn practical skills from people with real experience.</p>
           </article>
           <article className="step-card glass-card reveal reveal-delay-1">
-            <h3>Connect & Network</h3>
-            <p>Connect with learners and skilled professionals from different backgrounds to grow both personally and professionally.</p>
+            <h3>Share Your Knowledge</h3>
+            <p>Share your knowledge and make a positive impact.</p>
           </article>
           <article className="step-card glass-card reveal reveal-delay-2">
+            <h3>Connect & Network</h3>
+            <p>Connect with learners and skilled professionals from different backgrounds.</p>
+          </article>
+          <article className="step-card glass-card reveal">
+            <h3>Discover Opportunities</h3>
+            <p>Discover opportunities to grow both personally and professionally.</p>
+          </article>
+          <article className="step-card glass-card reveal reveal-delay-1">
             <h3>Simple & Secure Platform</h3>
-            <p>Enjoy a simple, secure, and easy-to-use platform designed specifically for meaningful, peer-to-peer learning.</p>
+            <p>Enjoy a simple, secure, and easy-to-use platform designed for meaningful learning.</p>
           </article>
         </div>
       </section>
 
       <section className="section" aria-labelledby="how-title">
         <h2 id="how-title" className="section-title reveal">How It Works</h2>
-        <div className="steps-grid">
-          <article className="step-card glass-card reveal">
-            <div className="step-card__icon" aria-hidden="true">1</div>
-            <h3>Setup & List</h3>
-            <p>Create your account and tell others what you can teach or what you'd like to learn.</p>
+        <div className="timeline">
+          <article className="timeline-item reveal">
+            <div className="timeline-icon" aria-hidden="true">1</div>
+            <div className="timeline-content glass-card" style={{ padding: '32px' }}>
+              <h3 style={{ fontSize: '1.25rem', marginBottom: '8px', color: 'var(--text-primary)' }}>Create Account</h3>
+              <p style={{ color: 'var(--text-secondary)' }}>Create your account to get started on your learning journey.</p>
+            </div>
           </article>
-          <article className="step-card glass-card reveal reveal-delay-1">
-            <div className="step-card__icon" aria-hidden="true">2</div>
-            <h3>Connect & Match</h3>
-            <p>Connect with people who share your interests and find the perfect knowledge exchange partner.</p>
+          <article className="timeline-item reveal reveal-delay-1">
+            <div className="timeline-icon" aria-hidden="true">2</div>
+            <div className="timeline-content glass-card" style={{ padding: '32px' }}>
+              <h3 style={{ fontSize: '1.25rem', marginBottom: '8px', color: 'var(--text-primary)' }}>List Your Interests</h3>
+              <p style={{ color: 'var(--text-secondary)' }}>Tell others what you can teach or what you'd like to learn.</p>
+            </div>
           </article>
-          <article className="step-card glass-card reveal reveal-delay-2">
-            <div className="step-card__icon" aria-hidden="true">3</div>
-            <h3>Learn & Grow</h3>
-            <p>Learn, teach, and exchange knowledge through meaningful sessions while helping others grow their skills.</p>
+          <article className="timeline-item reveal reveal-delay-2">
+            <div className="timeline-icon" aria-hidden="true">3</div>
+            <div className="timeline-content glass-card" style={{ padding: '32px' }}>
+              <h3 style={{ fontSize: '1.25rem', marginBottom: '8px', color: 'var(--text-primary)' }}>Connect</h3>
+              <p style={{ color: 'var(--text-secondary)' }}>Connect with people who share your interests.</p>
+            </div>
+          </article>
+          <article className="timeline-item reveal">
+            <div className="timeline-icon" aria-hidden="true">4</div>
+            <div className="timeline-content glass-card" style={{ padding: '32px' }}>
+              <h3 style={{ fontSize: '1.25rem', marginBottom: '8px', color: 'var(--text-primary)' }}>Exchange Knowledge</h3>
+              <p style={{ color: 'var(--text-secondary)' }}>Learn, teach, and exchange knowledge through meaningful sessions.</p>
+            </div>
+          </article>
+          <article className="timeline-item reveal reveal-delay-1">
+            <div className="timeline-icon" aria-hidden="true">5</div>
+            <div className="timeline-content glass-card" style={{ padding: '32px' }}>
+              <h3 style={{ fontSize: '1.25rem', marginBottom: '8px', color: 'var(--text-primary)' }}>Continue Growing</h3>
+              <p style={{ color: 'var(--text-secondary)' }}>Continue growing your skills while helping others grow theirs.</p>
+            </div>
           </article>
         </div>
       </section>

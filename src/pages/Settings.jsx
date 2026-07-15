@@ -17,10 +17,7 @@ export default function Settings() {
   const [portfolioUrl, setPortfolioUrl] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [timezone, setTimezone] = useState('UTC');
-  const [availabilityStatus, setAvailabilityStatus] = useState('AVAILABLE');
-  const [notifyMatches, setNotifyMatches] = useState(false);
-  const [notifyMessages, setNotifyMessages] = useState(false);
-  const [notifySessions, setNotifySessions] = useState(false);
+
   const [isVerified, setIsVerified] = useState(false);
   const [verificationRequested, setVerificationRequested] = useState(false);
 
@@ -56,10 +53,7 @@ export default function Settings() {
         setPortfolioUrl(user.portfolioUrl || '');
         setAvatarUrl(user.avatarUrl || '');
         setTimezone(user.timezone || 'UTC');
-        setAvailabilityStatus(user.availabilityStatus || 'AVAILABLE');
-        setNotifyMatches(user.notifyMatches || false);
-        setNotifyMessages(user.notifyMessages || false);
-        setNotifySessions(user.notifySessions || false);
+
         setIsVerified(user.isVerified || false);
         setVerificationRequested(user.verificationRequested || false);
       })
@@ -101,10 +95,7 @@ export default function Settings() {
         githubUrl,
         portfolioUrl,
         timezone,
-        availabilityStatus,
-        notifyMatches,
-        notifyMessages,
-        notifySessions,
+
       });
       const currentUser = getUser();
       if (currentUser && res.user) {
@@ -206,7 +197,17 @@ export default function Settings() {
           </div>
           <div className="form-group">
             <label htmlFor="timezone">Timezone</label>
-            <input id="timezone" placeholder="UTC" value={timezone} onChange={(e) => setTimezone(e.target.value)} />
+            <select id="timezone" value={timezone} onChange={(e) => setTimezone(e.target.value)}>
+              <option value="UTC">UTC (Coordinated Universal Time)</option>
+              <option value="EST">EST (Eastern Standard Time)</option>
+              <option value="CST">CST (Central Standard Time)</option>
+              <option value="PST">PST (Pacific Standard Time)</option>
+              <option value="GMT">GMT (Greenwich Mean Time)</option>
+              <option value="CET">CET (Central European Time)</option>
+              <option value="IST">IST (Indian Standard Time)</option>
+              <option value="JST">JST (Japan Standard Time)</option>
+              <option value="AEST">AEST (Australian Eastern Standard Time)</option>
+            </select>
           </div>
         </div>
         
@@ -223,31 +224,12 @@ export default function Settings() {
           <label htmlFor="portfolioUrl">Portfolio/Website URL</label>
           <input id="portfolioUrl" type="url" placeholder="https://yourwebsite.com" value={portfolioUrl} onChange={(e) => setPortfolioUrl(e.target.value)} />
         </div>
-        <div className="form-group">
-          <label htmlFor="availabilityStatus">Global Availability</label>
-          <select id="availabilityStatus" value={availabilityStatus} onChange={(e) => setAvailabilityStatus(e.target.value)}>
-            <option value="AVAILABLE">Available</option>
-            <option value="BUSY">Busy</option>
-            <option value="UNAVAILABLE">Unavailable</option>
-          </select>
-        </div>
-        <fieldset style={{ border: 'none', marginTop: '16px' }}>
-          <legend style={{ marginBottom: '12px' }}>Notifications</legend>
-          <div className="checkbox-group">
-            <label>
-              <input type="checkbox" checked={notifyMatches} onChange={(e) => setNotifyMatches(e.target.checked)} /> Match requests
-            </label>
-            <label>
-              <input type="checkbox" checked={notifyMessages} onChange={(e) => setNotifyMessages(e.target.checked)} /> Messages
-            </label>
-            <label>
-              <input type="checkbox" checked={notifySessions} onChange={(e) => setNotifySessions(e.target.checked)} /> Sessions
-            </label>
-          </div>
-        </fieldset>
+        
         <button type="submit" className="primary-cta" style={{ marginTop: '16px' }}>Save Settings</button>
         {profileError && <p className="form-error">{profileError}</p>}
       </form>
+
+
 
       <div className="form-card glass-card animate-fade-up delay-2" style={{ marginBottom: '32px' }}>
         <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>Account Verification</h2>

@@ -89,6 +89,9 @@ export const profileUpdateSchema = z.object({
   notifyMatches: z.boolean().optional(),
   notifyMessages: z.boolean().optional(),
   notifySessions: z.boolean().optional(),
+  emailNotifyMatches: z.boolean().optional(),
+  emailNotifyMessages: z.boolean().optional(),
+  emailNotifySessions: z.boolean().optional(),
 });
 
 export const passwordUpdateSchema = z.object({

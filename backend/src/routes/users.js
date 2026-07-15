@@ -88,6 +88,9 @@ router.patch('/me', authenticate, validate(profileUpdateSchema), async (req, res
   if (req.body.notifyMatches !== undefined) data.notifyMatches = req.body.notifyMatches;
   if (req.body.notifyMessages !== undefined) data.notifyMessages = req.body.notifyMessages;
   if (req.body.notifySessions !== undefined) data.notifySessions = req.body.notifySessions;
+  if (req.body.emailNotifyMatches !== undefined) data.emailNotifyMatches = req.body.emailNotifyMatches;
+  if (req.body.emailNotifyMessages !== undefined) data.emailNotifyMessages = req.body.emailNotifyMessages;
+  if (req.body.emailNotifySessions !== undefined) data.emailNotifySessions = req.body.emailNotifySessions;
 
   const user = await prisma.user.update({ where: { id: req.user.id }, data });
   return apiSuccess(res, { user: { id: user.id, name: user.name, email: user.email, avatarUrl: user.avatarUrl } });

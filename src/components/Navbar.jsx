@@ -137,6 +137,7 @@ export default function Navbar() {
                     </div>
                     <Link to="/profile">My Profile</Link>
                     <Link to="/settings">Settings</Link>
+                    <Link to="/settings/notifications">Notification Settings</Link>
                     <button type="button" onClick={handleLogout}>Log out</button>
                   </div>
                 </div>
@@ -196,6 +197,7 @@ export default function Navbar() {
               <>
                 <Link to="/profile" className="nav-btn nav-btn--ghost" onClick={() => setIsMenuOpen(false)} style={{ justifyContent: 'center' }}>My Profile</Link>
                 <Link to="/settings" className="nav-btn nav-btn--ghost" onClick={() => setIsMenuOpen(false)} style={{ justifyContent: 'center' }}>Settings</Link>
+                <Link to="/settings/notifications" className="nav-btn nav-btn--ghost" onClick={() => setIsMenuOpen(false)} style={{ justifyContent: 'center' }}>Notification Settings</Link>
                 <button type="button" onClick={(e) => { handleLogout(e); setIsMenuOpen(false); }} className="btn-secondary" style={{ width: '100%', padding: '12px' }}>Log out</button>
               </>
             ) : (

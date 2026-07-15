@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { admin } from '../shared/api';
+import { admin, groups } from '../shared/api';
 import { isLoggedIn, isAdmin } from '../shared/auth';
 
 export default function Admin() {
@@ -13,6 +13,8 @@ export default function Admin() {
   const [verifications, setVerifications] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
   const [supportMessages, setSupportMessages] = useState([]);
+  const [allGroups, setAllGroups] = useState([]);
+
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -24,6 +26,12 @@ export default function Admin() {
 
   const [activeTab, setActiveTab] = useState('analytics');
 
+  // Modal states
+  const [groupToDelete, setGroupToDelete] = useState(null);
+  const [userToBan, setUserToBan] = useState(null);
+  const [banReason, setBanReason] = useState('');
+
+
   const showToast = (msg) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(''), 3500);
@@ -33,14 +41,15 @@ export default function Admin() {
     setLoading(true);
     setError(false);
     try {
-      const [analyticsRes, usersRes, flagsRes, disputesRes, verificationsRes, auditRes, supportRes] = await Promise.all([
+      const [analyticsRes, usersRes, flagsRes, disputesRes, verificationsRes, auditRes, supportRes, groupsRes] = await Promise.all([
         admin.analytics(),
         admin.users(),
         admin.moderation(),
         admin.disputes(),
         admin.verifications(),
         admin.auditLogs(),
-        admin.supportMessages()
+        admin.supportMessages(),
+        groups.list()
       ]);
       setAnalytics(analyticsRes.analytics);
       setUsers(usersRes.users);
@@ -49,6 +58,7 @@ export default function Admin() {
       setVerifications(verificationsRes.users);
       setAuditLogs(auditRes.logs);
       setSupportMessages(supportRes.messages || []);
+      setAllGroups(groupsRes.groups || []);
     } catch (e) {
       setError(true);
     } finally {
@@ -69,15 +79,32 @@ export default function Admin() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
 
-  const handleBan = async (userId) => {
-    const reason = window.prompt('Reason for ban:');
-    if (reason === null) return;
+
+  const confirmDeleteGroup = async () => {
+    if (!groupToDelete) return;
     try {
-      await admin.banUser(userId, reason);
+      await admin.deleteGroup(groupToDelete);
+      showToast('Group deleted successfully');
+      loadData();
+    } catch (err) {
+      showToast(err.message || 'Failed to delete group');
+    } finally {
+      setGroupToDelete(null);
+    }
+  };
+
+  const confirmBanUser = async (e) => {
+    e.preventDefault();
+    if (!userToBan || !banReason.trim()) return;
+    try {
+      await admin.banUser(userToBan, banReason);
       showToast('User banned');
       loadData();
     } catch (err) {
       showToast(err.message);
+    } finally {
+      setUserToBan(null);
+      setBanReason('');
     }
   };
 
@@ -135,6 +162,7 @@ export default function Admin() {
   if (error) return <div style={{ paddingTop: '130px', paddingBottom: '64px' }}><div className="empty-state"><h3>Admin panel unavailable</h3></div></div>;
 
   return (
+    <>
     <div style={{ paddingTop: '130px', paddingBottom: '64px' }}>
       <div className="page-header">
         <h1 className="page-title">Admin Panel</h1>
@@ -148,6 +176,7 @@ export default function Admin() {
       <div className="tabs admin-tabs animate-fade-up delay-1" style={{ marginBottom: '24px', display: 'flex', gap: '16px', overflowX: 'auto', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
         <button className={`tab ${activeTab === 'analytics' ? 'tab--active' : ''}`} style={{ background: 'none', border: 'none', padding: '8px 16px', cursor: 'pointer', color: activeTab === 'analytics' ? 'var(--text-primary)' : 'var(--text-secondary)', borderBottom: activeTab === 'analytics' ? '2px solid var(--accent)' : 'none', fontWeight: activeTab === 'analytics' ? 600 : 400 }} onClick={() => setActiveTab('analytics')}>Overview</button>
         <button className={`tab ${activeTab === 'users' ? 'tab--active' : ''}`} style={{ background: 'none', border: 'none', padding: '8px 16px', cursor: 'pointer', color: activeTab === 'users' ? 'var(--text-primary)' : 'var(--text-secondary)', borderBottom: activeTab === 'users' ? '2px solid var(--accent)' : 'none', fontWeight: activeTab === 'users' ? 600 : 400 }} onClick={() => setActiveTab('users')}>Users</button>
+        <button className={`tab ${activeTab === 'groups' ? 'tab--active' : ''}`} style={{ background: 'none', border: 'none', padding: '8px 16px', cursor: 'pointer', color: activeTab === 'groups' ? 'var(--text-primary)' : 'var(--text-secondary)', borderBottom: activeTab === 'groups' ? '2px solid var(--accent)' : 'none', fontWeight: activeTab === 'groups' ? 600 : 400 }} onClick={() => setActiveTab('groups')}>Groups</button>
         <button className={`tab ${activeTab === 'disputes' ? 'tab--active' : ''}`} style={{ background: 'none', border: 'none', padding: '8px 16px', cursor: 'pointer', color: activeTab === 'disputes' ? 'var(--text-primary)' : 'var(--text-secondary)', borderBottom: activeTab === 'disputes' ? '2px solid var(--accent)' : 'none', fontWeight: activeTab === 'disputes' ? 600 : 400 }} onClick={() => setActiveTab('disputes')}>Disputes</button>
         <button className={`tab ${activeTab === 'moderation' ? 'tab--active' : ''}`} style={{ background: 'none', border: 'none', padding: '8px 16px', cursor: 'pointer', color: activeTab === 'moderation' ? 'var(--text-primary)' : 'var(--text-secondary)', borderBottom: activeTab === 'moderation' ? '2px solid var(--accent)' : 'none', fontWeight: activeTab === 'moderation' ? 600 : 400 }} onClick={() => setActiveTab('moderation')}>Moderation</button>
         <button className={`tab ${activeTab === 'verifications' ? 'tab--active' : ''}`} style={{ background: 'none', border: 'none', padding: '8px 16px', cursor: 'pointer', color: activeTab === 'verifications' ? 'var(--text-primary)' : 'var(--text-secondary)', borderBottom: activeTab === 'verifications' ? '2px solid var(--accent)' : 'none', fontWeight: activeTab === 'verifications' ? 600 : 400 }} onClick={() => setActiveTab('verifications')}>Verifications</button>
@@ -185,6 +214,43 @@ export default function Admin() {
       </div>
       )}
 
+
+      {activeTab === 'groups' && (
+      <section className="glass-card animate-fade-up delay-2" style={{ padding: '24px', marginTop: '32px' }}>
+        <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>Group Management</h2>
+        <div className="admin-table-wrap" style={{ overflowX: 'auto' }}>
+          {allGroups.length > 0 ? (
+          <div className="table-responsive">
+          <table className="admin-table" style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                <th style={{ padding: '12px' }}>Name</th>
+                <th style={{ padding: '12px' }}>Description</th>
+                <th style={{ padding: '12px' }}>Members</th>
+                <th style={{ padding: '12px' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {allGroups.map(g => (
+                <tr key={g.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                  <td style={{ padding: '12px' }}><strong>{g.name}</strong></td>
+                  <td style={{ padding: '12px', color: 'var(--text-secondary)' }}>{g.description.slice(0, 50)}{g.description.length > 50 ? '...' : ''}</td>
+                  <td style={{ padding: '12px' }}>{g.memberCount}</td>
+                  <td style={{ padding: '12px' }}>
+                    <button onClick={() => setGroupToDelete(g.id)} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '12px', color: '#ef4444', borderColor: 'rgba(239,68,68,0.3)' }}>Delete</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          </div>
+          ) : (
+            <p className="empty-state">No groups found.</p>
+          )}
+        </div>
+      </section>
+      )}
+
       {activeTab === 'users' && (
       <section className="glass-card animate-fade-up delay-2" style={{ padding: '24px', marginTop: '32px' }}>
         <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>User Management</h2>
@@ -212,7 +278,7 @@ export default function Admin() {
                   <td style={{ padding: '12px' }}>{u.isBanned ? 'Banned' : 'Active'}</td>
                   <td style={{ padding: '12px' }}>
                     {!u.isBanned && u.role !== 'SUPER_ADMIN' && (
-                      <button className="btn-secondary" onClick={() => handleBan(u.id)}>Ban User</button>
+                      <button className="btn-secondary" onClick={() => { setUserToBan(u.id); setBanReason(''); }}>Ban User</button>
                     )}
                   </td>
                 </tr>
@@ -406,5 +472,46 @@ export default function Admin() {
       </>
       )}
     </div>
+
+      {/* Modals */}
+      {groupToDelete && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1100, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <div onClick={() => setGroupToDelete(null)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} />
+          <div className="glass-card animate-dropdown-enter" style={{ position: 'relative', zIndex: 1, padding: '24px', borderRadius: '12px', width: '100%', maxWidth: '400px' }}>
+            <h2 style={{ marginTop: 0, marginBottom: '16px', fontSize: '1.25rem' }}>Delete Group</h2>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>Are you sure you want to permanently delete this community group? This will remove all members and messages!</p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <button type="button" className="btn-secondary" onClick={() => setGroupToDelete(null)}>Cancel</button>
+              <button type="button" className="primary-cta" style={{ background: '#ef4444', borderColor: '#ef4444' }} onClick={confirmDeleteGroup}>Delete Group</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {userToBan && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1100, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <div onClick={() => setUserToBan(null)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} />
+          <form onSubmit={confirmBanUser} className="glass-card animate-dropdown-enter" style={{ position: 'relative', zIndex: 1, padding: '24px', borderRadius: '12px', width: '100%', maxWidth: '400px' }}>
+            <h2 style={{ marginTop: 0, marginBottom: '16px', fontSize: '1.25rem' }}>Ban User</h2>
+            <div className="form-group">
+              <label htmlFor="banReason">Reason for ban:</label>
+              <input
+                type="text"
+                id="banReason"
+                autoFocus
+                required
+                value={banReason}
+                onChange={(e) => setBanReason(e.target.value)}
+                style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-primary)' }}
+              />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
+              <button type="button" className="btn-secondary" onClick={() => setUserToBan(null)}>Cancel</button>
+              <button type="submit" className="primary-cta" style={{ background: '#ef4444', borderColor: '#ef4444' }}>Ban User</button>
+            </div>
+          </form>
+        </div>
+      )}
+    </>
   );
 }

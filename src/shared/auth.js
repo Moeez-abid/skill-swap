@@ -18,6 +18,7 @@ export function setAuth(token, user) {
 export function clearAuth() {
   localStorage.removeItem('skillswap-token');
   localStorage.removeItem('skillswap-user');
+  sessionStorage.clear();
 }
 
 export function isLoggedIn() {

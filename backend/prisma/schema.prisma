@@ -69,12 +69,19 @@ enum NotificationType {
   SESSION_PROPOSED
   SESSION_UPDATED
   SYSTEM
+  GROUP_INVITE
 }
 
 enum DisputeStatus {
   PENDING_STANCES
   UNDER_REVIEW
   RESOLVED
+}
+
+enum GroupInvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
 }
 
 model User {
@@ -96,6 +103,9 @@ model User {
   notifyMatches         Boolean            @default(true)
   notifyMessages        Boolean            @default(true)
   notifySessions        Boolean            @default(true)
+  emailNotifyMatches    Boolean            @default(false)
+  emailNotifyMessages   Boolean            @default(false)
+  emailNotifySessions   Boolean            @default(true)
   isBanned              Boolean            @default(false)
   isVerified            Boolean            @default(false)
   verificationRequested Boolean            @default(false)
@@ -131,6 +141,8 @@ model User {
   createdGroups         Group[]            @relation("GroupCreator")
   groupMemberships      GroupMember[]
   groupMessages         GroupMessage[]
+  groupInvitesSent      GroupInvitation[]  @relation("GroupInvitesSent")
+  groupInvitesReceived  GroupInvitation[]  @relation("GroupInvitesReceived")
 
   @@index([email])
   @@index([role])
@@ -494,8 +506,25 @@ model Group {
   updatedAt   DateTime       @updatedAt
   members     GroupMember[]
   messages    GroupMessage[]
+  invitations GroupInvitation[]
 
   @@index([creatorId])
+}
+
+model GroupInvitation {
+  id        String                @id @default(cuid())
+  groupId   String
+  inviterId String
+  inviteeId String
+  status    GroupInvitationStatus @default(PENDING)
+  createdAt DateTime              @default(now())
+
+  group     Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  inviter   User  @relation("GroupInvitesSent", fields: [inviterId], references: [id], onDelete: Cascade)
+  invitee   User  @relation("GroupInvitesReceived", fields: [inviteeId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, inviteeId])
+  @@index([inviteeId])
 }
 
 model GroupMember {

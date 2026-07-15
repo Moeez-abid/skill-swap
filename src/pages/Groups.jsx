@@ -1,11 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { groups, subscribeToGroupEvents, getImageUrl } from '../shared/api.js';
+import { groups, users, subscribeToGroupEvents, getImageUrl } from '../shared/api.js';
 import { isLoggedIn, getUser } from '../shared/auth.js';
 
 export default function Groups() {
   const navigate = useNavigate();
   const messagesEndRef = useRef(null);
+
+  const [invitations, setInvitations] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
+  const [selectedUserToInvite, setSelectedUserToInvite] = useState('');
+  const leaveGroupDialogRef = useRef(null);
+  const addMemberDialogRef = useRef(null);
 
   // Data states
   const [groupList, setGroupList] = useState([]);
@@ -34,6 +40,7 @@ export default function Groups() {
       return;
     }
     loadGroups();
+    loadInvitations();
   }, [loggedIn, navigate]);
 
   // Subscribe to real-time messages when active group changes
@@ -67,6 +74,16 @@ export default function Groups() {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
+
+
+  const loadInvitations = async () => {
+    try {
+      const res = await groups.getInvitations();
+      setInvitations(res.invitations || []);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const loadGroups = async () => {
     setLoadingList(true);
@@ -126,6 +143,7 @@ export default function Groups() {
     try {
       await groups.join(group.id);
       await loadGroups();
+    loadInvitations();
       // Update local selection to trigger loading chat
       setSelectedGroup({ ...group, isMember: true, memberCount: group.memberCount + 1 });
     } catch (err) {
@@ -133,16 +151,60 @@ export default function Groups() {
     }
   };
 
-  const handleLeaveGroup = async (group) => {
-    if (!window.confirm(`Are you sure you want to leave ${group.name}?`)) return;
+
+  const openAddMemberModal = async () => {
+    try {
+      const data = await users.list();
+      setAllUsers(data.users || []);
+      if (data.users && data.users.length > 0) setSelectedUserToInvite(data.users[0].id);
+      if (addMemberDialogRef.current) addMemberDialogRef.current.showModal();
+    } catch (err) {
+      setError('Failed to load users');
+    }
+  };
+
+  const handleInviteUser = async () => {
+    if (!selectedGroup || !selectedUserToInvite) return;
+    try {
+      await groups.invite(selectedGroup.id, selectedUserToInvite);
+      if (addMemberDialogRef.current) addMemberDialogRef.current.close();
+      alert('Invitation sent successfully!');
+    } catch (e) {
+      setError(e.message || 'Failed to send invitation');
+      if (addMemberDialogRef.current) addMemberDialogRef.current.close();
+    }
+  };
+
+  const confirmLeaveGroup = async () => {
     setError(null);
     try {
-      await groups.leave(group.id);
+      await groups.leave(selectedGroup.id);
       await loadGroups();
-      setSelectedGroup({ ...group, isMember: false, memberCount: Math.max(0, group.memberCount - 1) });
+      setSelectedGroup({ ...selectedGroup, isMember: false, memberCount: Math.max(0, selectedGroup.memberCount - 1) });
       setMessages([]);
+      if (leaveGroupDialogRef.current) leaveGroupDialogRef.current.close();
     } catch (err) {
       setError(err.message || 'Failed to leave group');
+      if (leaveGroupDialogRef.current) leaveGroupDialogRef.current.close();
+    }
+  };
+
+  const handleAcceptInvite = async (invitationId) => {
+    try {
+      await groups.acceptInvitation(invitationId);
+      await loadInvitations();
+      await loadGroups();
+    } catch (e) {
+      setError(e.message || 'Failed to accept invitation');
+    }
+  };
+
+  const handleDeclineInvite = async (invitationId) => {
+    try {
+      await groups.declineInvitation(invitationId);
+      await loadInvitations();
+    } catch (e) {
+      setError(e.message || 'Failed to decline invitation');
     }
   };
 
@@ -202,6 +264,21 @@ export default function Groups() {
               />
             </div>
 
+
+            {invitations.length > 0 && (
+              <div style={{ padding: '0 12px 12px 12px' }}>
+                <strong style={{ fontSize: '13px', color: 'var(--text-secondary)', padding: '0 8px', display: 'block', marginBottom: '8px' }}>Invitations</strong>
+                {invitations.map(inv => (
+                  <div key={inv.id} className="conversation-item" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '8px', cursor: 'default' }}>
+                    <div style={{ fontSize: '13px' }}><strong>{inv.inviter?.name}</strong> invited you to <strong>{inv.group?.name}</strong></div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button className="primary-cta" style={{ flex: 1, padding: '4px', fontSize: '12px' }} onClick={(e) => { e.stopPropagation(); handleAcceptInvite(inv.id); }}>Accept</button>
+                      <button className="btn-secondary" style={{ flex: 1, padding: '4px', fontSize: '12px', color: '#ef4444' }} onClick={(e) => { e.stopPropagation(); handleDeclineInvite(inv.id); }}>Decline</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
             <div className="conversation-list" style={{ padding: '0 12px 12px 12px' }}>
               {loadingList ? (
                 <p className="loading" style={{ color: 'var(--text-muted)', textAlign: 'center', margin: '20px 0' }}>Loading channels...</p>
@@ -254,11 +331,18 @@ export default function Groups() {
                       <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{selectedGroup.description}</span>
                     </div>
                   </div>
+
                   {selectedGroup.isMember ? (
-                    <button onClick={() => handleLeaveGroup(selectedGroup)} className="btn-secondary" style={{ padding: '6px 10px', fontSize: '12px', color: '#ef4444', borderColor: 'rgba(239,68,68,0.3)', background: 'transparent' }}>
-                      Leave Group
-                    </button>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button onClick={openAddMemberModal} className="btn-secondary" style={{ padding: '6px 10px', fontSize: '12px' }}>
+                        Add Member
+                      </button>
+                      <button onClick={() => leaveGroupDialogRef.current?.showModal()} className="btn-secondary" style={{ padding: '6px 10px', fontSize: '12px', color: '#ef4444', borderColor: 'rgba(239,68,68,0.3)', background: 'transparent' }}>
+                        Leave Group
+                      </button>
+                    </div>
                   ) : (
+
                     <button onClick={() => handleJoinGroup(selectedGroup)} className="primary-cta" style={{ padding: '6px 16px', fontSize: '12px' }}>
                       Join Group
                     </button>
@@ -266,6 +350,7 @@ export default function Groups() {
                 </div>
 
                 <div className="message-list" style={{ flexGrow: 1, overflowY: 'auto' }}>
+
                   {selectedGroup.isMember ? (
                     <>
                       {loadingChat ? (
@@ -276,26 +361,17 @@ export default function Groups() {
                           const senderInitials = msg.sender?.name ? msg.sender.name.split(' ').map(n => n[0]).join('').slice(0, 2) : '?';
                           
                           return (
-                            <div key={msg.id} style={{ display: 'flex', gap: '10px', alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '70%', flexDirection: isMe ? 'row-reverse' : 'row' }}>
+                            <div key={msg.id} style={{ display: 'flex', gap: '10px', alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '70%', flexDirection: isMe ? 'row-reverse' : 'row', marginBottom: '16px' }}>
                               {!isMe && (
-                                msg.sender?.avatarUrl ? (
-                                  <img src={getImageUrl(msg.sender.avatarUrl)} alt={msg.sender.name} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', marginTop: '4px' }} />
-                                ) : (
-                                  <span className="avatar avatar--initials" style={{ width: '32px', height: '32px', fontSize: '12px', marginTop: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    {senderInitials}
-                                  </span>
-                                )
+                                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--accent)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', flexShrink: 0, overflow: 'hidden' }}>
+                                  {msg.sender?.avatarUrl ? <img src={getImageUrl(msg.sender.avatarUrl)} alt="" style={{width:'100%', height:'100%', objectFit:'cover'}} /> : senderInitials}
+                                </div>
                               )}
                               <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
-                                {!isMe && (
-                                  <span style={{ display: 'block', fontSize: '12px', fontWeight: '500', color: 'var(--text-secondary)', marginLeft: '4px', marginBottom: '4px' }}>
-                                    {msg.sender?.name || 'Deleted User'}
-                                  </span>
-                                )}
-                                <div className={`message-bubble message-bubble--${isMe ? 'sent' : 'received'}`} style={{ marginBottom: 0 }}>
+                                <div style={{ background: isMe ? 'var(--accent)' : 'var(--bg-card)', color: isMe ? 'white' : 'var(--text-primary)', padding: '10px 14px', borderRadius: '16px', borderBottomRightRadius: isMe ? '4px' : '16px', borderBottomLeftRadius: !isMe ? '4px' : '16px', border: isMe ? 'none' : '1px solid var(--border-subtle)', fontSize: '14px', lineHeight: '1.4' }}>
                                   {msg.content}
                                 </div>
-                                <span style={{ display: 'block', fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px', padding: '0 4px' }}>
+                                <span style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px' }}>
                                   {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </span>
                               </div>
@@ -303,11 +379,12 @@ export default function Groups() {
                           );
                         })
                       ) : (
-                        <p style={{ color: 'var(--text-muted)', textAlign: 'center', marginTop: '40px', fontStyle: 'italic' }}>No messages yet. Send a message to start the conversation!</p>
+                        <p style={{ color: 'var(--text-muted)', textAlign: 'center', marginTop: '40px' }}>No messages yet. Say hello!</p>
                       )}
                       <div ref={messagesEndRef} />
                     </>
                   ) : (
+
                     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '40px', textAlign: 'center', height: '100%' }}>
                       <div style={{ maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
                         <h4 style={{ fontSize: '18px', color: 'var(--text-primary)', margin: 0 }}>Join this Conversation</h4>
@@ -392,6 +469,36 @@ export default function Groups() {
           </form>
         </div>
       )}
+
+      <dialog ref={leaveGroupDialogRef} className="glass-card" style={{ padding: '24px', borderRadius: '12px', border: '1px solid var(--border)', width: '100%', maxWidth: '400px', margin: 'auto' }}>
+        <h2 style={{ marginTop: 0, marginBottom: '16px', fontSize: '1.25rem' }}>Leave Group</h2>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>Are you sure you want to leave {selectedGroup?.name}?</p>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+          <button type="button" className="btn-secondary" onClick={() => leaveGroupDialogRef.current?.close()}>Cancel</button>
+          <button type="button" className="primary-cta" style={{ background: '#ef4444', borderColor: '#ef4444' }} onClick={confirmLeaveGroup}>Leave Group</button>
+        </div>
+      </dialog>
+
+      <dialog ref={addMemberDialogRef} className="glass-card" style={{ padding: '24px', borderRadius: '12px', border: '1px solid var(--border)', width: '100%', maxWidth: '400px', margin: 'auto' }}>
+        <h2 style={{ marginTop: 0 }}>Add Member</h2>
+        <div className="form-group" style={{ marginTop: '16px' }}>
+          <label htmlFor="user-select">Select User</label>
+          <select 
+            id="user-select" 
+            style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-primary)' }}
+            value={selectedUserToInvite}
+            onChange={(e) => setSelectedUserToInvite(e.target.value)}
+          >
+            {allUsers.map(u => (
+              <option key={u.id} value={u.id}>{u.name}</option>
+            ))}
+          </select>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
+          <button type="button" className="btn-secondary" onClick={() => addMemberDialogRef.current?.close()}>Cancel</button>
+          <button type="button" className="primary-cta" onClick={handleInviteUser}>Send Invite</button>
+        </div>
+      </dialog>
     </>
   );
 }

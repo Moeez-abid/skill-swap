@@ -5,17 +5,19 @@ export default function Contact() {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
     try {
-      await api.post('/api/support', formData);
+      await api('/support', { method: 'POST', body: JSON.stringify(formData) });
       setSubmitted(true);
       setFormData({ name: '', email: '', message: '' });
     } catch (err) {
       console.error(err);
-      alert('Failed to send message. Please try again later.');
+      setError(err.message || 'Failed to send message. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -69,6 +71,7 @@ export default function Contact() {
                 placeholder="How can we help you?"
               ></textarea>
             </div>
+            {error && <div className="form-error" style={{ textAlign: 'center' }}>{error}</div>}
             <button type="submit" className="primary-cta" style={{ marginTop: '12px', width: '100%', padding: '14px' }} disabled={loading}>
               {loading ? 'Sending...' : 'Send Message'}
             </button>

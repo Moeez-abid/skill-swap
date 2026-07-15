@@ -313,12 +313,12 @@ export default function Matches() {
                     <div className="bento-card-main">
                       <Avatar user={partner} size={48} />
                       <div style={{ flex: 1 }}>
-                        <h4>{activeTab === 'requests' ? `Request from ${partner?.name}` : `Past match with ${partner?.name}`}</h4>
+                        <h4>{activeTab === 'requests' ? (r.direction === 'incoming' ? `Request from ${partner?.name}` : `Request to ${partner?.name}`) : `Past match with ${partner?.name}`}</h4>
                         <p>{activeTab === 'requests' ? r.message || 'No message provided.' : 'Session completed.'}</p>
                         {renderActions(r)}
                       </div>
                     </div>
-                    {activeTab === 'requests' && <span className="bento-time">{r.direction}</span>}
+                    {activeTab === 'requests' && <span className="bento-time">{r.direction === 'incoming' ? 'Received' : 'Sent'}</span>}
                   </div>
                 </div>
               );

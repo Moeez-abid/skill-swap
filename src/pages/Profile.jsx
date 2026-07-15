@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { users, getImageUrl } from '../shared/api';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { users, skills, getImageUrl } from '../shared/api';
 import { getUser } from '../shared/auth';
 import SkillCard from '../components/SkillCard';
 
@@ -29,6 +29,7 @@ function Avatar({ user, size = 40, className = "avatar" }) {
 }
 
 export default function Profile() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const queryId = searchParams.get('id');
   const loggedInUser = getUser();
@@ -111,25 +112,58 @@ export default function Profile() {
         <p className="loading">Loading profile…</p>
       ) : (
         <>
-      <header className="profile-header glass-card animate-fade-up">
-        <Avatar user={{ ...profile, name: profile.name }} size={96} className="avatar profile-header__avatar" />
-        <div>
-          <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {profile.name}
-            {profile.isVerified && (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--accent)' }}>
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-              </svg>
-            )}
-          </h1>
-          {profile.headline && <p style={{ fontSize: '1.2rem', color: 'var(--text-secondary)', fontWeight: 500, marginTop: '-12px', marginBottom: '8px' }}>{profile.headline}</p>}
-          <p className="page-subtitle">{profile.bio || 'No bio yet'}</p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '8px' }}>
-            <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: 0 }}>
-              {profile.location ? `${profile.location} · ` : ''}{formatAvailability(profile.availabilityStatus)}
-            </p>
-            <div style={{ display: 'flex', gap: '12px' }}>
+      <header className="profile-header glass-card animate-fade-up" style={{ padding: '40px', overflow: 'hidden', borderRadius: '24px' }}>
+        <div style={{ position: 'relative' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <Avatar user={{ ...profile, name: profile.name }} size={132} className="avatar profile-header__avatar" style={{ background: 'var(--bg-card)', borderRadius: '50%', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+            <div>
+              {isOwner ? (
+                <button className="btn-secondary" onClick={() => window.location.href='/settings'} style={{ padding: '8px 24px', fontWeight: 600, borderRadius: '24px' }}>Edit Profile</button>
+              ) : (
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button className="btn-secondary" style={{ fontSize: '13px', padding: '8px 16px', borderRadius: '24px' }} onClick={() => reportDialogRef.current?.showModal()}>Report</button>
+                  <button className="btn-secondary" style={{ fontSize: '13px', padding: '8px 16px', color: '#ef4444', borderColor: '#ef4444', borderRadius: '24px' }} onClick={() => blockDialogRef.current?.showModal()}>Block</button>
+                </div>
+              )}
+            </div>
+          </div>
+          <div>
+            <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px', fontSize: '2rem' }}>
+              {profile.name}
+              {profile.isVerified && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--accent)', fontSize: '0.85rem', fontWeight: 600, marginLeft: '12px', padding: '3px 8px', background: 'color-mix(in srgb, var(--accent) 10%, transparent)', borderRadius: '16px' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                  </svg>
+                  Approved
+                </span>
+              )}
+            </h1>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '16px', fontSize: '1.1rem', fontWeight: 500 }}>@{profile.email?.split('@')[0] || profile.name.toLowerCase().replace(/\s+/g, '')}</p>
+            {profile.headline && <p style={{ fontSize: '1.15rem', fontWeight: 500, marginBottom: '12px', color: 'var(--text-primary)' }}>{profile.headline}</p>}
+            <p style={{ lineHeight: '1.6', marginBottom: '24px', maxWidth: '800px', fontSize: '1.05rem', color: 'var(--text-secondary)' }}>{profile.bio || 'This user hasn\'t added a bio yet.'}</p>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap', color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+              {profile.location && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  {profile.location}
+                </div>
+              )}
+              {profile.timezone && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  {profile.timezone}
+                </div>
+              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                Joined {new Date(profile.createdAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
               {profile.linkedinUrl && (
                 <a href={profile.linkedinUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }} title="LinkedIn">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
@@ -147,21 +181,6 @@ export default function Profile() {
               )}
             </div>
           </div>
-          <div className="profile-stats" style={{ marginTop: '16px' }}>
-            <div className="profile-stat"><strong>{profile.stats.activeMatches}</strong><span>Active Matches</span></div>
-            <div className="profile-stat"><strong>{profile.stats.completedSwaps}</strong><span>Completed Swaps</span></div>
-            <div className="profile-stat"><strong>{profile.stats.avgRating || '—'}</strong><span>Avg Rating</span></div>
-          </div>
-          {!isOwner && (
-            <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
-              <button className="btn-secondary" style={{ fontSize: '12px', padding: '4px 12px' }} onClick={() => reportDialogRef.current?.showModal()}>
-                Report User
-              </button>
-              <button className="btn-secondary" style={{ fontSize: '12px', padding: '4px 12px', color: '#ef4444', borderColor: '#ef4444' }} onClick={() => blockDialogRef.current?.showModal()}>
-                Block User
-              </button>
-            </div>
-          )}
         </div>
       </header>
 
@@ -175,20 +194,29 @@ export default function Profile() {
                 skill={{ ...s, provider: { id: profile.id, name: profile.name, avatarUrl: profile.avatarUrl, isVerified: profile.isVerified } }} 
                 actions={
                   isOwner ? (
-                    <button 
-                      onClick={(e) => {
-                        e.preventDefault();
-                        if(window.confirm('Delete this skill?')) {
-                          skills.delete(s.id).then(() => {
-                            window.location.reload();
-                          }).catch(err => alert(err.message));
-                        }
-                      }}
-                      className="btn btn--outline" 
-                      style={{ padding: '6px 12px', fontSize: '0.85rem', width: '100%', borderColor: 'var(--text-muted)', color: 'var(--text-muted)' }}
-                    >
-                      Delete Skill
-                    </button>
+                    <div style={{ display: 'flex', gap: '8px', width: '100%', marginTop: 'auto' }}>
+                      <button 
+                        onClick={(e) => { e.preventDefault(); navigate(`/create-skill?id=${s.id}`); }}
+                        className="btn-secondary" 
+                        style={{ flex: 1, padding: '8px', fontSize: '0.85rem' }}
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if(window.confirm('Delete this skill?')) {
+                            skills.delete(s.id).then(() => {
+                              window.location.reload();
+                            }).catch(err => alert(err.message));
+                          }
+                        }}
+                        className="btn-secondary" 
+                        style={{ flex: 1, padding: '8px', fontSize: '0.85rem', color: '#ef4444', borderColor: '#ef4444' }}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   ) : null
                 }
               />

@@ -5,9 +5,134 @@ import { apiError, apiSuccess } from '../utils/helpers.js';
 import { triggerEvent } from '../lib/pusher.js';
 
 const router = Router();
-
-// Apply auth middleware to all group routes
 router.use(authenticate);
+
+// GET /api/groups/invitations - Get pending invitations for logged in user
+router.get('/invitations', async (req, res) => {
+  try {
+    const invitations = await prisma.groupInvitation.findMany({
+      where: { inviteeId: req.user.id, status: 'PENDING' },
+      include: {
+        group: true,
+        inviter: { select: { id: true, name: true, avatarUrl: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    return apiSuccess(res, { invitations });
+  } catch (error) {
+    console.error('Error fetching group invitations:', error);
+    return apiError(res, 500, 'Internal server error');
+  }
+});
+
+// POST /api/groups/invitations/:id/accept - Accept an invitation
+router.post('/invitations/:id/accept', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+    const invitation = await prisma.groupInvitation.findFirst({
+      where: { id, inviteeId: userId, status: 'PENDING' }
+    });
+    if (!invitation) return apiError(res, 404, 'Invitation not found or already processed');
+
+    // Update status to accepted
+    await prisma.groupInvitation.update({
+      where: { id },
+      data: { status: 'ACCEPTED' }
+    });
+
+    // Join group if not already a member
+    const existingMember = await prisma.groupMember.findUnique({
+      where: { groupId_userId: { groupId: invitation.groupId, userId } }
+    });
+    if (!existingMember) {
+      await prisma.groupMember.create({
+        data: { groupId: invitation.groupId, userId }
+      });
+    }
+    return apiSuccess(res, { message: 'Invitation accepted' });
+  } catch (error) {
+    console.error('Error accepting invitation:', error);
+    return apiError(res, 500, 'Internal server error');
+  }
+});
+
+// POST /api/groups/invitations/:id/decline - Decline an invitation
+router.post('/invitations/:id/decline', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+    const invitation = await prisma.groupInvitation.findFirst({
+      where: { id, inviteeId: userId, status: 'PENDING' }
+    });
+    if (!invitation) return apiError(res, 404, 'Invitation not found or already processed');
+
+    await prisma.groupInvitation.update({
+      where: { id },
+      data: { status: 'DECLINED' }
+    });
+    return apiSuccess(res, { message: 'Invitation declined' });
+  } catch (error) {
+    console.error('Error declining invitation:', error);
+    return apiError(res, 500, 'Internal server error');
+  }
+});
+
+// POST /api/groups/:id/invite - Invite a user to the group
+router.post('/:id/invite', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { userId } = req.body;
+    const inviterId = req.user.id;
+
+    if (!userId) return apiError(res, 400, 'userId is required');
+
+    // check if inviter is in group
+    const inviterMember = await prisma.groupMember.findUnique({
+      where: { groupId_userId: { groupId: id, userId: inviterId } }
+    });
+    if (!inviterMember) return apiError(res, 403, 'You must be a member to invite others');
+
+    const invitee = await prisma.user.findUnique({ where: { id: userId } });
+    if (!invitee) return apiError(res, 404, 'User to invite not found');
+
+    const existingMember = await prisma.groupMember.findUnique({
+      where: { groupId_userId: { groupId: id, userId } }
+    });
+    if (existingMember) return apiError(res, 400, 'User is already a member');
+
+    const existingInvite = await prisma.groupInvitation.findFirst({
+      where: { groupId: id, inviteeId: userId, status: 'PENDING' }
+    });
+    if (existingInvite) return apiError(res, 400, 'User has already been invited');
+
+    const invitation = await prisma.groupInvitation.create({
+      data: {
+        groupId: id,
+        inviterId,
+        inviteeId: userId,
+        status: 'PENDING'
+      },
+      include: { group: true }
+    });
+
+    // Create Notification
+    await prisma.notification.create({
+      data: {
+        userId,
+        type: 'GROUP_INVITE',
+        title: 'New Group Invitation',
+        content: `You have been invited to join the group "${invitation.group.name}"`,
+        linkUrl: `/groups`
+      }
+    });
+
+    return apiSuccess(res, { message: 'Invitation sent successfully', invitation });
+  } catch (error) {
+    console.error('Error sending invitation:', error);
+    return apiError(res, 500, 'Internal server error');
+  }
+});
 
 // GET /api/groups - Get all groups with membership flags and member count
 router.get('/', async (req, res) => {

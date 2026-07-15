@@ -32,8 +32,8 @@ async function getConversation(userId, convId) {
       OR: [{ user1Id: userId }, { user2Id: userId }],
     },
     include: {
-      user1: { select: { id: true, name: true, avatarUrl: true } },
-      user2: { select: { id: true, name: true, avatarUrl: true } },
+      user1: { select: { id: true, name: true, avatarUrl: true, email: true, emailNotifyMessages: true } },
+      user2: { select: { id: true, name: true, avatarUrl: true, email: true, emailNotifyMessages: true } },
     },
   });
 }

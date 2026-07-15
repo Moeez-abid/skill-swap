@@ -151,19 +151,24 @@ router.post('/', authenticate, validate(matchRequestSchema), async (req, res) =>
     data: { requestCount: { increment: 1 } },
   });
 
-  const notification = await prisma.notification.create({
-    data: {
-      userId: wanted.providerId,
-      type: 'MATCH_REQUEST',
-      title: 'New Match Request',
-      content: `${req.user.name} sent you a match request!`,
-      linkUrl: '/matches',
-    }
-  });
-
-  await triggerEvent(`user-${wanted.providerId}`, 'match-request', { request, notification });
-
+  let notification = null;
   if (wanted.provider.notifyMatches) {
+    notification = await prisma.notification.create({
+      data: {
+        userId: wanted.providerId,
+        type: 'MATCH_REQUEST',
+        title: 'New Match Request',
+        content: `${req.user.name} sent you a match request!`,
+        linkUrl: '/matches',
+      }
+    });
+    await triggerEvent(`user-${wanted.providerId}`, 'match-request', { request, notification });
+  } else {
+    // still send the socket event without notification badge
+    await triggerEvent(`user-${wanted.providerId}`, 'match-request', { request });
+  }
+
+  if (wanted.provider.emailNotifyMatches) {
     sendEmail({
       to: wanted.provider.email,
       subject: 'New Match Request on SkillSwap',
@@ -236,26 +241,30 @@ router.patch('/:id/status', authenticate, async (req, res) => {
         });
       }
 
-      const notification = await tx.notification.create({
-        data: {
-          userId: mr.senderId,
-          type: 'MATCH_ACCEPTED',
-          title: 'Match Accepted!',
-          content: 'Your match request was accepted. You can now schedule sessions!',
-          linkUrl: '/sessions',
-        }
-      });
-
-      await triggerEvent(`user-${mr.senderId}`, 'match-accepted', { matchRequestId: mr.id, notification });
-
+      let notification = null;
       if (request.sender.notifyMatches) {
+        notification = await tx.notification.create({
+          data: {
+            userId: request.senderId,
+            type: 'MATCH_ACCEPTED',
+            title: 'Match Request Accepted',
+            content: `${request.receiver.name} accepted your match request!`,
+            linkUrl: '/matches',
+          }
+        });
+        await triggerEvent(`user-${mr.senderId}`, 'match-accepted', { matchRequestId: mr.id, notification });
+      } else {
+        await triggerEvent(`user-${mr.senderId}`, 'match-accepted', { matchRequestId: mr.id });
+      }
+
+      if (request.sender.emailNotifyMatches) {
         sendEmail({
           to: request.sender.email,
           subject: 'Match Request Accepted!',
           html: `<p><strong>${request.receiver.name}</strong> accepted your match request!</p>
                  <p>You can now chat and schedule sessions with them.</p>
                  <br/>
-                 <p><a href="http://localhost:5173/sessions" style="display:inline-block;padding:10px 20px;background:#E92E20;color:#fff;text-decoration:none;border-radius:8px;">Schedule a Session</a></p>`
+                 <p><a href="http://localhost:5173/matches" style="display:inline-block;padding:10px 20px;background:#E92E20;color:#fff;text-decoration:none;border-radius:8px;">View Matches</a></p>`
         });
       }
     }

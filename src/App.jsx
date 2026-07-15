@@ -12,6 +12,7 @@ import Dashboard from './pages/Dashboard.jsx';
 import Profile from './pages/Profile.jsx';
 import Messages from './pages/Messages.jsx';
 import Settings from './pages/Settings.jsx';
+import NotificationSettings from './pages/NotificationSettings.jsx';
 import CreateSkill from './pages/CreateSkill.jsx';
 import Matches from './pages/Matches.jsx';
 import Sessions from './pages/Sessions.jsx';
@@ -68,6 +69,7 @@ export default function App() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/messages" element={<Messages />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/settings/notifications" element={<NotificationSettings />} />
           <Route path="/create-skill" element={<CreateSkill />} />
           <Route path="/matches" element={<Matches />} />
           <Route path="/sessions" element={<Sessions />} />
