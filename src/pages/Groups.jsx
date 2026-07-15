@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { groups, users, subscribeToGroupEvents, getImageUrl } from '../shared/api.js';
+import { groups, users, notifications, subscribeToGroupEvents, subscribeToUserEvents, getImageUrl } from '../shared/api.js';
 import { isLoggedIn, getUser } from '../shared/auth.js';
 
 export default function Groups() {
@@ -12,13 +12,23 @@ export default function Groups() {
   const [selectedUserToInvite, setSelectedUserToInvite] = useState('');
   const leaveGroupDialogRef = useRef(null);
   const addMemberDialogRef = useRef(null);
+  const groupDetailsDialogRef = useRef(null);
 
   // Data states
   const [groupList, setGroupList] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState(null);
+  const [sidebarTab, setSidebarTab] = useState('joined');
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Advanced messaging states
+  const [file, setFile] = useState(null);
+  const fileInputRef = useRef(null);
+  const [selectedMessages, setSelectedMessages] = useState(new Set());
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [hoveredMsgId, setHoveredMsgId] = useState(null);
+  const [menuConfig, setMenuConfig] = useState({ id: null });
 
   // Modals / forms
   const [isCreating, setIsCreating] = useState(false);
@@ -43,6 +53,22 @@ export default function Groups() {
     loadInvitations();
   }, [loggedIn, navigate]);
 
+  const loadMessagesRef = useRef();
+
+  const loadMessages = async (groupId) => {
+    setLoadingChat(true);
+    try {
+      const res = await groups.messages(groupId);
+      setMessages(res.messages || []);
+    } catch (err) {
+      console.error(err);
+      setError('Failed to load messages');
+    } finally {
+      setLoadingChat(false);
+    }
+  };
+  loadMessagesRef.current = loadMessages;
+
   // Subscribe to real-time messages when active group changes
   useEffect(() => {
     if (!selectedGroup || !selectedGroup.isMember) {
@@ -51,29 +77,54 @@ export default function Groups() {
     }
 
     loadMessages(selectedGroup.id);
+    setReplyingTo(null);
+    setSelectedMessages(new Set());
 
     // Pusher real-time bind
     const unsubscribe = subscribeToGroupEvents(selectedGroup.id, 'new-group-message', (data) => {
       if (data && data.message) {
         setMessages((prev) => {
-          // Prevent duplicates in case HTTP response comes after pusher or vice versa
+          // Prevent duplicates
           if (prev.some((m) => m.id === data.message.id)) return prev;
           return [...prev, data.message];
         });
       }
     });
 
+    const unsubGrpDel = subscribeToGroupEvents(selectedGroup.id, 'group-message-deleted', (data) => {
+      loadMessagesRef.current(selectedGroup.id);
+    });
+
+    const unsubMyDel = subscribeToUserEvents(currentUser.id, 'group-message-deleted', (data) => {
+      if (data.groupId === selectedGroup.id) loadMessagesRef.current(selectedGroup.id);
+    });
+
+    const unsubMyBulkDel = subscribeToUserEvents(currentUser.id, 'group-messages-deleted', (data) => {
+      if (data.groupId === selectedGroup.id) loadMessagesRef.current(selectedGroup.id);
+    });
+
     return () => {
       if (unsubscribe) unsubscribe();
+      if (unsubGrpDel) unsubGrpDel();
+      if (unsubMyDel) unsubMyDel();
+      if (unsubMyBulkDel) unsubMyBulkDel();
     };
+  }, [selectedGroup, currentUser?.id]);
+
+  // Scroll  // Clear notifications when group is selected
+  useEffect(() => {
+    if (selectedGroup) {
+      notifications.markRead('group_message').catch(console.error);
+    }
   }, [selectedGroup]);
 
-  // Scroll to bottom of chat when messages update
+  // Global click listener to close menus
   useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages]);
+    if (!menuConfig.id) return;
+    const handleClick = () => setMenuConfig({ id: null });
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, [menuConfig.id]);
 
 
   const loadInvitations = async () => {
@@ -103,18 +154,7 @@ export default function Groups() {
     }
   };
 
-  const loadMessages = async (groupId) => {
-    setLoadingChat(true);
-    try {
-      const res = await groups.messages(groupId);
-      setMessages(res.messages || []);
-    } catch (err) {
-      console.error(err);
-      setError('Failed to load messages');
-    } finally {
-      setLoadingChat(false);
-    }
-  };
+
 
   const handleCreateGroup = async (e) => {
     e.preventDefault();
@@ -210,17 +250,118 @@ export default function Groups() {
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || !selectedGroup) return;
-    const content = newMessage;
+    if (!newMessage.trim() && !file) return;
+    if (!selectedGroup) return;
+
+    const content = newMessage.trim();
+    const currentFile = file;
+    const currentReplyTo = replyingTo;
+
+    const optimisticMsg = {
+      id: `temp-${Date.now()}`,
+      senderId: currentUser.id,
+      content,
+      fileUrl: currentFile ? URL.createObjectURL(currentFile) : null,
+      fileName: currentFile ? currentFile.name : null,
+      createdAt: new Date().toISOString(),
+      replyTo: currentReplyTo,
+      sender: { id: currentUser.id, name: currentUser.name, avatarUrl: currentUser.avatarUrl }
+    };
+
+    setMessages((prev) => [...prev, optimisticMsg]);
     setNewMessage('');
+    setFile(null);
+    setReplyingTo(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+
+    setTimeout(() => {
+      if (messagesEndRef.current) messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }, 50);
+
+    const fd = new FormData();
+    if (content) fd.append('content', content);
+    if (currentFile) fd.append('file', currentFile);
+    if (currentReplyTo) fd.append('replyToId', currentReplyTo.id);
+
     try {
-      const res = await groups.sendMessage(selectedGroup.id, content);
-      setMessages((prev) => {
-        if (prev.some((m) => m.id === res.message.id)) return prev;
-        return [...prev, res.message];
+      const res = await groups.sendMessage(selectedGroup.id, fd);
+      setMessages(prev => {
+        if (prev.some(m => m.id === res.message.id)) {
+          return prev.filter(m => m.id !== optimisticMsg.id);
+        }
+        return prev.map(m => m.id === optimisticMsg.id ? res.message : m);
       });
     } catch (err) {
       setError('Failed to send message');
+      setMessages(prev => prev.filter(m => m.id !== optimisticMsg.id));
+    }
+  };
+
+  const handleFileChange = async (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    if (f.size > 5 * 1024 * 1024) {
+      alert('File must be under 5MB');
+      return;
+    }
+    
+    const optimisticMsg = {
+      id: `temp-${Date.now()}`,
+      senderId: currentUser.id,
+      content: null,
+      fileUrl: URL.createObjectURL(f),
+      fileName: f.name,
+      createdAt: new Date().toISOString(),
+      replyTo: null,
+      sender: { id: currentUser.id, name: currentUser.name, avatarUrl: currentUser.avatarUrl }
+    };
+    
+    setMessages(prev => [...prev, optimisticMsg]);
+    setTimeout(() => {
+      if (messagesEndRef.current) messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }, 50);
+
+    const fd = new FormData();
+    fd.append('file', f);
+    try {
+      await groups.sendMessage(selectedGroup.id, fd);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      loadMessagesRef.current(selectedGroup.id);
+    } catch (err) {
+      setError(err.message || 'Failed to send file');
+      loadMessagesRef.current(selectedGroup.id);
+    }
+  };
+
+  const handleDeleteMessage = async (messageId, forEveryone = false) => {
+    if (!window.confirm(`Are you sure you want to delete this message${forEveryone ? ' for everyone' : ' for yourself'}?`)) return;
+    setMessages(prev => prev.map(m => m.id === messageId ? { ...m, isDeleting: true } : m));
+    try {
+      await groups.deleteMessage(selectedGroup.id, messageId, forEveryone);
+      loadMessagesRef.current(selectedGroup.id);
+    } catch (err) {
+      setError(err.message || 'Failed to delete message');
+      loadMessagesRef.current(selectedGroup.id);
+    }
+  };
+
+  const toggleSelection = (id) => {
+    const next = new Set(selectedMessages);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelectedMessages(next);
+  };
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Are you sure you want to delete ${selectedMessages.size} selected message(s) for yourself?`)) return;
+    setMessages(prev => prev.map(m => selectedMessages.has(m.id) ? { ...m, isDeleting: true } : m));
+    try {
+      await groups.bulkDeleteMessages(selectedGroup.id, Array.from(selectedMessages));
+      setSelectedMessages(new Set());
+      loadMessagesRef.current(selectedGroup.id);
+    } catch (err) {
+      setError(err.message || 'Failed to bulk delete');
+      loadMessagesRef.current(selectedGroup.id);
     }
   };
 
@@ -228,6 +369,9 @@ export default function Groups() {
     g.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     g.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const joinedGroups = filteredGroups.filter(g => g.isMember);
+  const discoverGroups = filteredGroups.filter(g => !g.isMember);
 
   return (
     <>
@@ -264,8 +408,25 @@ export default function Groups() {
               />
             </div>
 
+            <div className="tabs" style={{ margin: '0 12px 20px 12px', borderBottom: '1px solid var(--border)', position: 'relative' }}>
+              <button 
+                className={`tab ${sidebarTab === 'joined' ? 'active' : ''}`} 
+                onClick={() => setSidebarTab('joined')}
+                style={{ flex: 1, textAlign: 'center', paddingBottom: '16px', borderBottom: 'none', background: 'transparent' }}
+              >
+                My Groups
+              </button>
+              <button 
+                className={`tab ${sidebarTab === 'discover' ? 'active' : ''}`} 
+                onClick={() => setSidebarTab('discover')}
+                style={{ flex: 1, textAlign: 'center', paddingBottom: '16px', borderBottom: 'none', background: 'transparent' }}
+              >
+                Discover
+              </button>
+              <div style={{ position: 'absolute', bottom: -1, left: sidebarTab === 'joined' ? 0 : '50%', width: '50%', height: '2px', background: 'var(--accent)', transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }}></div>
+            </div>
 
-            {invitations.length > 0 && (
+            {invitations.length > 0 && sidebarTab === 'joined' && (
               <div style={{ padding: '0 12px 12px 12px' }}>
                 <strong style={{ fontSize: '13px', color: 'var(--text-secondary)', padding: '0 8px', display: 'block', marginBottom: '8px' }}>Invitations</strong>
                 {invitations.map(inv => (
@@ -282,37 +443,66 @@ export default function Groups() {
             <div className="conversation-list" style={{ padding: '0 12px 12px 12px' }}>
               {loadingList ? (
                 <p className="loading" style={{ color: 'var(--text-muted)', textAlign: 'center', margin: '20px 0' }}>Loading channels...</p>
-              ) : filteredGroups.length > 0 ? (
-                filteredGroups.map((group) => {
-                  const isCurrent = selectedGroup && selectedGroup.id === group.id;
-                  return (
-                    <button
-                      key={group.id}
-                      type="button"
-                      className={`conversation-item ${isCurrent ? 'active' : ''}`}
-                      onClick={() => setSelectedGroup(group)}
-                    >
-                      <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
-                          <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>{group.name}</strong>
-                          {group.isMember && (
-                            <span style={{ fontSize: '10px', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '2px 6px', borderRadius: '10px', fontWeight: 'bold' }}>
-                              Joined
-                            </span>
-                          )}
-                        </div>
-                        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 6px 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: '1.4' }}>
-                          {group.description}
-                        </p>
-                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                          {group.memberCount} member{group.memberCount === 1 ? '' : 's'}
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })
               ) : (
-                <p style={{ color: 'var(--text-muted)', textAlign: 'center', margin: '20px 0', fontSize: '14px' }}>No groups found</p>
+                <div key={sidebarTab} className="animate-fade-up">
+                  {sidebarTab === 'joined' ? (
+                    joinedGroups.length > 0 ? (
+                      joinedGroups.map((group) => {
+                        const isCurrent = selectedGroup && selectedGroup.id === group.id;
+                        return (
+                          <button
+                            key={group.id}
+                            type="button"
+                            className={`conversation-item ${isCurrent ? 'active' : ''}`}
+                            onClick={() => setSelectedGroup(group)}
+                          >
+                            <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
+                                <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>{group.name}</strong>
+                              </div>
+                              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 6px 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: '1.4' }}>
+                                {group.description}
+                              </p>
+                              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                                {group.memberCount} member{group.memberCount === 1 ? '' : 's'}
+                              </span>
+                            </div>
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <p style={{ color: 'var(--text-muted)', textAlign: 'center', margin: '20px 0', fontSize: '14px' }}>You haven't joined any groups yet.</p>
+                    )
+                  ) : (
+                    discoverGroups.length > 0 ? (
+                      discoverGroups.map((group) => {
+                        const isCurrent = selectedGroup && selectedGroup.id === group.id;
+                        return (
+                          <button
+                            key={group.id}
+                            type="button"
+                            className={`conversation-item ${isCurrent ? 'active' : ''}`}
+                            onClick={() => setSelectedGroup(group)}
+                          >
+                            <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
+                                <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>{group.name}</strong>
+                              </div>
+                              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 6px 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: '1.4' }}>
+                                {group.description}
+                              </p>
+                              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                                {group.memberCount} member{group.memberCount === 1 ? '' : 's'}
+                              </span>
+                            </div>
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <p style={{ color: 'var(--text-muted)', textAlign: 'center', margin: '20px 0', fontSize: '14px' }}>No new groups to discover right now.</p>
+                    )
+                  )}
+                </div>
               )}
             </div>
           </aside>
@@ -322,30 +512,35 @@ export default function Groups() {
             {selectedGroup ? (
               <>
                 <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', background: 'var(--bg-surface)', borderTopLeftRadius: '16px', borderTopRightRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <button type="button" className="mobile-back-btn" onClick={() => setSelectedGroup(null)} aria-label="Back to groups">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                    </button>
-                    <div>
-                      <strong style={{ fontSize: '1.05rem', display: 'block' }}>{selectedGroup.name}</strong>
-                      <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{selectedGroup.description}</span>
-                    </div>
-                  </div>
-
-                  {selectedGroup.isMember ? (
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button onClick={openAddMemberModal} className="btn-secondary" style={{ padding: '6px 10px', fontSize: '12px' }}>
-                        Add Member
-                      </button>
-                      <button onClick={() => leaveGroupDialogRef.current?.showModal()} className="btn-secondary" style={{ padding: '6px 10px', fontSize: '12px', color: '#ef4444', borderColor: 'rgba(239,68,68,0.3)', background: 'transparent' }}>
-                        Leave Group
-                      </button>
-                    </div>
+                  {selectedMessages.size > 0 ? (
+                    <>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <button type="button" className="btn-secondary" style={{ padding: '6px 10px', fontSize: '13px' }} onClick={() => setSelectedMessages(new Set())}>Cancel</button>
+                        <strong style={{ fontSize: '1.05rem', color: 'var(--text-primary)' }}>{selectedMessages.size} selected</strong>
+                      </div>
+                      <button type="button" className="btn-secondary" style={{ padding: '6px 10px', fontSize: '13px', color: '#ef4444', borderColor: 'rgba(239,68,68,0.3)', background: 'transparent' }} onClick={handleBulkDelete}>Delete Selected</button>
+                    </>
                   ) : (
-
-                    <button onClick={() => handleJoinGroup(selectedGroup)} className="primary-cta" style={{ padding: '6px 16px', fontSize: '12px' }}>
-                      Join Group
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <button type="button" className="mobile-back-btn" onClick={() => setSelectedGroup(null)} aria-label="Back to groups">
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                        </button>
+                        <div 
+                          onClick={() => groupDetailsDialogRef.current?.showModal()} 
+                          style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 8px', borderRadius: '8px', transition: 'background 0.2s', margin: '-4px -8px' }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-surface-raised)'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                        >
+                          <strong style={{ fontSize: '1.15rem', display: 'block', color: 'var(--text-primary)' }}>{selectedGroup.name}</strong>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--text-muted)' }}>
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
                   )}
                 </div>
 
@@ -356,24 +551,114 @@ export default function Groups() {
                       {loadingChat ? (
                         <p style={{ color: 'var(--text-muted)', textAlign: 'center', marginTop: '40px' }}>Loading conversation history...</p>
                       ) : messages.length > 0 ? (
-                        messages.map((msg) => {
+                        messages.map((msg, index) => {
                           const isMe = currentUser && msg.senderId === currentUser.id;
+                          const prevMsg = index > 0 ? messages[index - 1] : null;
+                          const isConsecutive = prevMsg && prevMsg.senderId === msg.senderId;
+                          const hasNextConsecutive = index < messages.length - 1 && messages[index + 1].senderId === msg.senderId;
                           const senderInitials = msg.sender?.name ? msg.sender.name.split(' ').map(n => n[0]).join('').slice(0, 2) : '?';
                           
+                          const isHovered = hoveredMsgId === msg.id;
+                          const isSelected = selectedMessages.has(msg.id);
+                          const isSelecting = selectedMessages.size > 0;
+
                           return (
-                            <div key={msg.id} style={{ display: 'flex', gap: '10px', alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '70%', flexDirection: isMe ? 'row-reverse' : 'row', marginBottom: '16px' }}>
-                              {!isMe && (
-                                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--accent)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', flexShrink: 0, overflow: 'hidden' }}>
-                                  {msg.sender?.avatarUrl ? <img src={getImageUrl(msg.sender.avatarUrl)} alt="" style={{width:'100%', height:'100%', objectFit:'cover'}} /> : senderInitials}
+                            <div 
+                              key={msg.id} 
+                              style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '80%', flexDirection: isMe ? 'row-reverse' : 'row', marginBottom: hasNextConsecutive ? '2px' : '16px' }}
+                              onMouseEnter={() => setHoveredMsgId(msg.id)}
+                              onMouseLeave={() => setHoveredMsgId(null)}
+                            >
+                              {isSelecting && (
+                                <div style={{ alignSelf: 'center', margin: '0 8px' }}>
+                                  <input 
+                                    type="checkbox" 
+                                    checked={isSelected}
+                                    onChange={() => toggleSelection(msg.id)}
+                                    style={{ cursor: 'pointer', width: '18px', height: '18px' }}
+                                  />
                                 </div>
                               )}
-                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
-                                <div style={{ background: isMe ? 'var(--accent)' : 'var(--bg-card)', color: isMe ? 'white' : 'var(--text-primary)', padding: '10px 14px', borderRadius: '16px', borderBottomRightRadius: isMe ? '4px' : '16px', borderBottomLeftRadius: !isMe ? '4px' : '16px', border: isMe ? 'none' : '1px solid var(--border-subtle)', fontSize: '14px', lineHeight: '1.4' }}>
-                                  {msg.content}
+                              {!isMe && (
+                                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--accent)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', flexShrink: 0, overflow: 'hidden', opacity: isConsecutive ? 0 : 1 }}>
+                                  {!isConsecutive && (
+                                    msg.sender?.avatarUrl ? <img src={getImageUrl(msg.sender.avatarUrl)} alt="" style={{width:'100%', height:'100%', objectFit:'cover'}} /> : senderInitials
+                                  )}
                                 </div>
-                                <span style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                                  {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </span>
+                              )}
+                              <div 
+                                style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', position: 'relative', opacity: msg.isDeleting ? 0.5 : (isSelecting && !isSelected ? 0.7 : 1) }}
+                                onDoubleClick={() => setReplyingTo(msg)}
+                              >
+                                {!isMe && !isConsecutive && (
+                                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px', marginLeft: '4px', fontWeight: '500' }}>
+                                    {msg.sender?.name || 'Unknown User'}
+                                  </span>
+                                )}
+                                
+                                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                  {(isHovered || menuConfig.id === msg.id) && !isSelecting && !msg.id.startsWith('temp-') && !msg.isDeleting && (
+                                    <div style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', right: isMe ? '100%' : 'auto', left: !isMe ? '100%' : 'auto', paddingRight: isMe ? '8px' : '0', paddingLeft: !isMe ? '8px' : '0', zIndex: menuConfig.id === msg.id ? 20 : 1 }}>
+                                      <button 
+                                        type="button" 
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          if (menuConfig.id === msg.id) setMenuConfig({ id: null });
+                                          else {
+                                            const rect = e.currentTarget.getBoundingClientRect();
+                                            const spaceBelow = window.innerHeight - rect.bottom;
+                                            setMenuConfig({ id: msg.id, isUp: spaceBelow < 280 });
+                                          }
+                                        }}
+                                        style={{ background: 'var(--bg-surface-raised)', border: '1px solid var(--border-subtle)', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-primary)' }}
+                                      >
+                                        ⋮
+                                      </button>
+                                      {menuConfig.id === msg.id && (
+                                        <div style={{ 
+                                          position: 'absolute', 
+                                          [menuConfig.isUp ? 'bottom' : 'top']: '100%', 
+                                          [menuConfig.isUp ? 'marginBottom' : 'marginTop']: '4px',
+                                          [isMe ? 'right' : 'left']: isMe ? '12px' : '0', 
+                                          background: 'var(--bg-page)', 
+                                          border: '1px solid var(--border)', 
+                                          borderRadius: '8px', 
+                                          boxShadow: '0 4px 20px rgba(0,0,0,0.15)', 
+                                          zIndex: 1001, 
+                                          minWidth: '150px', 
+                                          overflow: 'hidden' 
+                                        }} onClick={(e) => e.stopPropagation()}>
+                                          <button type="button" onClick={() => { setReplyingTo(msg); setMenuConfig({ id: null }); }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 16px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '13px', color: 'var(--text-primary)' }}>Reply to Message</button>
+                                          <button type="button" onClick={() => { toggleSelection(msg.id); setMenuConfig({ id: null }); }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 16px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '13px', color: 'var(--text-primary)' }}>Select Message</button>
+                                          <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '4px 0' }}></div>
+                                          <button type="button" onClick={() => { handleDeleteMessage(msg.id, false); setMenuConfig({ id: null }); }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 16px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '13px', color: '#ef4444' }}>Delete for me</button>
+                                          {(isMe || (selectedGroup && selectedGroup.creatorId === currentUser.id)) && (
+                                            <button type="button" onClick={() => { handleDeleteMessage(msg.id, true); setMenuConfig({ id: null }); }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 16px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '13px', color: '#ef4444' }}>Delete for everyone</button>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                  <div style={{ background: isMe ? 'var(--accent)' : 'var(--bg-card)', color: isMe ? 'white' : 'var(--text-primary)', padding: '10px 14px', borderRadius: '16px', borderBottomRightRadius: isMe && hasNextConsecutive ? '4px' : '16px', borderBottomLeftRadius: !isMe && hasNextConsecutive ? '4px' : '16px', border: isMe ? 'none' : '1px solid var(--border-subtle)', fontSize: '14px', lineHeight: '1.4', wordBreak: 'break-word', display: 'flex', flexDirection: 'column' }}>
+                                    {msg.replyTo && (
+                                      <div style={{ background: 'rgba(0,0,0,0.1)', padding: '6px 10px', borderRadius: '6px', marginBottom: '8px', fontSize: '13px', borderLeft: '3px solid rgba(0,0,0,0.2)' }}>
+                                        <strong>{msg.replyTo.senderId === currentUser.id ? 'You' : (msg.replyTo.sender?.name || 'User')}</strong>: {msg.replyTo.content || msg.replyTo.fileName}
+                                      </div>
+                                    )}
+                                    {msg.content ? (
+                                      <span>{msg.content}</span>
+                                    ) : (
+                                      <a href={getImageUrl(msg.fileUrl)} target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>{msg.fileName || 'File'}</a>
+                                    )}
+                                  </div>
+                                </div>
+                                {!hasNextConsecutive && (
+                                  <span style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                                    {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    {msg.isDeleting ? ' · Deleting...' : ''}
+                                    {msg.id.startsWith('temp-') && ' · Sending...'}
+                                  </span>
+                                )}
                               </div>
                             </div>
                           );
@@ -400,19 +685,46 @@ export default function Groups() {
                 </div>
 
                 {selectedGroup.isMember && (
-                  <form onSubmit={handleSendMessage} style={{ padding: '16px 20px', background: 'rgba(255,255,255,0.01)', borderTop: '1px solid var(--border-subtle)', display: 'flex', gap: '12px', alignItems: 'center' }}>
-                    <input
-                      type="text"
-                      placeholder="Type a message to the group..."
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      required
-                      style={{ flex: 1, padding: '12px 16px', borderRadius: '24px', border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-primary)', outline: 'none' }}
-                    />
-                    <button type="submit" className="primary-cta" style={{ borderRadius: '24px', padding: '10px 24px', fontSize: '14px', minHeight: 'auto' }}>
-                      Send
-                    </button>
-                  </form>
+                  <div style={{ padding: '16px 20px', background: 'rgba(255,255,255,0.01)', borderTop: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column' }}>
+                    {replyingTo && (
+                      <div style={{ background: 'var(--bg-surface-raised)', padding: '10px 16px', borderRadius: '8px', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderLeft: '4px solid var(--accent)' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontSize: '12px', color: 'var(--accent)', fontWeight: '600', marginBottom: '4px' }}>Replying to {replyingTo.senderId === currentUser.id ? 'yourself' : (replyingTo.sender?.name || 'User')}</span>
+                          <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{replyingTo.content || replyingTo.fileName || 'Attachment'}</span>
+                        </div>
+                        <button type="button" onClick={() => setReplyingTo(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
+                      </div>
+                    )}
+                    {file && (
+                      <div style={{ background: 'var(--bg-surface-raised)', padding: '10px 16px', borderRadius: '8px', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderLeft: '4px solid var(--accent)' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontSize: '12px', color: 'var(--accent)', fontWeight: '600', marginBottom: '4px' }}>Attachment</span>
+                          <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{file.name}</span>
+                        </div>
+                        <button type="button" onClick={() => { setFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
+                      </div>
+                    )}
+                    <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                      <input type="file" style={{ display: 'none' }} ref={fileInputRef} onChange={(e) => setFile(e.target.files[0])} />
+                      <button type="button" onClick={() => fileInputRef.current?.click()} style={{ background: 'var(--bg-surface-raised)', border: '1px solid var(--border)', borderRadius: '50%', width: '42px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-secondary)', flexShrink: 0 }}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                      </button>
+                      <input
+                        type="text"
+                        placeholder="Type a message to the group..."
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        style={{ flex: 1, padding: '12px 16px', borderRadius: '24px', border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-primary)', outline: 'none' }}
+                      />
+                      <button type="submit" className="primary-cta" style={{ borderRadius: '24px', padding: '10px 24px', fontSize: '14px', minHeight: 'auto', opacity: (!newMessage.trim() && !file) ? 0.5 : 1 }} disabled={!newMessage.trim() && !file}>
+                        Send
+                      </button>
+                    </form>
+                  </div>
                 )}
               </>
             ) : (
@@ -470,7 +782,41 @@ export default function Groups() {
         </div>
       )}
 
-      <dialog ref={leaveGroupDialogRef} className="glass-card" style={{ padding: '24px', borderRadius: '12px', border: '1px solid var(--border)', width: '100%', maxWidth: '400px', margin: 'auto' }}>
+      {/* Modals */}
+      <dialog ref={groupDetailsDialogRef} className="glass-card animate-dropdown-enter" style={{ border: 'none', padding: '32px', maxWidth: '400px', width: '100%', margin: 'auto', borderRadius: '16px' }}>
+        {selectedGroup && (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.5rem', fontFamily: 'Fustat, sans-serif' }}>{selectedGroup.name}</h3>
+              <button type="button" onClick={() => groupDetailsDialogRef.current?.close()} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--text-secondary)' }}>&times;</button>
+            </div>
+            
+            <div style={{ marginBottom: '24px' }}>
+              <p style={{ color: 'var(--text-secondary)', lineHeight: '1.5', margin: '0 0 12px 0' }}>{selectedGroup.description}</p>
+              <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{selectedGroup.memberCount} member{selectedGroup.memberCount === 1 ? '' : 's'}</span>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', flexDirection: 'column' }}>
+              {selectedGroup.isMember ? (
+                <>
+                  <button onClick={() => { groupDetailsDialogRef.current?.close(); openAddMemberModal(); }} className="btn-secondary" style={{ width: '100%' }}>
+                    Add Member
+                  </button>
+                  <button onClick={() => { groupDetailsDialogRef.current?.close(); leaveGroupDialogRef.current?.showModal(); }} className="btn-secondary" style={{ width: '100%', color: '#ef4444', borderColor: 'rgba(239,68,68,0.3)' }}>
+                    Leave Group
+                  </button>
+                </>
+              ) : (
+                <button onClick={() => { groupDetailsDialogRef.current?.close(); handleJoinGroup(selectedGroup); }} className="primary-cta" style={{ width: '100%' }}>
+                  Join Group
+                </button>
+              )}
+            </div>
+          </>
+        )}
+      </dialog>
+
+      <dialog ref={leaveGroupDialogRef} className="glass-card animate-dropdown-enter" style={{ border: 'none', padding: '32px', maxWidth: '400px', width: '100%', margin: 'auto', borderRadius: '16px' }}>
         <h2 style={{ marginTop: 0, marginBottom: '16px', fontSize: '1.25rem' }}>Leave Group</h2>
         <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>Are you sure you want to leave {selectedGroup?.name}?</p>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>

@@ -47,7 +47,14 @@ export default function Navbar() {
   let links = [];
   if (isAdmin()) {
     links = [
-      { href: '/admin', label: 'Admin Dashboard' },
+      { href: '/admin?tab=analytics', label: 'Overview' },
+      { href: '/admin?tab=users', label: 'Users' },
+      { href: '/admin?tab=groups', label: 'Groups' },
+      { href: '/admin?tab=disputes', label: 'Disputes' },
+      { href: '/admin?tab=moderation', label: 'Moderation' },
+      { href: '/admin?tab=verifications', label: 'Verifications' },
+      { href: '/admin?tab=audit', label: 'Audit Logs' },
+      { href: '/admin?tab=support', label: 'Support' },
       { href: '/blogs', label: 'Blogs' }
     ];
   } else {
@@ -72,6 +79,17 @@ export default function Navbar() {
       ];
   }
 
+  const searchParams = new URLSearchParams(location.search);
+  const currentTab = searchParams.get('tab') || 'analytics';
+
+  const isActive = (l) => {
+    if (l.href.startsWith('/admin?tab=')) {
+      const tab = new URLSearchParams(l.href.split('?')[1]).get('tab');
+      return location.pathname === '/admin' && currentTab === tab;
+    }
+    return location.pathname === l.href || (location.pathname === '/' && l.href === '/index.html');
+  };
+
   function getInitials(name) {
     return (name || '?').split(' ').map(n => n[0]).join('').slice(0, 2);
   }
@@ -86,8 +104,8 @@ export default function Navbar() {
             <Link
               key={l.href}
               to={l.href}
-              className={currentPath === l.href || (currentPath === '/' && l.href === '/index.html') ? 'active' : ''}
-              aria-current={currentPath === l.href ? 'page' : undefined}
+              className={isActive(l) ? 'active' : ''}
+              aria-current={isActive(l) ? 'page' : undefined}
             >
               {l.label}
             </Link>
@@ -181,8 +199,8 @@ export default function Navbar() {
             <Link
               key={l.href}
               to={l.href}
-              className={currentPath === l.href || (currentPath === '/' && l.href === '/index.html') ? 'active' : ''}
-              aria-current={currentPath === l.href ? 'page' : undefined}
+              className={isActive(l) ? 'active' : ''}
+              aria-current={isActive(l) ? 'page' : undefined}
               onClick={() => setIsMenuOpen(false)}
             >
               {l.label}

@@ -540,13 +540,21 @@ model GroupMember {
 }
 
 model GroupMessage {
-  id        String   @id @default(cuid())
-  groupId   String
-  senderId  String
-  content   String
-  createdAt DateTime @default(now())
-  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  groupId    String
+  senderId   String
+  content    String?
+  fileUrl    String?
+  fileName   String?
+  fileType   String?
+  replyToId  String?
+  deletedFor String[] @default([])
+  createdAt  DateTime @default(now())
+
+  group      Group         @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  sender     User          @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  replyTo    GroupMessage? @relation("GroupMessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies    GroupMessage[] @relation("GroupMessageReplies")
 
   @@index([groupId])
   @@index([senderId])

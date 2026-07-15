@@ -341,7 +341,9 @@ export const groups = {
   },
   declineInvitation: (id) => api(`/groups/invitations/${id}/decline`, { method: 'POST' }),
   messages: (id) => api(`/groups/${id}/messages`), // Skip cache for chat messages
-  sendMessage: (id, content) => api(`/groups/${id}/messages`, { method: 'POST', body: JSON.stringify({ content }) }),
+  sendMessage: (id, data) => api(`/groups/${id}/messages`, { method: 'POST', body: data instanceof FormData ? data : JSON.stringify(data) }),
+  deleteMessage: (groupId, messageId, forEveryone = false) => api(`/groups/${groupId}/messages/${messageId}?forEveryone=${forEveryone}`, { method: 'DELETE' }),
+  bulkDeleteMessages: (groupId, messageIds) => api(`/groups/${groupId}/messages/bulk-delete`, { method: 'POST', body: JSON.stringify({ messageIds }) })
 };
 
 export function subscribeToGroupEvents(groupId, eventName, callback) {

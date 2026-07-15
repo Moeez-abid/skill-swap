@@ -3,6 +3,26 @@ import { prisma } from '../lib/prisma.js';
 import { authenticate } from '../middleware/auth.js';
 import { apiError, apiSuccess } from '../utils/helpers.js';
 import { triggerEvent } from '../lib/pusher.js';
+import multer from 'multer';
+import { uploadFile } from '../lib/cloudinary.js';
+import fs from 'fs';
+import path from 'path';
+
+const uploadDir = path.join(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) { cb(null, uploadDir) },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname))
+  }
+});
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+});
 
 const router = Router();
 router.use(authenticate);
@@ -273,11 +293,13 @@ router.get('/:id/messages', async (req, res) => {
     }
 
     const messages = await prisma.groupMessage.findMany({
-      where: { groupId: id },
+      where: { 
+        groupId: id,
+        NOT: { deletedFor: { has: userId } }
+      },
       include: {
-        sender: {
-          select: { id: true, name: true, avatarUrl: true }
-        }
+        sender: { select: { id: true, name: true, avatarUrl: true } },
+        replyTo: { include: { sender: { select: { id: true, name: true } } } }
       },
       orderBy: { createdAt: 'asc' }
     });
@@ -290,20 +312,29 @@ router.get('/:id/messages', async (req, res) => {
 });
 
 // POST /api/groups/:id/messages - Send a chat message (must be a member, triggers Pusher event)
-router.post('/:id/messages', async (req, res) => {
+router.post('/:id/messages', upload.single('file'), async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
-    const { content } = req.body;
+    const { content, replyToId } = req.body;
 
-    if (!content) {
-      return apiError(res, 400, 'Message content is required');
+    let fileUrl = null;
+    let fileName = null;
+    let fileType = null;
+    
+    if (req.file) {
+      fileUrl = await uploadFile(req.file.path, 'group_attachments');
+      fileName = req.file.originalname;
+      fileType = req.file.mimetype;
+      fs.unlinkSync(req.file.path);
+    }
+
+    if (!content && !fileUrl) {
+      return apiError(res, 400, 'Message content or file is required');
     }
 
     const member = await prisma.groupMember.findUnique({
-      where: {
-        groupId_userId: { groupId: id, userId }
-      }
+      where: { groupId_userId: { groupId: id, userId } }
     });
 
     if (!member) {
@@ -314,12 +345,15 @@ router.post('/:id/messages', async (req, res) => {
       data: {
         groupId: id,
         senderId: userId,
-        content
+        content,
+        fileUrl,
+        fileName,
+        fileType,
+        replyToId: replyToId || null,
       },
       include: {
-        sender: {
-          select: { id: true, name: true, avatarUrl: true }
-        }
+        sender: { select: { id: true, name: true, avatarUrl: true } },
+        replyTo: { include: { sender: { select: { id: true, name: true } } } }
       }
     });
 
@@ -329,6 +363,73 @@ router.post('/:id/messages', async (req, res) => {
     return apiSuccess(res, { message }, 201);
   } catch (error) {
     console.error('Error sending group message:', error);
+    return apiError(res, 500, 'Internal server error');
+  }
+});
+
+router.delete('/:id/messages/:messageId', async (req, res) => {
+  try {
+    const { id, messageId } = req.params;
+    const userId = req.user.id;
+    const forEveryone = req.query.forEveryone === 'true';
+
+    const message = await prisma.groupMessage.findUnique({
+      where: { id: messageId },
+      include: { group: true }
+    });
+    if (!message || message.groupId !== id) return apiError(res, 404, 'Message not found');
+
+    if (forEveryone) {
+      const isSender = message.senderId === userId;
+      const isAdmin = message.group.creatorId === userId;
+      if (!isSender && !isAdmin) return apiError(res, 403, 'Not authorized to delete for everyone');
+      
+      await prisma.groupMessage.delete({ where: { id: messageId } });
+      await triggerEvent(`group-${id}`, 'group-message-deleted', { messageId });
+    } else {
+      const deletedForArray = message.deletedFor || [];
+      if (!deletedForArray.includes(userId)) {
+        await prisma.groupMessage.update({
+          where: { id: messageId },
+          data: { deletedFor: { push: userId } }
+        });
+      }
+      await triggerEvent(`user-${userId}`, 'group-message-deleted', { messageId, groupId: id });
+    }
+
+    return apiSuccess(res, { success: true });
+  } catch (error) {
+    console.error('Error deleting group message:', error);
+    return apiError(res, 500, 'Internal server error');
+  }
+});
+
+router.post('/:id/messages/bulk-delete', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+    const { messageIds } = req.body;
+    
+    if (!Array.isArray(messageIds) || messageIds.length === 0) return apiError(res, 400, 'Invalid messageIds');
+
+    const messages = await prisma.groupMessage.findMany({
+      where: { id: { in: messageIds }, groupId: id }
+    });
+
+    await Promise.all(messages.map(m => {
+      const deletedForArray = m.deletedFor || [];
+      if (!deletedForArray.includes(userId)) {
+        return prisma.groupMessage.update({
+          where: { id: m.id },
+          data: { deletedFor: { push: userId } }
+        });
+      }
+    }));
+
+    await triggerEvent(`user-${userId}`, 'group-messages-deleted', { messageIds, groupId: id });
+    return apiSuccess(res, { success: true });
+  } catch (error) {
+    console.error('Error bulk deleting group messages:', error);
     return apiError(res, 500, 'Internal server error');
   }
 });

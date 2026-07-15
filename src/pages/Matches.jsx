@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { matches, reviews, getImageUrl } from '../shared/api';
 import { isLoggedIn, getUser } from '../shared/auth';
 
@@ -18,7 +18,13 @@ function Avatar({ user, size = 40 }) {
 export default function Matches() {
   const navigate = useNavigate();
   const currentUser = getUser();
-  const [activeTab, setActiveTab] = useState('active');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get('tab') || 'active';
+  const [activeTab, setActiveTab] = useState(tabFromUrl);
+
+  useEffect(() => {
+    setSearchParams({ tab: activeTab }, { replace: true });
+  }, [activeTab, setSearchParams]);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -276,7 +282,7 @@ export default function Matches() {
 
   return (
     <div style={{ paddingTop: '130px', paddingBottom: '64px' }}>
-      <header style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+      <header style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <h1 className="page-title" style={{ margin: 0 }}>Active Exchanges</h1>
           <p className="page-subtitle" style={{ margin: '8px 0 0' }}>Manage your skill swaps, requests, and mentorship sessions.</p>

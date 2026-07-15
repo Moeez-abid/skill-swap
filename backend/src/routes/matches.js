@@ -27,7 +27,7 @@ router.get('/', authenticate, async (req, res) => {
     promises.push(
       prisma.matchRequest.findMany({
         ...base,
-        where: { receiverId: req.user.id },
+        where: { receiverId: req.user.id, status: 'PENDING' },
       }).then(inc => requests.push(...inc.map(r => ({ 
         ...r, 
         offeredSkill: r.offeredSkillSnapshot || r.offeredSkill,
@@ -40,7 +40,7 @@ router.get('/', authenticate, async (req, res) => {
     promises.push(
       prisma.matchRequest.findMany({
         ...base,
-        where: { senderId: req.user.id },
+        where: { senderId: req.user.id, status: 'PENDING' },
       }).then(out => requests.push(...out.map(r => ({ 
         ...r, 
         offeredSkill: r.offeredSkillSnapshot || r.offeredSkill,

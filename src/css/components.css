@@ -669,7 +669,7 @@ select option {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 10px 18px;
+  padding: 10px 18px 12px;
   border-radius: 8px;
   text-decoration: none;
   font-weight: 500;
@@ -698,6 +698,13 @@ select option {
   border-radius: 8px;
   background: var(--bg-surface-raised);
   border: 1px solid var(--border-subtle);
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.view-toggle::-webkit-scrollbar {
+  display: none;
 }
 
 .view-toggle button {
@@ -709,6 +716,8 @@ select option {
   cursor: pointer;
   font-size: 14px;
   transition: background 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .view-toggle button.active {
@@ -1149,10 +1158,18 @@ select option {
   gap: 4px;
   margin-bottom: 24px;
   border-bottom: 1px solid var(--border-subtle);
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+}
+
+.tabs::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
 }
 
 .tab {
-  padding: 10px 18px;
+  padding: 10px 18px 12px;
   border: none;
   background: none;
   color: var(--text-secondary);
@@ -1162,7 +1179,9 @@ select option {
   cursor: pointer;
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
-  transition: color 0.15s ease;
+  transition: color 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .tab:hover {

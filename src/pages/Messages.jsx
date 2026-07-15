@@ -36,6 +36,20 @@ export default function Messages() {
     activeConversationIdRef.current = activeConversationId;
   }, [activeConversationId]);
 
+  const [isHeaderMenuOpen, setIsHeaderMenuOpen] = useState(false);
+  const [menuConfig, setMenuConfig] = useState({ id: null });
+
+  // Global click listener to close menus
+  useEffect(() => {
+    if (!menuConfig.id && !isHeaderMenuOpen) return;
+    const handleClick = () => {
+      setMenuConfig({ id: null });
+      setIsHeaderMenuOpen(false);
+    };
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, [menuConfig.id, isHeaderMenuOpen]);
+
   // We need to keep a ref to the latest loadThread function to avoid stale closures in Pusher callbacks
   const loadThreadRef = useRef(() => {});
 
@@ -46,7 +60,6 @@ export default function Messages() {
   const [selectedMessages, setSelectedMessages] = useState(new Set());
   const [replyingTo, setReplyingTo] = useState(null);
   const [hoveredMsgId, setHoveredMsgId] = useState(null);
-  const [menuConfig, setMenuConfig] = useState({ id: null });
 
   const messageListRef = useRef(null);
   const modalRef = useRef(null);
@@ -107,6 +120,9 @@ export default function Messages() {
       setThreadLoading(true);
     }
 
+    // Optimistically clear unread count for the active conversation
+    setConversations(prev => prev.map(c => c.id === activeConversationId ? { ...c, unreadCount: 0 } : c));
+
     try {
       const res = await messages.list(activeConversationId);
       setThreadMsgs(res.messages);
@@ -115,6 +131,9 @@ export default function Messages() {
       
       // Update cache
       msgCacheRef.current[activeConversationId] = res;
+
+      // Refresh conversations to sync read status and unread count
+      loadConversations();
 
       setTimeout(() => {
         if (messageListRef.current) {
@@ -228,50 +247,29 @@ export default function Messages() {
     if (currentReplyTo) fd.append('replyToId', currentReplyTo.id);
 
     try {
-      await messages.send(activeConversationId, fd);
-      loadThread();
+      const res = await messages.send(activeConversationId, fd);
+      setThreadMsgs(prev => {
+        const next = prev.map(m => m.id === optimisticMsg.id ? res.message : m);
+        if (msgCacheRef.current[activeConversationId]) {
+          msgCacheRef.current[activeConversationId].messages = next;
+        }
+        return next;
+      });
       loadConversations();
     } catch (err) {
       showToast(err.message);
-      loadThread(); // Refresh on error to rollback
+      setThreadMsgs(prev => prev.filter(m => m.id !== optimisticMsg.id));
     }
   };
 
-  const handleFileChange = async (e) => {
+  const handleFileChange = (e) => {
     const f = e.target.files[0];
     if (!f) return;
     if (f.size > 5 * 1024 * 1024) {
       showToast('File must be under 5MB');
       return;
     }
-    
-    // Optimistic UI for file-only upload
-    const optimisticMsg = {
-      id: `temp-${Date.now()}`,
-      senderId: currentUser.id,
-      content: null,
-      fileUrl: URL.createObjectURL(f),
-      fileName: f.name,
-      createdAt: new Date().toISOString(),
-      isRead: false,
-      replyTo: null
-    };
-    setThreadMsgs(prev => [...prev, optimisticMsg]);
-    setTimeout(() => {
-      if (messageListRef.current) messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
-    }, 50);
-
-    const fd = new FormData();
-    fd.append('file', f);
-    try {
-      await messages.send(activeConversationId, fd);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      loadThread();
-      loadConversations();
-    } catch (err) {
-      showToast(err.message);
-      loadThread(); // rollback
-    }
+    setFile(f);
   };
 
   const openNewChatModal = async () => {
@@ -419,9 +417,48 @@ export default function Messages() {
                   }} aria-label="Back to messages">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
                   </button>
-                  <Avatar user={partner} size={36} /> <strong style={{ fontSize: '1.05rem' }}>{partner?.name}</strong>
+                  
+                  <div style={{ position: 'relative' }}>
+                    <div 
+                      onClick={(e) => { e.stopPropagation(); setIsHeaderMenuOpen(!isHeaderMenuOpen); }} 
+                      style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', padding: '4px 8px', borderRadius: '8px', transition: 'background 0.2s', marginLeft: '-8px' }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-surface-raised)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <Avatar user={partner} size={36} />
+                      <strong style={{ fontSize: '1.05rem' }}>{partner?.name}</strong>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-secondary)' }}><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+
+                    {isHeaderMenuOpen && (
+                      <>
+                        <div style={{ 
+                          position: 'absolute', 
+                          top: '100%', 
+                          left: '0', 
+                          marginTop: '8px',
+                          background: 'var(--bg-page)', 
+                          border: '1px solid var(--border)', 
+                          borderRadius: '8px', 
+                          boxShadow: '0 4px 20px rgba(0,0,0,0.15)', 
+                          zIndex: 1001, 
+                          minWidth: '200px', 
+                          overflow: 'hidden' 
+                        }}>
+                          <button type="button" onClick={() => { setIsHeaderMenuOpen(false); navigate(`/profile/${partner?.id}`); }} style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', textAlign: 'left', padding: '12px 16px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '14px', color: 'var(--text-primary)' }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            View Profile
+                          </button>
+                          <div style={{ height: '1px', background: 'var(--border-subtle)' }}></div>
+                          <button type="button" onClick={() => { setIsHeaderMenuOpen(false); handleDeleteChat(); }} style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', textAlign: 'left', padding: '12px 16px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '14px', color: '#ef4444' }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                            Delete Chat
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
-                <button type="button" className="btn-secondary" style={{ padding: '6px 10px', fontSize: '12px', color: '#ef4444', borderColor: 'rgba(239,68,68,0.3)', background: 'transparent' }} onClick={handleDeleteChat}>Delete Chat</button>
               </div>
               <div className="message-list" ref={messageListRef}>
                 {threadMsgs.map((m, index) => {
@@ -429,11 +466,12 @@ export default function Messages() {
                   const isHovered = hoveredMsgId === m.id;
                   const isSelected = selectedMessages.has(m.id);
                   const isSelecting = selectedMessages.size > 0;
+                  const hasNextConsecutive = index < threadMsgs.length - 1 && threadMsgs[index + 1].senderId === m.senderId;
 
                   return (
                     <div 
                       key={m.id} 
-                      style={{ display: 'flex', alignItems: 'center', gap: '8px', alignSelf: sent ? 'flex-end' : 'flex-start', maxWidth: '80%', marginBottom: '16px' }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '8px', alignSelf: sent ? 'flex-end' : 'flex-start', maxWidth: '80%', marginBottom: hasNextConsecutive ? '2px' : '16px' }}
                       onMouseEnter={() => setHoveredMsgId(m.id)}
                       onMouseLeave={() => setHoveredMsgId(null)}
                     >
@@ -445,34 +483,13 @@ export default function Messages() {
                           style={{ cursor: 'pointer', width: '18px', height: '18px', flexShrink: 0 }}
                         />
                       )}
-                      <div 
-                        className={`message-bubble message-bubble--${sent ? 'sent' : 'received'}`} 
-                        style={{ position: 'relative', width: '100%', maxWidth: '100%', marginBottom: 0, opacity: m.isDeleting ? 0.5 : (isSelecting && !isSelected ? 0.7 : 1) }}
-                        onDoubleClick={() => setReplyingTo(m)}
-                      >
-                        {m.replyTo && (
-                          <div style={{ background: 'rgba(0,0,0,0.1)', padding: '6px 10px', borderRadius: '6px', marginBottom: '8px', fontSize: '13px', borderLeft: '3px solid rgba(0,0,0,0.2)' }}>
-                            <strong>{m.replyTo.senderId === currentUser.id ? 'You' : partner?.name}</strong>: {m.replyTo.content || m.replyTo.fileName}
-                          </div>
-                        )}
-                        {m.content ? (
-                          m.content
-                        ) : (
-                          <a href={getImageUrl(m.fileUrl)} target="_blank" rel="noreferrer">{m.fileName || 'File'}</a>
-                        )}
-                        <div className="message-meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
-                          <span>
-                            {new Date(m.createdAt).toLocaleTimeString()}
-                            {m.isDeleting ? ' · Deleting...' : (sent && !m.id.startsWith('temp-') && m.isRead ? ' · Read' : '')}
-                            {m.id.startsWith('temp-') && ' · Sending...'}
-                          </span>
-                        </div>
-
+                      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                         {(isHovered || menuConfig.id === m.id) && !isSelecting && !m.id.startsWith('temp-') && !m.isDeleting && (
-                          <div style={{ position: 'absolute', top: '8px', right: sent ? '100%' : '8px', paddingRight: sent ? '12px' : '0', zIndex: menuConfig.id === m.id ? 20 : 1 }}>
+                          <div style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', right: sent ? '100%' : 'auto', left: !sent ? '100%' : 'auto', paddingRight: sent ? '8px' : '0', paddingLeft: !sent ? '8px' : '0', zIndex: menuConfig.id === m.id ? 20 : 1 }}>
                             <button 
                               type="button" 
                               onClick={(e) => {
+                                e.stopPropagation();
                                 if (menuConfig.id === m.id) {
                                   setMenuConfig({ id: null });
                                 } else {
@@ -489,32 +506,53 @@ export default function Messages() {
                               ⋮
                             </button>
                             {menuConfig.id === m.id && (
-                              <>
-                                <div style={{ position: 'fixed', inset: 0, zIndex: 1000 }} onClick={(e) => { e.stopPropagation(); setMenuConfig({ id: null }); }}></div>
-                                <div style={{ 
-                                  position: 'absolute', 
-                                  [menuConfig.isUp ? 'bottom' : 'top']: '100%', 
-                                  [menuConfig.isUp ? 'marginBottom' : 'marginTop']: '4px',
-                                  [sent ? 'right' : 'left']: sent ? '12px' : 0, 
-                                  background: 'var(--bg-page)', 
-                                  border: '1px solid var(--border)', 
-                                  borderRadius: '8px', 
-                                  boxShadow: '0 8px 24px rgba(0,0,0,0.4)', 
-                                  zIndex: 1001, 
-                                  minWidth: '150px', 
-                                  overflow: 'hidden' 
-                                }}>
-                                  <button type="button" style={{ display: 'block', width: '100%', padding: '8px 12px', textAlign: 'left', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '13px', color: 'var(--text-primary)' }} onClick={() => { setReplyingTo(m); setMenuConfig({ id: null }); }}>Reply to Message</button>
-                                  <button type="button" style={{ display: 'block', width: '100%', padding: '8px 12px', textAlign: 'left', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '13px', color: 'var(--text-primary)' }} onClick={() => { toggleSelection(m.id); setMenuConfig({ id: null }); }}>Select Message</button>
-                                  <button type="button" style={{ display: 'block', width: '100%', padding: '8px 12px', textAlign: 'left', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '13px', color: '#ef4444' }} onClick={() => { handleDeleteMessage(m.id, false); setMenuConfig({ id: null }); }}>Delete for me</button>
-                                  {sent && (
-                                    <button type="button" style={{ display: 'block', width: '100%', padding: '8px 12px', textAlign: 'left', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '13px', color: '#ef4444' }} onClick={() => { handleDeleteMessage(m.id, true); setMenuConfig({ id: null }); }}>Delete for everyone</button>
-                                  )}
-                                </div>
-                              </>
+                              <div style={{ 
+                                position: 'absolute', 
+                                [menuConfig.isUp ? 'bottom' : 'top']: '100%', 
+                                [menuConfig.isUp ? 'marginBottom' : 'marginTop']: '4px',
+                                [sent ? 'right' : 'left']: sent ? '12px' : 0, 
+                                background: 'var(--bg-page)', 
+                                border: '1px solid var(--border)', 
+                                borderRadius: '8px', 
+                                boxShadow: '0 4px 20px rgba(0,0,0,0.15)', 
+                                zIndex: 1001, 
+                                minWidth: '150px', 
+                                overflow: 'hidden' 
+                              }} onClick={(e) => e.stopPropagation()}>
+                                <button type="button" onClick={() => { setReplyingTo(m); setMenuConfig({ id: null }); }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 16px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '13px', color: 'var(--text-primary)' }}>Reply to Message</button>
+                                <button type="button" onClick={() => { toggleSelection(m.id); setMenuConfig({ id: null }); }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 16px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '13px', color: 'var(--text-primary)' }}>Select Message</button>
+                                <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '4px 0' }}></div>
+                                <button type="button" onClick={() => { handleDeleteMessage(m.id, false); setMenuConfig({ id: null }); }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 16px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '13px', color: '#ef4444' }}>Delete for me</button>
+                                {sent && (
+                                  <button type="button" onClick={() => { handleDeleteMessage(m.id, true); setMenuConfig({ id: null }); }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 16px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '13px', color: '#ef4444' }}>Delete for everyone</button>
+                                )}
+                              </div>
                             )}
                           </div>
                         )}
+                        <div 
+                          className={`message-bubble message-bubble--${sent ? 'sent' : 'received'}`} 
+                          style={{ position: 'relative', width: '100%', maxWidth: '100%', marginBottom: 0, opacity: m.isDeleting ? 0.5 : (isSelecting && !isSelected ? 0.7 : 1) }}
+                          onDoubleClick={() => setReplyingTo(m)}
+                        >
+                          {m.replyTo && (
+                            <div style={{ background: 'rgba(0,0,0,0.1)', padding: '6px 10px', borderRadius: '6px', marginBottom: '8px', fontSize: '13px', borderLeft: '3px solid rgba(0,0,0,0.2)' }}>
+                              <strong>{m.replyTo.senderId === currentUser.id ? 'You' : partner?.name}</strong>: {m.replyTo.content || m.replyTo.fileName}
+                            </div>
+                          )}
+                          {m.content ? (
+                            m.content
+                          ) : (
+                            <a href={getImageUrl(m.fileUrl)} target="_blank" rel="noreferrer">{m.fileName || 'File'}</a>
+                          )}
+                          <div className="message-meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                            <span>
+                              {new Date(m.createdAt).toLocaleTimeString()}
+                              {m.isDeleting ? ' · Deleting...' : (sent && !m.id.startsWith('temp-') && m.isRead ? ' · Read' : '')}
+                              {m.id.startsWith('temp-') && ' · Sending...'}
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   );
@@ -530,38 +568,46 @@ export default function Messages() {
                   </div>
                 </div>
               ) : (
-                <form className="message-compose" onSubmit={handleSendMessage} style={{ display: 'flex', flexDirection: 'column', padding: '16px 24px' }}>
+                <div style={{ padding: '16px 20px', background: 'rgba(255,255,255,0.01)', borderTop: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column' }}>
                   {replyingTo && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-surface-raised)', padding: '8px 12px', borderRadius: '8px 8px 0 0', border: '1px solid var(--border-subtle)', borderBottom: 'none', fontSize: '13px' }}>
-                      <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        <strong style={{ color: 'var(--accent)' }}>Replying to {replyingTo.senderId === currentUser.id ? 'yourself' : partner?.name}:</strong> {replyingTo.content || replyingTo.fileName}
+                    <div style={{ background: 'var(--bg-surface-raised)', padding: '10px 16px', borderRadius: '8px', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderLeft: '4px solid var(--accent)' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontSize: '12px', color: 'var(--accent)', fontWeight: '600', marginBottom: '4px' }}>Replying to {replyingTo.senderId === currentUser.id ? 'yourself' : partner?.name}</span>
+                        <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{replyingTo.content || replyingTo.fileName || 'Attachment'}</span>
                       </div>
-                      <button type="button" onClick={() => setReplyingTo(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', padding: '4px' }}>✕</button>
+                      <button type="button" onClick={() => setReplyingTo(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                      </button>
                     </div>
                   )}
-                  <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
-                    <input 
-                      type="text" 
-                      placeholder="Type a message…" 
-                      required={!file} 
-                      aria-label="Message" 
+                  {file && (
+                    <div style={{ background: 'var(--bg-surface-raised)', padding: '10px 16px', borderRadius: '8px', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderLeft: '4px solid var(--accent)' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontSize: '12px', color: 'var(--accent)', fontWeight: '600', marginBottom: '4px' }}>Attachment</span>
+                        <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{file.name}</span>
+                      </div>
+                      <button type="button" onClick={() => { setFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                      </button>
+                    </div>
+                  )}
+                  <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <input type="file" style={{ display: 'none' }} ref={fileInputRef} onChange={handleFileChange} />
+                    <button type="button" onClick={() => fileInputRef.current?.click()} style={{ background: 'var(--bg-surface-raised)', border: '1px solid var(--border)', borderRadius: '50%', width: '42px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-secondary)', flexShrink: 0 }}>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                    </button>
+                    <input
+                      type="text"
+                      placeholder="Type a message..."
                       value={messageInput}
                       onChange={(e) => setMessageInput(e.target.value)}
-                      style={{ borderRadius: '24px', flex: 1, padding: '12px 16px', border: '1px solid var(--border)', background: 'var(--bg-page)', color: 'var(--text-primary)' }}
+                      style={{ flex: 1, padding: '12px 16px', borderRadius: '24px', border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-primary)', outline: 'none' }}
                     />
-                    <label className="btn-secondary" style={{ cursor: 'pointer', borderRadius: '50%', width: '48px', height: '48px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      📎
-                      <input 
-                        type="file" 
-                        hidden 
-                        accept="image/*,.pdf" 
-                        ref={fileInputRef}
-                        onChange={handleFileChange}
-                      />
-                    </label>
-                    <button type="submit" className="primary-cta" style={{ borderRadius: '24px', padding: '0 24px', width: 'auto' }}>Send</button>
-                  </div>
-                </form>
+                    <button type="submit" className="primary-cta" style={{ borderRadius: '24px', padding: '10px 24px', fontSize: '14px', minHeight: 'auto', opacity: (!messageInput.trim() && !file) ? 0.5 : 1 }} disabled={!messageInput.trim() && !file}>
+                      Send
+                    </button>
+                  </form>
+                </div>
               )}
             </>
           )}

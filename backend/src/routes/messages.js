@@ -67,7 +67,7 @@ router.get('/conversations', authenticate, async (req, res) => {
   return apiSuccess(res, { conversations: formatted });
 });
 
-router.post('/', authenticate, async (req, res) => {
+router.post('/conversations', authenticate, async (req, res) => {
   const { partnerId } = req.body;
   if (!partnerId || partnerId === req.user.id) return apiError(res, 400, 'Invalid partner');
 

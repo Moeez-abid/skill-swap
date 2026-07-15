@@ -24,7 +24,15 @@ export default function Sessions() {
   const [agenda, setAgenda] = useState('');
 
   const [toastMsg, setToastMsg] = useState('');
-  const [activeTab, setActiveTab] = useState('schedule');
+  const tabFromUrl = searchParams.get('tab') || 'schedule';
+  const [activeTab, setActiveTab] = useState(tabFromUrl);
+
+  useEffect(() => {
+    setSearchParams(prev => {
+      prev.set('tab', activeTab);
+      return prev;
+    }, { replace: true });
+  }, [activeTab, setSearchParams]);
   const [editingSessionId, setEditingSessionId] = useState(null);
   const [reviewingSessionId, setReviewingSessionId] = useState(null);
   const [rating, setRating] = useState(5);
