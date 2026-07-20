@@ -115,6 +115,7 @@ export default function Blogs() {
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [coverFile, setCoverFile] = useState(null);
 
   const loggedIn = isLoggedIn();
   const currentUser = loggedIn ? getUser() : null;
@@ -149,9 +150,16 @@ export default function Blogs() {
     if (!editTitle.trim() || !editContent.trim()) return;
     setSubmitting(true);
     try {
-      await blogs.create({ title: editTitle, content: editContent });
+      const formData = new FormData();
+      formData.append('title', editTitle);
+      formData.append('content', editContent);
+      if (coverFile) {
+        formData.append('coverImage', coverFile);
+      }
+      await blogs.create(formData);
       setEditTitle('');
       setEditContent('');
+      setCoverFile(null);
       setIsCreating(false);
       fetchData();
     } catch (err) {
@@ -166,9 +174,16 @@ export default function Blogs() {
     if (!editTitle.trim() || !editContent.trim()) return;
     setSubmitting(true);
     try {
-      const res = await blogs.update(currentPost.id, { title: editTitle, content: editContent });
+      const formData = new FormData();
+      formData.append('title', editTitle);
+      formData.append('content', editContent);
+      if (coverFile) {
+        formData.append('coverImage', coverFile);
+      }
+      const res = await blogs.update(currentPost.id, formData);
       setCurrentPost(res.post);
       setIsEditing(false);
+      setCoverFile(null);
       fetchData();
     } catch (err) {
       setError(err.message || 'Failed to update post');
@@ -282,6 +297,16 @@ export default function Blogs() {
                 rows="10"
               />
             </div>
+            <div className="form-group" style={{ marginBottom: '24px' }}>
+              <label htmlFor="coverImage">Cover Picture</label>
+              <input 
+                type="file" 
+                id="coverImage" 
+                accept="image/*"
+                onChange={(e) => setCoverFile(e.target.files[0])}
+                style={{ width: '100%', background: 'transparent', color: 'var(--text-primary)' }}
+              />
+            </div>
             <div style={{ display: 'flex', gap: '12px' }}>
               <button type="submit" className="primary-cta" disabled={submitting}>
                 {submitting ? 'Saving...' : 'Save Changes'}
@@ -293,10 +318,18 @@ export default function Blogs() {
           </form>
         ) : (
           <>
-            <article className="glass-card" style={{ padding: '32px', marginBottom: '32px' }}>
-              <h1 className="page-title" style={{ marginBottom: '16px' }}>
-                {currentPost.title}
-              </h1>
+            <article className="glass-card" style={{ padding: '0px', marginBottom: '32px', overflow: 'hidden', borderRadius: '24px' }}>
+              {currentPost.coverImageUrl && (
+                <img 
+                  src={getImageUrl(currentPost.coverImageUrl)} 
+                  alt="" 
+                  style={{ width: '100%', height: '350px', objectFit: 'cover' }} 
+                />
+              )}
+              <div style={{ padding: '32px' }}>
+                <h1 className="page-title" style={{ marginBottom: '16px' }}>
+                  {currentPost.title}
+                </h1>
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', paddingBottom: '16px', borderBottom: '1px solid var(--border-subtle)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -329,6 +362,7 @@ export default function Blogs() {
 
               <div style={{ color: 'var(--text-secondary)', lineHeight: '1.8', fontSize: '16px', whiteSpace: 'pre-wrap' }}>
                 {currentPost.content}
+              </div>
               </div>
             </article>
 
@@ -433,6 +467,16 @@ export default function Blogs() {
               rows="10"
             />
           </div>
+          <div className="form-group" style={{ marginBottom: '24px' }}>
+            <label htmlFor="createCover">Cover Picture</label>
+            <input 
+              type="file" 
+              id="createCover" 
+              accept="image/*"
+              onChange={(e) => setCoverFile(e.target.files[0])}
+              style={{ width: '100%', background: 'transparent', color: 'var(--text-primary)' }}
+            />
+          </div>
           <div style={{ display: 'flex', gap: '12px' }}>
             <button type="submit" className="primary-cta" disabled={submitting}>
               {submitting ? 'Publishing...' : 'Publish Post'}
@@ -456,7 +500,7 @@ export default function Blogs() {
               <div 
                 key={post.id} 
                 className="glass-card" 
-                style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', cursor: 'pointer', transition: 'transform 0.2s, box-shadow 0.2s' }}
+                style={{ display: 'flex', flexDirection: 'column', gap: '0px', cursor: 'pointer', transition: 'transform 0.2s, box-shadow 0.2s', overflow: 'hidden', borderRadius: '16px' }}
                 onClick={() => setSearchParams({ id: post.id })}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translateY(-4px)';
@@ -467,16 +511,24 @@ export default function Blogs() {
                   e.currentTarget.style.boxShadow = 'none';
                 }}
               >
-                <div>
-                  <h3 style={{ fontFamily: 'Fustat, sans-serif', fontSize: '18px', margin: '0 0 8px 0', color: 'var(--text-primary)', lineHeight: '1.4' }}>
-                    {post.title}
-                  </h3>
-                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{dateStr}</span>
-                </div>
-                
-                <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.6', flexGrow: 1 }}>
-                  {snippet}
-                </p>
+                {post.coverImageUrl && (
+                  <img 
+                    src={getImageUrl(post.coverImageUrl)} 
+                    alt="" 
+                    style={{ width: '100%', height: '180px', objectFit: 'cover' }} 
+                  />
+                )}
+                <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', flex: 1 }}>
+                  <div>
+                    <h3 style={{ fontFamily: 'Fustat, sans-serif', fontSize: '18px', margin: '0 0 8px 0', color: 'var(--text-primary)', lineHeight: '1.4' }}>
+                      {post.title}
+                    </h3>
+                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{dateStr}</span>
+                  </div>
+                  
+                  <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.6', flexGrow: 1 }}>
+                    {snippet}
+                  </p>
 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto', paddingTop: '12px', borderTop: '1px solid var(--border-subtle)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -492,6 +544,7 @@ export default function Blogs() {
                   <span style={{ fontSize: '13px', color: 'var(--accent)', fontWeight: '500' }}>
                     {post._count?.comments || 0} comment{post._count?.comments === 1 ? '' : 's'}
                   </span>
+                  </div>
                 </div>
               </div>
             );

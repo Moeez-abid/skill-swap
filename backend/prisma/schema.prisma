@@ -464,14 +464,15 @@ model SupportMessage {
 }
 
 model BlogPost {
-  id        String        @id @default(cuid())
-  title     String
-  content   String
-  authorId  String
-  author    User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  comments  BlogComment[]
+  id            String        @id @default(cuid())
+  title         String
+  content       String
+  coverImageUrl String?
+  authorId      String
+  author        User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  comments      BlogComment[]
 
   @@index([authorId])
   @@index([createdAt])
@@ -497,16 +498,17 @@ model BlogComment {
 }
 
 model Group {
-  id          String         @id @default(cuid())
-  name        String
-  description String
-  creatorId   String
-  creator     User           @relation("GroupCreator", fields: [creatorId], references: [id], onDelete: Cascade)
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  members     GroupMember[]
-  messages    GroupMessage[]
-  invitations GroupInvitation[]
+  id            String         @id @default(cuid())
+  name          String
+  description   String
+  messagingMode String         @default("ALL")
+  creatorId     String
+  creator       User           @relation("GroupCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  members       GroupMember[]
+  messages      GroupMessage[]
+  invitations   GroupInvitation[]
 
   @@index([creatorId])
 }
@@ -530,6 +532,7 @@ model GroupInvitation {
 model GroupMember {
   groupId  String
   userId   String
+  role     String   @default("MEMBER")
   joinedAt DateTime @default(now())
   group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)

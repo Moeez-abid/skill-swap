@@ -161,7 +161,7 @@ router.get('/', async (req, res) => {
     const groups = await prisma.group.findMany({
       include: {
         members: {
-          select: { userId: true }
+          select: { userId: true, role: true }
         },
         _count: {
           select: { members: true }
@@ -171,11 +171,14 @@ router.get('/', async (req, res) => {
     });
 
     const mappedGroups = groups.map(group => {
-      const isMember = group.members.some(m => m.userId === userId);
+      const memberInfo = group.members.find(m => m.userId === userId);
+      const isMember = !!memberInfo;
+      const userGroupRole = memberInfo ? memberInfo.role : null;
       const { members, ...groupData } = group;
       return {
         ...groupData,
         isMember,
+        userGroupRole,
         memberCount: group._count.members
       };
     });
@@ -187,7 +190,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST /api/groups - Create a new group (creator is auto-joined)
+// POST /api/groups - Create a new group (creator is auto-joined as ADMIN)
 router.post('/', async (req, res) => {
   try {
     const { name, description } = req.body;
@@ -202,7 +205,8 @@ router.post('/', async (req, res) => {
         creatorId: req.user.id,
         members: {
           create: {
-            userId: req.user.id
+            userId: req.user.id,
+            role: 'ADMIN'
           }
         }
       }
@@ -237,7 +241,7 @@ router.post('/:id/join', async (req, res) => {
     }
 
     await prisma.groupMember.create({
-      data: { groupId: id, userId }
+      data: { groupId: id, userId, role: 'MEMBER' }
     });
 
     return apiSuccess(res, { message: 'Successfully joined group' });
@@ -276,7 +280,7 @@ router.post('/:id/leave', async (req, res) => {
   }
 });
 
-// GET /api/groups/:id/messages - Get chat messages for a group (must be a member)
+// GET /api/groups/:id/messages - Get chat messages for a group (members or platform admin/managers)
 router.get('/:id/messages', async (req, res) => {
   try {
     const { id } = req.params;
@@ -288,9 +292,23 @@ router.get('/:id/messages', async (req, res) => {
       }
     });
 
-    if (!member) {
+    const isPlatformAdminOrManager = ['SUPER_ADMIN', 'MANAGER'].includes(req.user.role);
+
+    if (!member && !isPlatformAdminOrManager) {
       return apiError(res, 403, 'You must join this group to read messages');
     }
+
+    const group = await prisma.group.findUnique({
+      where: { id },
+      include: {
+        members: {
+          include: {
+            user: { select: { id: true, name: true, avatarUrl: true, role: true } }
+          }
+        }
+      }
+    });
+    if (!group) return apiError(res, 404, 'Group not found');
 
     const messages = await prisma.groupMessage.findMany({
       where: { 
@@ -304,14 +322,27 @@ router.get('/:id/messages', async (req, res) => {
       orderBy: { createdAt: 'asc' }
     });
 
-    return apiSuccess(res, { messages });
+    const membersList = group.members.map(m => ({
+      id: m.user.id,
+      name: m.user.name,
+      avatarUrl: m.user.avatarUrl,
+      role: m.role, // 'ADMIN' or 'MEMBER'
+      platformRole: m.user.role
+    }));
+
+    return apiSuccess(res, { 
+      messages,
+      messagingMode: group.messagingMode,
+      userGroupRole: member ? member.role : (isPlatformAdminOrManager ? 'ADMIN' : null),
+      members: membersList
+    });
   } catch (error) {
     console.error('Error fetching group messages:', error);
     return apiError(res, 500, 'Internal server error');
   }
 });
 
-// POST /api/groups/:id/messages - Send a chat message (must be a member, triggers Pusher event)
+// POST /api/groups/:id/messages - Send a chat message (enforce messagingMode and permissions)
 router.post('/:id/messages', upload.single('file'), async (req, res) => {
   try {
     const { id } = req.params;
@@ -333,12 +364,31 @@ router.post('/:id/messages', upload.single('file'), async (req, res) => {
       return apiError(res, 400, 'Message content or file is required');
     }
 
-    const member = await prisma.groupMember.findUnique({
-      where: { groupId_userId: { groupId: id, userId } }
+    const group = await prisma.group.findUnique({
+      where: { id },
+      include: {
+        members: {
+          where: { userId }
+        }
+      }
     });
 
-    if (!member) {
+    if (!group) return apiError(res, 404, 'Group not found');
+
+    const isPlatformAdminOrManager = ['SUPER_ADMIN', 'MANAGER'].includes(req.user.role);
+    const member = group.members[0];
+
+    if (!member && !isPlatformAdminOrManager) {
       return apiError(res, 403, 'You must join this group to send messages');
+    }
+
+    // Verify messagingMode
+    if (group.messagingMode === 'ADMINS_ONLY') {
+      const isGroupAdmin = member && member.role === 'ADMIN';
+      const isGroupCreator = group.creatorId === userId;
+      if (!isPlatformAdminOrManager && !isGroupAdmin && !isGroupCreator) {
+        return apiError(res, 403, 'Only group admins and platform staff can message in this group');
+      }
     }
 
     const message = await prisma.groupMessage.create({
@@ -367,6 +417,102 @@ router.post('/:id/messages', upload.single('file'), async (req, res) => {
   }
 });
 
+// PATCH /api/groups/:id/settings - Update group settings (messagingMode)
+router.patch('/:id/settings', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+    const { messagingMode } = req.body;
+
+    if (!['ALL', 'ADMINS_ONLY'].includes(messagingMode)) {
+      return apiError(res, 400, 'Invalid messagingMode');
+    }
+
+    const group = await prisma.group.findUnique({
+      where: { id },
+      include: {
+        members: {
+          where: { userId }
+        }
+      }
+    });
+
+    if (!group) return apiError(res, 404, 'Group not found');
+
+    const isPlatformAdminOrManager = ['SUPER_ADMIN', 'MANAGER'].includes(req.user.role);
+    const member = group.members[0];
+    const isGroupAdmin = member && member.role === 'ADMIN';
+    const isGroupCreator = group.creatorId === userId;
+
+    if (!isPlatformAdminOrManager && !isGroupAdmin && !isGroupCreator) {
+      return apiError(res, 403, 'Not authorized to change group settings');
+    }
+
+    const updated = await prisma.group.update({
+      where: { id },
+      data: { messagingMode }
+    });
+
+    // Notify group members
+    await triggerEvent(`group-${id}`, 'group-settings-changed', { group: updated });
+
+    return apiSuccess(res, { group: updated });
+  } catch (error) {
+    console.error('Error updating group settings:', error);
+    return apiError(res, 500, 'Internal server error');
+  }
+});
+
+// PATCH /api/groups/:id/members/:targetUserId/role - Manage group roles (ADMIN / MEMBER)
+router.patch('/:id/members/:targetUserId/role', async (req, res) => {
+  try {
+    const { id, targetUserId } = req.params;
+    const userId = req.user.id;
+    const { role } = req.body;
+
+    if (!['MEMBER', 'ADMIN'].includes(role)) {
+      return apiError(res, 400, 'Invalid role');
+    }
+
+    const group = await prisma.group.findUnique({
+      where: { id },
+      include: {
+        members: {
+          where: { userId }
+        }
+      }
+    });
+
+    if (!group) return apiError(res, 404, 'Group not found');
+
+    const isPlatformAdminOrManager = ['SUPER_ADMIN', 'MANAGER'].includes(req.user.role);
+    const member = group.members[0];
+    const isGroupAdmin = member && member.role === 'ADMIN';
+    const isGroupCreator = group.creatorId === userId;
+
+    if (!isPlatformAdminOrManager && !isGroupAdmin && !isGroupCreator) {
+      return apiError(res, 403, 'Not authorized to manage group member roles');
+    }
+
+    const targetMember = await prisma.groupMember.findUnique({
+      where: { groupId_userId: { groupId: id, userId: targetUserId } }
+    });
+    if (!targetMember) return apiError(res, 404, 'Target member not found');
+
+    const updated = await prisma.groupMember.update({
+      where: { groupId_userId: { groupId: id, userId: targetUserId } },
+      data: { role }
+    });
+
+    await triggerEvent(`group-${id}`, 'group-member-role-changed', { groupId: id, userId: targetUserId, role });
+
+    return apiSuccess(res, { member: updated });
+  } catch (error) {
+    console.error('Error updating member role:', error);
+    return apiError(res, 500, 'Internal server error');
+  }
+});
+
 router.delete('/:id/messages/:messageId', async (req, res) => {
   try {
     const { id, messageId } = req.params;
@@ -381,8 +527,17 @@ router.delete('/:id/messages/:messageId', async (req, res) => {
 
     if (forEveryone) {
       const isSender = message.senderId === userId;
-      const isAdmin = message.group.creatorId === userId;
-      if (!isSender && !isAdmin) return apiError(res, 403, 'Not authorized to delete for everyone');
+      const isGroupCreator = message.group.creatorId === userId;
+      const isPlatformAdminOrManager = ['SUPER_ADMIN', 'MANAGER'].includes(req.user.role);
+      
+      const member = await prisma.groupMember.findUnique({
+        where: { groupId_userId: { groupId: id, userId } }
+      });
+      const isGroupAdmin = member && member.role === 'ADMIN';
+
+      if (!isSender && !isGroupCreator && !isPlatformAdminOrManager && !isGroupAdmin) {
+        return apiError(res, 403, 'Not authorized to delete for everyone');
+      }
       
       await prisma.groupMessage.delete({ where: { id: messageId } });
       await triggerEvent(`group-${id}`, 'group-message-deleted', { messageId });

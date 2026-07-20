@@ -3,6 +3,7 @@ import { prisma } from '../lib/prisma.js';
 import { authenticate, requireRole } from '../middleware/auth.js';
 import { apiError, apiSuccess } from '../utils/helpers.js';
 import { triggerEvent } from '../lib/pusher.js';
+import { signToken } from '../lib/jwt.js';
 
 const router = Router();
 
@@ -296,6 +297,68 @@ router.delete('/groups/:id', requireRole(['SUPER_ADMIN', 'MANAGER']), async (req
     return apiSuccess(res, { message: 'Group deleted successfully' });
   } catch (error) {
     console.error('Error deleting group:', error);
+    return apiError(res, 500, 'Internal server error');
+  }
+});
+
+// PATCH /admin/users/:id/role - Assign or remove Manager role (SUPER_ADMIN only)
+router.patch('/users/:id/role', requireRole(['SUPER_ADMIN']), async (req, res) => {
+  try {
+    const { role } = req.body;
+    if (!['USER', 'MANAGER'].includes(role)) {
+      return apiError(res, 400, 'Role must be USER or MANAGER');
+    }
+
+    const targetUser = await prisma.user.findUnique({ where: { id: req.params.id } });
+    if (!targetUser) return apiError(res, 404, 'User not found');
+    if (targetUser.role === 'SUPER_ADMIN') return apiError(res, 403, 'Cannot change role of a Super Admin');
+
+    const updated = await prisma.user.update({
+      where: { id: req.params.id },
+      data: { role },
+      select: { id: true, name: true, email: true, role: true },
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        action: role === 'MANAGER' ? 'MANAGER_ASSIGNED' : 'MANAGER_REMOVED',
+        actorId: req.user.id,
+        targetId: updated.id,
+        metadata: { previousRole: targetUser.role, newRole: role },
+      },
+    });
+
+    return apiSuccess(res, { user: updated });
+  } catch (error) {
+    console.error('Error updating user role:', error);
+    return apiError(res, 500, 'Internal server error');
+  }
+});
+
+// POST /admin/impersonate/:id - Login as a user (SUPER_ADMIN only)
+router.post('/impersonate/:id', requireRole(['SUPER_ADMIN']), async (req, res) => {
+  try {
+    const targetUser = await prisma.user.findUnique({
+      where: { id: req.params.id },
+      select: { id: true, email: true, name: true, role: true, avatarUrl: true, isVerified: true, verificationRequested: true },
+    });
+    if (!targetUser) return apiError(res, 404, 'User not found');
+    if (targetUser.role === 'SUPER_ADMIN') return apiError(res, 403, 'Cannot impersonate another Super Admin');
+
+    const token = signToken({ userId: targetUser.id });
+
+    await prisma.auditLog.create({
+      data: {
+        action: 'USER_IMPERSONATED',
+        actorId: req.user.id,
+        targetId: targetUser.id,
+        metadata: { impersonatedEmail: targetUser.email },
+      },
+    });
+
+    return apiSuccess(res, { user: targetUser, token });
+  } catch (error) {
+    console.error('Error impersonating user:', error);
     return apiError(res, 500, 'Internal server error');
   }
 });

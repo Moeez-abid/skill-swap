@@ -30,6 +30,14 @@ export function isAdmin() {
   return role === 'SUPER_ADMIN' || role === 'MANAGER' || role === 'MAINTENANCE_ADMIN';
 }
 
+export function isSuperAdmin() {
+  return getUser()?.role === 'SUPER_ADMIN';
+}
+
+export function isManager() {
+  return getUser()?.role === 'MANAGER';
+}
+
 export function requireAuth(redirectTo = '/login.html') {
   if (!isLoggedIn()) {
     window.location.href = `${redirectTo}?redirect=${encodeURIComponent(window.location.pathname)}`;

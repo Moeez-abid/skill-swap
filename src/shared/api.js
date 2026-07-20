@@ -269,6 +269,14 @@ export const admin = {
     const res = await api(`/admin/groups/${id}`, { method: 'DELETE' });
     clearApiCache('/groups');
     return res;
+  },
+  setUserRole: async (id, role) => {
+    const res = await api(`/admin/users/${id}/role`, { method: 'PATCH', body: JSON.stringify({ role }) });
+    clearApiCache('/users');
+    return res;
+  },
+  impersonate: async (id) => {
+    return api(`/admin/impersonate/${id}`, { method: 'POST' });
   }
 };
 
@@ -289,12 +297,12 @@ export const blogs = {
   list: () => cachedApi('/blogs'),
   get: (id) => cachedApi(`/blogs/${id}`),
   create: async (data) => {
-    const res = await api('/blogs', { method: 'POST', body: JSON.stringify(data) });
+    const res = await api('/blogs', { method: 'POST', body: data instanceof FormData ? data : JSON.stringify(data) });
     clearApiCache('/blogs');
     return res;
   },
   update: async (id, data) => {
-    const res = await api(`/blogs/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+    const res = await api(`/blogs/${id}`, { method: 'PUT', body: data instanceof FormData ? data : JSON.stringify(data) });
     clearApiCache('/blogs');
     return res;
   },
@@ -343,6 +351,16 @@ export const groups = {
   messages: (id) => api(`/groups/${id}/messages`), // Skip cache for chat messages
   sendMessage: (id, data) => api(`/groups/${id}/messages`, { method: 'POST', body: data instanceof FormData ? data : JSON.stringify(data) }),
   deleteMessage: (groupId, messageId, forEveryone = false) => api(`/groups/${groupId}/messages/${messageId}?forEveryone=${forEveryone}`, { method: 'DELETE' }),
+  updateSettings: async (groupId, settings) => {
+    const res = await api(`/groups/${groupId}/settings`, { method: 'PATCH', body: JSON.stringify(settings) });
+    clearApiCache('/groups');
+    return res;
+  },
+  setMemberRole: async (groupId, userId, role) => {
+    const res = await api(`/groups/${groupId}/members/${userId}/role`, { method: 'PATCH', body: JSON.stringify({ role }) });
+    clearApiCache('/groups');
+    return res;
+  },
   bulkDeleteMessages: (groupId, messageIds) => api(`/groups/${groupId}/messages/bulk-delete`, { method: 'POST', body: JSON.stringify({ messageIds }) })
 };
 

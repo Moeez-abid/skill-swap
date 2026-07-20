@@ -46,17 +46,27 @@ export default function Navbar() {
 
   let links = [];
   if (isAdmin()) {
-    links = [
-      { href: '/admin?tab=analytics', label: 'Overview' },
-      { href: '/admin?tab=users', label: 'Users' },
-      { href: '/admin?tab=groups', label: 'Groups' },
-      { href: '/admin?tab=disputes', label: 'Disputes' },
-      { href: '/admin?tab=moderation', label: 'Moderation' },
-      { href: '/admin?tab=verifications', label: 'Verifications' },
-      { href: '/admin?tab=audit', label: 'Audit Logs' },
-      { href: '/admin?tab=support', label: 'Support' },
-      { href: '/blogs', label: 'Blogs' }
-    ];
+    const userRole = getUser()?.role;
+    if (userRole === 'MANAGER') {
+      links = [
+        { href: '/admin?tab=users', label: 'Users' },
+        { href: '/admin?tab=groups', label: 'Groups' },
+        { href: '/admin?tab=support', label: 'Support' },
+        { href: '/admin?tab=blogs', label: 'Blogs' }
+      ];
+    } else {
+      links = [
+        { href: '/admin?tab=analytics', label: 'Overview' },
+        { href: '/admin?tab=users', label: 'Users' },
+        { href: '/admin?tab=groups', label: 'Groups' },
+        { href: '/admin?tab=disputes', label: 'Disputes' },
+        { href: '/admin?tab=moderation', label: 'Moderation' },
+        { href: '/admin?tab=verifications', label: 'Verifications' },
+        { href: '/admin?tab=audit', label: 'Audit Logs' },
+        { href: '/admin?tab=support', label: 'Support' },
+        { href: '/admin?tab=blogs', label: 'Blogs' }
+      ];
+    }
   } else {
     links = loggedIn && user
       ? [
@@ -90,13 +100,64 @@ export default function Navbar() {
     return location.pathname === l.href || (location.pathname === '/' && l.href === '/index.html');
   };
 
+  const handleReturnToAdmin = () => {
+    const originalToken = localStorage.getItem('skillswap-original-token');
+    const originalUser = localStorage.getItem('skillswap-original-user');
+    if (originalToken && originalUser) {
+      localStorage.setItem('skillswap-token', originalToken);
+      localStorage.setItem('skillswap-user', originalUser);
+      localStorage.removeItem('skillswap-original-token');
+      localStorage.removeItem('skillswap-original-user');
+      window.location.href = '/admin?tab=users';
+    }
+  };
+
+  const isImpersonating = !!localStorage.getItem('skillswap-original-token');
+
   function getInitials(name) {
     return (name || '?').split(' ').map(n => n[0]).join('').slice(0, 2);
   }
 
   return (
     <>
-      <nav className="navbar" aria-label="Main navigation">
+      {isImpersonating && (
+        <div style={{
+          background: 'var(--accent)',
+          color: 'white',
+          padding: '8px 16px',
+          textAlign: 'center',
+          fontSize: '14px',
+          fontWeight: 'bold',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '12px',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 1100
+        }}>
+          <span>You are viewing as <strong>{user?.name}</strong> (Impersonating)</span>
+          <button 
+            type="button" 
+            onClick={handleReturnToAdmin} 
+            style={{
+              background: 'white',
+              color: 'var(--accent)',
+              border: 'none',
+              padding: '4px 12px',
+              borderRadius: '16px',
+              cursor: 'pointer',
+              fontSize: '12px',
+              fontWeight: 'bold'
+            }}
+          >
+            Return to Admin
+          </button>
+        </div>
+      )}
+      <nav className="navbar" style={{ top: isImpersonating ? '37px' : '0px' }} aria-label="Main navigation">
         <Link to="/" className="nav-logo">SkillSwap</Link>
 
         <div className="nav-links">

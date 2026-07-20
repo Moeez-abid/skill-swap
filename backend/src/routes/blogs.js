@@ -1,7 +1,27 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma.js';
-import { authenticate, requireAdmin } from '../middleware/auth.js';
+import { authenticate, requireRole } from '../middleware/auth.js';
 import { apiError, apiSuccess } from '../utils/helpers.js';
+import multer from 'multer';
+import { uploadFile } from '../lib/cloudinary.js';
+import fs from 'fs';
+import path from 'path';
+
+const uploadDir = path.join(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) { cb(null, uploadDir) },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 }
+});
 
 const router = Router();
 
@@ -84,18 +104,25 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/blogs - Create a new blog post (Admin only)
-router.post('/', authenticate, requireAdmin, async (req, res) => {
+// POST /api/blogs - Create a new blog post (Admin or Manager)
+router.post('/', authenticate, requireRole(['SUPER_ADMIN', 'MANAGER']), upload.single('coverImage'), async (req, res) => {
   try {
     const { title, content } = req.body;
     if (!title || !content) {
       return apiError(res, 400, 'Title and content are required');
     }
 
+    let coverImageUrl = null;
+    if (req.file) {
+      coverImageUrl = await uploadFile(req.file.path, 'blog_covers');
+      fs.unlinkSync(req.file.path);
+    }
+
     const post = await prisma.blogPost.create({
       data: {
         title,
         content,
+        coverImageUrl,
         authorId: req.user.id
       },
       include: {
@@ -112,8 +139,8 @@ router.post('/', authenticate, requireAdmin, async (req, res) => {
   }
 });
 
-// PUT /api/blogs/:id - Update an existing blog post (Admin only)
-router.put('/:id', authenticate, requireAdmin, async (req, res) => {
+// PUT /api/blogs/:id - Update an existing blog post (Admin or Manager)
+router.put('/:id', authenticate, requireRole(['SUPER_ADMIN', 'MANAGER']), upload.single('coverImage'), async (req, res) => {
   try {
     const { id } = req.params;
     const { title, content } = req.body;
@@ -121,9 +148,16 @@ router.put('/:id', authenticate, requireAdmin, async (req, res) => {
       return apiError(res, 400, 'Title and content are required');
     }
 
+    const updateData = { title, content };
+
+    if (req.file) {
+      updateData.coverImageUrl = await uploadFile(req.file.path, 'blog_covers');
+      fs.unlinkSync(req.file.path);
+    }
+
     const post = await prisma.blogPost.update({
       where: { id },
-      data: { title, content },
+      data: updateData,
       include: {
         author: {
           select: { id: true, name: true, avatarUrl: true }
@@ -138,8 +172,8 @@ router.put('/:id', authenticate, requireAdmin, async (req, res) => {
   }
 });
 
-// DELETE /api/blogs/:id - Delete a blog post (Admin only)
-router.delete('/:id', authenticate, requireAdmin, async (req, res) => {
+// DELETE /api/blogs/:id - Delete a blog post (Admin or Manager)
+router.delete('/:id', authenticate, requireRole(['SUPER_ADMIN', 'MANAGER']), async (req, res) => {
   try {
     const { id } = req.params;
     await prisma.blogPost.delete({

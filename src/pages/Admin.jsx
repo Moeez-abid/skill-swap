@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { admin, groups } from '../shared/api';
-import { isLoggedIn, isAdmin } from '../shared/auth';
+import { admin, groups, blogs, getImageUrl } from '../shared/api';
+import { isLoggedIn, isAdmin, getUser } from '../shared/auth';
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -14,7 +14,15 @@ export default function Admin() {
   const [auditLogs, setAuditLogs] = useState([]);
   const [supportMessages, setSupportMessages] = useState([]);
   const [allGroups, setAllGroups] = useState([]);
+  const [blogPosts, setBlogPosts] = useState([]);
 
+  // Blog form states
+  const [isBlogModalOpen, setIsBlogModalOpen] = useState(false);
+  const [blogEditingId, setBlogEditingId] = useState(null);
+  const [blogTitle, setBlogTitle] = useState('');
+  const [blogContent, setBlogContent] = useState('');
+  const [blogCoverFile, setBlogCoverFile] = useState(null);
+  const [blogSubmitting, setBlogSubmitting] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -25,18 +33,26 @@ export default function Admin() {
   const [winnerId, setWinnerId] = useState('');
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const tabFromUrl = searchParams.get('tab') || 'analytics';
+
+  const currentUser = getUser();
+  const isManager = currentUser?.role === 'MANAGER';
+
+  const tabFromUrl = searchParams.get('tab') || (isManager ? 'users' : 'analytics');
   const [activeTab, setActiveTab] = useState(tabFromUrl);
 
   useEffect(() => {
-    setActiveTab(searchParams.get('tab') || 'analytics');
-  }, [searchParams]);
+    const tab = searchParams.get('tab') || (isManager ? 'users' : 'analytics');
+    if (isManager && !['users', 'groups', 'support', 'blogs'].includes(tab)) {
+      setSearchParams({ tab: 'users' });
+    } else {
+      setActiveTab(tab);
+    }
+  }, [searchParams, isManager, setSearchParams]);
 
   // Modal states
   const [groupToDelete, setGroupToDelete] = useState(null);
   const [userToBan, setUserToBan] = useState(null);
   const [banReason, setBanReason] = useState('');
-
 
   const showToast = (msg) => {
     setToastMsg(msg);
@@ -47,25 +63,43 @@ export default function Admin() {
     setLoading(true);
     setError(false);
     try {
-      const [analyticsRes, usersRes, flagsRes, disputesRes, verificationsRes, auditRes, supportRes, groupsRes] = await Promise.all([
-        admin.analytics(),
-        admin.users(),
-        admin.moderation(),
-        admin.disputes(),
-        admin.verifications(),
-        admin.auditLogs(),
-        admin.supportMessages(),
-        groups.list()
-      ]);
-      setAnalytics(analyticsRes.analytics);
-      setUsers(usersRes.users);
-      setFlags(flagsRes.flags);
-      setDisputes(disputesRes.disputes);
-      setVerifications(verificationsRes.users);
-      setAuditLogs(auditRes.logs);
-      setSupportMessages(supportRes.messages || []);
-      setAllGroups(groupsRes.groups || []);
+      if (isManager) {
+        const [usersRes, groupsRes, supportRes, blogsRes] = await Promise.all([
+          admin.users(),
+          groups.list(),
+          admin.supportMessages(),
+          blogs.list()
+        ]);
+        setUsers(usersRes.users);
+        setAllGroups(groupsRes.groups || []);
+        setSupportMessages(supportRes.messages || []);
+        setBlogPosts(blogsRes.posts || []);
+        // Dummy analytics structure to prevent crash if anything expects it
+        setAnalytics({ users: { total: 0, growth30d: 0 }, skills: { total: 0, created30d: 0 }, matches: { active: 0, completed: 0 }, moderation: { pendingFlags: 0 } });
+      } else {
+        const [analyticsRes, usersRes, flagsRes, disputesRes, verificationsRes, auditRes, supportRes, groupsRes, blogsRes] = await Promise.all([
+          admin.analytics(),
+          admin.users(),
+          admin.moderation(),
+          admin.disputes(),
+          admin.verifications(),
+          admin.auditLogs(),
+          admin.supportMessages(),
+          groups.list(),
+          blogs.list()
+        ]);
+        setAnalytics(analyticsRes.analytics);
+        setUsers(usersRes.users);
+        setFlags(flagsRes.flags);
+        setDisputes(disputesRes.disputes);
+        setVerifications(verificationsRes.users);
+        setAuditLogs(auditRes.logs);
+        setSupportMessages(supportRes.messages || []);
+        setAllGroups(groupsRes.groups || []);
+        setBlogPosts(blogsRes.posts || []);
+      }
     } catch (e) {
+      console.error(e);
       setError(true);
     } finally {
       setLoading(false);
@@ -84,7 +118,6 @@ export default function Admin() {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
-
 
   const confirmDeleteGroup = async () => {
     if (!groupToDelete) return;
@@ -162,6 +195,85 @@ export default function Admin() {
       loadData();
     } catch (err) {
       showToast(err.message);
+    }
+  };
+
+  const handleSetRole = async (userId, role) => {
+    try {
+      await admin.setUserRole(userId, role);
+      showToast(`User role updated to ${role}`);
+      loadData();
+    } catch (err) {
+      showToast(err.message || 'Failed to update user role');
+    }
+  };
+
+  const handleImpersonate = async (userId) => {
+    try {
+      const res = await admin.impersonate(userId);
+      localStorage.setItem('skillswap-original-token', localStorage.getItem('skillswap-token'));
+      localStorage.setItem('skillswap-original-user', localStorage.getItem('skillswap-user'));
+      localStorage.setItem('skillswap-token', res.token);
+      localStorage.setItem('skillswap-user', JSON.stringify(res.user));
+      showToast(`Logged in as ${res.user.name}`);
+      window.location.href = '/dashboard';
+    } catch (err) {
+      showToast(err.message || 'Impersonation failed');
+    }
+  };
+
+  const openCreateBlog = () => {
+    setBlogEditingId(null);
+    setBlogTitle('');
+    setBlogContent('');
+    setBlogCoverFile(null);
+    setIsBlogModalOpen(true);
+  };
+
+  const openEditBlog = (post) => {
+    setBlogEditingId(post.id);
+    setBlogTitle(post.title);
+    setBlogContent(post.content);
+    setBlogCoverFile(null);
+    setIsBlogModalOpen(true);
+  };
+
+  const handleSaveBlog = async (e) => {
+    e.preventDefault();
+    if (!blogTitle.trim() || !blogContent.trim()) return;
+    setBlogSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append('title', blogTitle);
+      formData.append('content', blogContent);
+      if (blogCoverFile) {
+        formData.append('coverImage', blogCoverFile);
+      }
+
+      if (blogEditingId) {
+        await blogs.update(blogEditingId, formData);
+        showToast('Blog post updated');
+      } else {
+        await blogs.create(formData);
+        showToast('Blog post created');
+      }
+      setIsBlogModalOpen(false);
+      loadData();
+    } catch (err) {
+      showToast(err.message || 'Failed to save blog post');
+    } finally {
+      setBlogSubmitting(false);
+    }
+  };
+
+  const handleDeleteBlog = async (postId) => {
+    if (!window.confirm('Delete this blog post?')) return;
+    try {
+      await blogs.delete(postId);
+      showToast('Blog post deleted');
+      loadData();
+    } catch (err) {
+      showToast(err.message || 'Failed to delete blog post');
     }
   };
 
@@ -269,9 +381,21 @@ export default function Admin() {
                   <td style={{ padding: '12px' }}>{u._count.skills}</td>
                   <td style={{ padding: '12px' }}>{u.isBanned ? 'Banned' : 'Active'}</td>
                   <td style={{ padding: '12px' }}>
-                    {!u.isBanned && u.role !== 'SUPER_ADMIN' && (
-                      <button className="btn-secondary" onClick={() => { setUserToBan(u.id); setBanReason(''); }}>Ban User</button>
-                    )}
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      {!u.isBanned && u.role !== 'SUPER_ADMIN' && (
+                        <button className="btn-secondary" onClick={() => { setUserToBan(u.id); setBanReason(''); }} style={{ padding: '6px 12px', fontSize: '12px', color: '#ef4444', borderColor: 'rgba(239,68,68,0.3)' }}>Ban User</button>
+                      )}
+                      {currentUser?.role === 'SUPER_ADMIN' && (
+                        <>
+                          {u.role === 'MANAGER' ? (
+                            <button className="btn-secondary" onClick={() => handleSetRole(u.id, 'USER')} style={{ padding: '6px 12px', fontSize: '12px' }}>Remove Manager</button>
+                          ) : (
+                            <button className="btn-secondary" onClick={() => handleSetRole(u.id, 'MANAGER')} style={{ padding: '6px 12px', fontSize: '12px' }}>Set as Manager</button>
+                          )}
+                          <button className="primary-cta" onClick={() => handleImpersonate(u.id)} style={{ padding: '6px 12px', fontSize: '12px', width: 'auto' }}>Login as User</button>
+                        </>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -456,6 +580,56 @@ export default function Admin() {
       </section>
       )}
 
+      {activeTab === 'blogs' && (
+      <section className="glass-card animate-fade-up delay-2" style={{ padding: '24px', marginTop: '32px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h2 style={{ fontFamily: 'Fustat,sans-serif', margin: 0 }}>Blog Management</h2>
+          <button className="primary-cta" style={{ width: 'auto' }} onClick={openCreateBlog}>+ Add Blog Post</button>
+        </div>
+        <div className="admin-table-wrap" style={{ overflowX: 'auto' }}>
+          {blogPosts.length > 0 ? (
+          <div className="table-responsive">
+          <table className="admin-table" style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                <th style={{ padding: '12px' }}>Cover</th>
+                <th style={{ padding: '12px' }}>Title</th>
+                <th style={{ padding: '12px' }}>Author</th>
+                <th style={{ padding: '12px' }}>Created</th>
+                <th style={{ padding: '12px' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {blogPosts.map(post => (
+                <tr key={post.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                  <td style={{ padding: '12px' }}>
+                    {post.coverImageUrl ? (
+                      <img src={getImageUrl(post.coverImageUrl)} alt="" style={{ width: '60px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
+                    ) : (
+                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>No Cover</span>
+                    )}
+                  </td>
+                  <td style={{ padding: '12px' }}><strong>{post.title}</strong></td>
+                  <td style={{ padding: '12px' }}>{post.author?.name}</td>
+                  <td style={{ padding: '12px' }}>{new Date(post.createdAt).toLocaleDateString()}</td>
+                  <td style={{ padding: '12px' }}>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button className="btn-secondary" onClick={() => openEditBlog(post)} style={{ padding: '6px 12px', fontSize: '12px' }}>Edit</button>
+                      <button className="btn-secondary" onClick={() => handleDeleteBlog(post.id)} style={{ padding: '6px 12px', fontSize: '12px', color: '#ef4444', borderColor: 'rgba(239,68,68,0.3)' }}>Delete</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          </div>
+          ) : (
+            <p className="empty-state">No blog posts found.</p>
+          )}
+        </div>
+      </section>
+      )}
+
       {toastMsg && (
         <div className="toast toast--info toast--visible" role="status">
           {toastMsg}
@@ -500,6 +674,55 @@ export default function Admin() {
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
               <button type="button" className="btn-secondary" onClick={() => setUserToBan(null)}>Cancel</button>
               <button type="submit" className="primary-cta" style={{ background: '#ef4444', borderColor: '#ef4444' }}>Ban User</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {isBlogModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1100, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <div onClick={() => setIsBlogModalOpen(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} />
+          <form onSubmit={handleSaveBlog} className="glass-card animate-dropdown-enter" style={{ position: 'relative', zIndex: 1, padding: '24px', borderRadius: '12px', width: '100%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto' }}>
+            <h2 style={{ marginTop: 0, marginBottom: '16px', fontSize: '1.25rem' }}>
+              {blogEditingId ? 'Edit Blog Post' : 'Add Blog Post'}
+            </h2>
+            <div className="form-group" style={{ marginBottom: '16px' }}>
+              <label htmlFor="blogTitle" style={{ display: 'block', marginBottom: '6px', fontSize: '14px' }}>Title</label>
+              <input
+                type="text"
+                id="blogTitle"
+                required
+                value={blogTitle}
+                onChange={(e) => setBlogTitle(e.target.value)}
+                style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-primary)' }}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '16px' }}>
+              <label htmlFor="blogContent" style={{ display: 'block', marginBottom: '6px', fontSize: '14px' }}>Content</label>
+              <textarea
+                id="blogContent"
+                required
+                rows="8"
+                value={blogContent}
+                onChange={(e) => setBlogContent(e.target.value)}
+                style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-primary)', resize: 'vertical' }}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '24px' }}>
+              <label htmlFor="blogCover" style={{ display: 'block', marginBottom: '6px', fontSize: '14px' }}>Cover Picture</label>
+              <input
+                type="file"
+                id="blogCover"
+                accept="image/*"
+                onChange={(e) => setBlogCoverFile(e.target.files[0])}
+                style={{ width: '100%', padding: '8px', background: 'transparent', color: 'var(--text-primary)' }}
+              />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <button type="button" className="btn-secondary" onClick={() => setIsBlogModalOpen(false)}>Cancel</button>
+              <button type="submit" className="primary-cta" disabled={blogSubmitting} style={{ width: 'auto' }}>
+                {blogSubmitting ? 'Saving...' : 'Save Post'}
+              </button>
             </div>
           </form>
         </div>

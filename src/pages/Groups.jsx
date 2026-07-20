@@ -41,6 +41,12 @@ export default function Groups() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
+  // Group permission states
+  const [messagingMode, setMessagingMode] = useState('ALL');
+  const [userGroupRole, setUserGroupRole] = useState('MEMBER');
+  const [groupMembers, setGroupMembers] = useState([]);
+  const [updatingSettings, setUpdatingSettings] = useState(false);
+
   const loggedIn = isLoggedIn();
   const currentUser = loggedIn ? getUser() : null;
 
@@ -60,6 +66,9 @@ export default function Groups() {
     try {
       const res = await groups.messages(groupId);
       setMessages(res.messages || []);
+      setMessagingMode(res.messagingMode || 'ALL');
+      setUserGroupRole(res.userGroupRole || 'MEMBER');
+      setGroupMembers(res.members || []);
     } catch (err) {
       console.error(err);
       setError('Failed to load messages');
@@ -103,11 +112,28 @@ export default function Groups() {
       if (data.groupId === selectedGroup.id) loadMessagesRef.current(selectedGroup.id);
     });
 
+    const unsubSettings = subscribeToGroupEvents(selectedGroup.id, 'group-settings-changed', (data) => {
+      if (data && data.group) {
+        setMessagingMode(data.group.messagingMode);
+      }
+    });
+
+    const unsubMemberRole = subscribeToGroupEvents(selectedGroup.id, 'group-member-role-changed', (data) => {
+      if (data) {
+        if (data.userId === currentUser.id) {
+          setUserGroupRole(data.role);
+        }
+        setGroupMembers(prev => prev.map(m => m.id === data.userId ? { ...m, role: data.role } : m));
+      }
+    });
+
     return () => {
       if (unsubscribe) unsubscribe();
       if (unsubGrpDel) unsubGrpDel();
       if (unsubMyDel) unsubMyDel();
       if (unsubMyBulkDel) unsubMyBulkDel();
+      if (unsubSettings) unsubSettings();
+      if (unsubMemberRole) unsubMemberRole();
     };
   }, [selectedGroup, currentUser?.id]);
 
@@ -214,7 +240,33 @@ export default function Groups() {
       if (addMemberDialogRef.current) addMemberDialogRef.current.close();
     }
   };
+  const handleToggleMemberRole = async (targetUserId, currentRole) => {
+    if (!selectedGroup) return;
+    const newRole = currentRole === 'ADMIN' ? 'MEMBER' : 'ADMIN';
+    setUpdatingSettings(true);
+    try {
+      await groups.setMemberRole(selectedGroup.id, targetUserId, newRole);
+      loadMessages(selectedGroup.id);
+    } catch (err) {
+      alert(err.message || 'Failed to update member role');
+    } finally {
+      setUpdatingSettings(false);
+    }
+  };
 
+  const handleToggleMessagingMode = async () => {
+    if (!selectedGroup) return;
+    const newMode = messagingMode === 'ALL' ? 'ADMINS_ONLY' : 'ALL';
+    setUpdatingSettings(true);
+    try {
+      await groups.updateSettings(selectedGroup.id, { messagingMode: newMode });
+      setMessagingMode(newMode);
+    } catch (err) {
+      alert(err.message || 'Failed to update group settings');
+    } finally {
+      setUpdatingSettings(false);
+    }
+  };
   const confirmLeaveGroup = async () => {
     setError(null);
     try {
@@ -372,6 +424,10 @@ export default function Groups() {
 
   const joinedGroups = filteredGroups.filter(g => g.isMember);
   const discoverGroups = filteredGroups.filter(g => !g.isMember);
+
+  const isPlatformAdminOrManager = currentUser && ['SUPER_ADMIN', 'MANAGER'].includes(currentUser.role);
+  const isGroupAdmin = userGroupRole === 'ADMIN' || isPlatformAdminOrManager || (selectedGroup && selectedGroup.creatorId === currentUser?.id);
+  const cannotMessage = messagingMode === 'ADMINS_ONLY' && !isGroupAdmin;
 
   return (
     <>
@@ -591,8 +647,13 @@ export default function Groups() {
                                 onDoubleClick={() => setReplyingTo(msg)}
                               >
                                 {!isMe && !isConsecutive && (
-                                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px', marginLeft: '4px', fontWeight: '500' }}>
+                                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px', marginLeft: '4px', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                     {msg.sender?.name || 'Unknown User'}
+                                    {((groupMembers.find(m => m.id === msg.senderId)?.role === 'ADMIN') || (selectedGroup && selectedGroup.creatorId === msg.senderId)) && (
+                                      <span className="badge badge--success" style={{ fontSize: '9px', padding: '1px 5px', zoom: 0.9 }}>
+                                        Admin
+                                      </span>
+                                    )}
                                   </span>
                                 )}
                                 
@@ -710,17 +771,18 @@ export default function Groups() {
                     )}
                     <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                       <input type="file" style={{ display: 'none' }} ref={fileInputRef} onChange={(e) => setFile(e.target.files[0])} />
-                      <button type="button" onClick={() => fileInputRef.current?.click()} style={{ background: 'var(--bg-surface-raised)', border: '1px solid var(--border)', borderRadius: '50%', width: '42px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-secondary)', flexShrink: 0 }}>
+                      <button type="button" onClick={() => fileInputRef.current?.click()} disabled={cannotMessage} style={{ background: 'var(--bg-surface-raised)', border: '1px solid var(--border)', borderRadius: '50%', width: '42px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: cannotMessage ? 'not-allowed' : 'pointer', color: 'var(--text-secondary)', flexShrink: 0, opacity: cannotMessage ? 0.5 : 1 }}>
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
                       </button>
                       <input
                         type="text"
-                        placeholder="Type a message to the group..."
+                        placeholder={cannotMessage ? "Only admins can send messages in this group" : "Type a message to the group..."}
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
-                        style={{ flex: 1, padding: '12px 16px', borderRadius: '24px', border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-primary)', outline: 'none' }}
+                        disabled={cannotMessage}
+                        style={{ flex: 1, padding: '12px 16px', borderRadius: '24px', border: '1px solid var(--border)', background: cannotMessage ? 'rgba(0,0,0,0.05)' : 'var(--bg-surface)', color: 'var(--text-primary)', outline: 'none', cursor: cannotMessage ? 'not-allowed' : 'text' }}
                       />
-                      <button type="submit" className="primary-cta" style={{ borderRadius: '24px', padding: '10px 24px', fontSize: '14px', minHeight: 'auto', opacity: (!newMessage.trim() && !file) ? 0.5 : 1 }} disabled={!newMessage.trim() && !file}>
+                      <button type="submit" className="primary-cta" style={{ borderRadius: '24px', padding: '10px 24px', fontSize: '14px', minHeight: 'auto', opacity: ((!newMessage.trim() && !file) || cannotMessage) ? 0.5 : 1 }} disabled={(!newMessage.trim() && !file) || cannotMessage}>
                         Send
                       </button>
                     </form>
@@ -783,7 +845,7 @@ export default function Groups() {
       )}
 
       {/* Modals */}
-      <dialog ref={groupDetailsDialogRef} className="glass-card animate-dropdown-enter" style={{ border: 'none', padding: '32px', maxWidth: '400px', width: '100%', margin: 'auto', borderRadius: '16px' }}>
+      <dialog ref={groupDetailsDialogRef} className="glass-card animate-dropdown-enter" style={{ border: 'none', padding: '32px', maxWidth: '450px', width: '100%', margin: 'auto', borderRadius: '16px' }}>
         {selectedGroup && (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
@@ -796,6 +858,46 @@ export default function Groups() {
               <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{selectedGroup.memberCount} member{selectedGroup.memberCount === 1 ? '' : 's'}</span>
             </div>
 
+            {/* Messaging Mode setting */}
+            {(['SUPER_ADMIN', 'MANAGER'].includes(currentUser?.role) || userGroupRole === 'ADMIN' || selectedGroup.creatorId === currentUser?.id) && (
+              <div style={{ marginBottom: '20px', padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', cursor: 'pointer', margin: 0 }}>
+                  <input 
+                    type="checkbox" 
+                    checked={messagingMode === 'ADMINS_ONLY'} 
+                    onChange={handleToggleMessagingMode}
+                    disabled={updatingSettings} 
+                  />
+                  <span>Only admins can send messages</span>
+                </label>
+              </div>
+            )}
+
+            {/* Members role list */}
+            {groupMembers.length > 0 && (
+              <div style={{ marginBottom: '20px', maxHeight: '180px', overflowY: 'auto' }}>
+                <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', color: 'var(--text-primary)', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '4px' }}>Group Members</h4>
+                {groupMembers.map(member => (
+                  <div key={member.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                      {member.name} 
+                      {member.role === 'ADMIN' && <span className="badge badge--success" style={{ marginLeft: '6px', fontSize: '9px', padding: '1px 5px' }}>Admin</span>}
+                    </span>
+                    {((['SUPER_ADMIN', 'MANAGER'].includes(currentUser?.role) || userGroupRole === 'ADMIN' || selectedGroup.creatorId === currentUser?.id) && member.id !== currentUser?.id && member.id !== selectedGroup.creatorId) ? (
+                      <button 
+                        type="button"
+                        onClick={() => handleToggleMemberRole(member.id, member.role)} 
+                        disabled={updatingSettings}
+                        style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '11px', textDecoration: 'underline', padding: 0 }}
+                      >
+                        {member.role === 'ADMIN' ? 'Dismiss Admin' : 'Make Admin'}
+                      </button>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            )}
+ 
             <div style={{ display: 'flex', gap: '12px', flexDirection: 'column' }}>
               {selectedGroup.isMember ? (
                 <>
