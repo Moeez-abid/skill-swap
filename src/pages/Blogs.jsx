@@ -53,8 +53,8 @@ function CommentNode({ comment, onReply, onDelete, loggedIn, currentUser, adminU
         {loggedIn ? (
           <button 
             onClick={() => setActiveReplyId(isReplying ? null : comment.id)} 
-            className="btn nav-btn--ghost" 
-            style={{ padding: '4px 12px', fontSize: '12px', borderRadius: '20px', minHeight: 'auto', background: 'var(--bg-surface-raised)' }}
+            className="btn-secondary" 
+            style={{ padding: '4px 12px', fontSize: '12px', borderRadius: '20px', minHeight: 'auto', width: 'auto' }}
           >
             {isReplying ? 'Cancel' : 'Reply'}
           </button>
@@ -72,8 +72,8 @@ function CommentNode({ comment, onReply, onDelete, loggedIn, currentUser, adminU
               style={{ width: '100%', padding: '10px', fontSize: '13px', borderRadius: '8px', minHeight: '60px', resize: 'vertical', background: 'var(--bg-surface)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
             />
             <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-              <button type="submit" className="btn" style={{ padding: '6px 12px', fontSize: '12px', minHeight: 'auto' }}>Submit</button>
-              <button type="button" onClick={() => setActiveReplyId(null)} className="btn nav-btn--ghost" style={{ padding: '6px 12px', fontSize: '12px', minHeight: 'auto' }}>Cancel</button>
+              <button type="submit" className="primary-cta" style={{ padding: '6px 16px', fontSize: '12px', minHeight: 'auto', width: 'auto' }}>Submit</button>
+              <button type="button" onClick={() => setActiveReplyId(null)} className="btn-secondary" style={{ padding: '6px 16px', fontSize: '12px', minHeight: 'auto', width: 'auto' }}>Cancel</button>
             </div>
           </form>
         )}
@@ -268,7 +268,7 @@ export default function Blogs() {
   if (postId && currentPost) {
     return (
       <div className="animate-fade-up" style={{ paddingTop: '130px', minHeight: 'calc(100vh - 200px)', paddingBottom: '64px', maxWidth: '800px', margin: '0 auto' }}>
-        <button onClick={() => setSearchParams({})} className="btn nav-btn--ghost" style={{ marginBottom: '24px', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+        <button onClick={() => setSearchParams({})} className="btn-secondary" style={{ marginBottom: '24px', display: 'inline-flex', alignItems: 'center', gap: '8px', width: 'auto' }}>
           &larr; Back to Blogs
         </button>
 
