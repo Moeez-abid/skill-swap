@@ -5,7 +5,7 @@ import { isLoggedIn, getUser } from '../shared/auth';
 
 export default function Sessions() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const currentUser = getUser();
 
   const [matchesList, setMatchesList] = useState([]);
