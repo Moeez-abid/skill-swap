@@ -133,7 +133,7 @@ export default function Navbar() {
           alignItems: 'center',
           gap: '12px',
           position: 'fixed',
-          top: 0,
+          bottom: 0,
           left: 0,
           right: 0,
           zIndex: 1100
@@ -157,7 +157,7 @@ export default function Navbar() {
           </button>
         </div>
       )}
-      <nav className="navbar" style={{ top: isImpersonating ? '37px' : '0px' }} aria-label="Main navigation">
+      <nav className="navbar" aria-label="Main navigation">
         <Link to="/" className="nav-logo">SkillSwap</Link>
 
         <div className="nav-links">
