@@ -8,7 +8,7 @@ const router = Router();
 // Public route: Submit a support message
 router.post('/', async (req, res) => {
   try {
-    const { name, email, message } = req.body;
+    const { name, email, message, isAppeal } = req.body;
     
     if (!name || !email || !message) {
       return apiError(res, 400, 'Name, email, and message are required');
@@ -19,6 +19,7 @@ router.post('/', async (req, res) => {
         name,
         email,
         message,
+        isAppeal: !!isAppeal
       },
     });
 

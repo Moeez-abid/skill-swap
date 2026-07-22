@@ -30,6 +30,7 @@ export default function Admin() {
   const [resolvingDisputeId, setResolvingDisputeId] = useState(null);
   const [decisionText, setDecisionText] = useState('');
   const [winnerId, setWinnerId] = useState('');
+  const [supportFilter, setSupportFilter] = useState('ALL'); // ALL, SUPPORT, APPEALS
 
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -481,29 +482,71 @@ export default function Admin() {
       {activeTab === 'support' && (
       <section className="glass-card animate-fade-up delay-2" style={{ padding: '24px', marginTop: '32px' }}>
         <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>Support Inbox</h2>
-        {supportMessages.length > 0 ? (
-          supportMessages.map(msg => (
-            <div key={msg.id} className="match-card" style={{ background: 'var(--bg-surface)', marginBottom: '12px', padding: '16px', border: '1px solid var(--border-subtle)', borderRadius: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div>
-                  <p><strong>{msg.name}</strong> ({msg.email})</p>
-                  <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Received: {new Date(msg.createdAt).toLocaleString()}</p>
+        
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
+          <button 
+            type="button" 
+            className={supportFilter === 'ALL' ? 'primary-cta' : 'btn-secondary'} 
+            onClick={() => setSupportFilter('ALL')}
+            style={{ padding: '6px 16px', fontSize: '13px', minHeight: 'auto' }}
+          >
+            All Messages ({supportMessages.length})
+          </button>
+          <button 
+            type="button" 
+            className={supportFilter === 'SUPPORT' ? 'primary-cta' : 'btn-secondary'} 
+            onClick={() => setSupportFilter('SUPPORT')}
+            style={{ padding: '6px 16px', fontSize: '13px', minHeight: 'auto' }}
+          >
+            General Support ({supportMessages.filter(m => !m.isAppeal).length})
+          </button>
+          <button 
+            type="button" 
+            className={supportFilter === 'APPEALS' ? 'primary-cta' : 'btn-secondary'} 
+            onClick={() => setSupportFilter('APPEALS')}
+            style={{ padding: '6px 16px', fontSize: '13px', minHeight: 'auto' }}
+          >
+            Ban Appeals ({supportMessages.filter(m => m.isAppeal).length})
+          </button>
+        </div>
+
+        {(() => {
+          const filtered = supportMessages.filter(msg => {
+            if (supportFilter === 'SUPPORT') return !msg.isAppeal;
+            if (supportFilter === 'APPEALS') return msg.isAppeal;
+            return true;
+          });
+
+          return filtered.length > 0 ? (
+            filtered.map(msg => (
+              <div key={msg.id} className="match-card" style={{ background: 'var(--bg-surface)', marginBottom: '12px', padding: '16px', border: '1px solid var(--border-subtle)', borderRadius: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <p style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', margin: '0 0 4px 0' }}>
+                      <strong>{msg.name}</strong> 
+                      <span style={{ color: 'var(--text-secondary)', fontWeight: 'normal' }}>({msg.email})</span>
+                      {msg.isAppeal && (
+                        <span className="badge" style={{ background: 'var(--brand-orange)', color: 'white', padding: '2px 8px', fontSize: '11px', borderRadius: '4px' }}>Ban Appeal</span>
+                      )}
+                    </p>
+                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>Received: {new Date(msg.createdAt).toLocaleString()}</p>
+                  </div>
+                  {!msg.isRead && (
+                    <button className="primary-cta" onClick={() => handleMarkSupportRead(msg.id)}>Mark as Read</button>
+                  )}
+                  {msg.isRead && (
+                    <span className="badge badge--success">Read</span>
+                  )}
                 </div>
-                {!msg.isRead && (
-                  <button className="primary-cta" onClick={() => handleMarkSupportRead(msg.id)}>Mark as Read</button>
-                )}
-                {msg.isRead && (
-                  <span className="badge badge--success">Read</span>
-                )}
+                <div style={{ marginTop: '16px', padding: '12px', background: 'var(--bg-surface-raised)', borderRadius: '8px' }}>
+                  <p style={{ fontSize: '14px', whiteSpace: 'pre-wrap', margin: 0 }}>{msg.message}</p>
+                </div>
               </div>
-              <div style={{ marginTop: '16px', padding: '12px', background: 'var(--bg-surface-raised)', borderRadius: '8px' }}>
-                <p style={{ fontSize: '14px', whiteSpace: 'pre-wrap' }}>{msg.message}</p>
-              </div>
-            </div>
-          ))
-        ) : (
-          <p className="empty-state">No support messages found.</p>
-        )}
+            ))
+          ) : (
+            <p className="empty-state">No support messages found.</p>
+          );
+        })()}
       </section>
       )}
 

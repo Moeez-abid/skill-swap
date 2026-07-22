@@ -1,24 +1,35 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../shared/api';
+import { getUser, clearAuth } from '../shared/auth';
 
 export default function Banned() {
   const [reason, setReason] = useState('');
   const [contactMsg, setContactMsg] = useState('');
+  const [emailInput, setEmailInput] = useState('');
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
   const [sending, setSending] = useState(false);
   const navigate = useNavigate();
 
+  const currentUser = getUser();
+
   useEffect(() => {
     const savedReason = localStorage.getItem('skillswap-ban-reason');
     if (savedReason) {
       setReason(savedReason);
+    } else if (currentUser?.isBanned) {
+      setReason(currentUser.banReason || 'Your account was suspended.');
     } else {
-      // If they land here without a reason, redirect to home
       navigate('/');
     }
-  }, [navigate]);
+  }, [navigate, currentUser]);
+
+  const handleLogout = () => {
+    clearAuth();
+    localStorage.removeItem('skillswap-ban-reason');
+    navigate('/');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,14 +37,20 @@ export default function Banned() {
     setSending(true);
     setError('');
     try {
-      // Note: In an actual robust system, you'd want to allow banned users to submit 
-      // support tickets by attaching their email since they are logged out.
+      const email = currentUser?.email || emailInput;
+      const name = currentUser?.name || 'Banned User Appeal';
+      
+      if (!email) {
+        throw new Error('Please specify an email address');
+      }
+
       await api('/support', {
         method: 'POST',
         body: JSON.stringify({
-          name: 'Banned User Appeal',
-          email: 'banned@skillswap.local', // Placeholder, the backend should ideally capture the real email if possible, or they can provide it in the message
-          message: `[BAN APPEAL]\n\n${contactMsg}`,
+          name,
+          email,
+          message: contactMsg,
+          isAppeal: true
         }),
       });
       setSent(true);
@@ -65,24 +82,50 @@ export default function Banned() {
             <p style={{ fontSize: '14px', marginBottom: '16px', color: 'var(--text-secondary)' }}>
               If you believe this is a mistake, you can contact our support team to appeal this decision.
             </p>
+            {!currentUser && (
+              <div className="form-group" style={{ marginBottom: '16px' }}>
+                <label htmlFor="email">Your Email Address</label>
+                <input
+                  type="email"
+                  id="email"
+                  required
+                  value={emailInput}
+                  onChange={(e) => setEmailInput(e.target.value)}
+                  placeholder="name@example.com"
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-primary)' }}
+                />
+              </div>
+            )}
             <div className="form-group">
-              <label>Appeal Message (Please include your email)</label>
+              <label htmlFor="appealMsg">Appeal Message</label>
               <textarea
+                id="appealMsg"
                 required
                 rows="4"
                 value={contactMsg}
                 onChange={(e) => setContactMsg(e.target.value)}
-                placeholder="Explain why your account should be reinstated, and provide an email we can reach you at..."
+                placeholder="Explain why your account should be reinstated..."
+                style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-primary)' }}
               />
             </div>
-            {error && <p className="error-message">{error}</p>}
-            <button type="submit" className="primary-cta auth-btn" disabled={sending}>
+            {error && <p className="error-message" style={{ color: '#ef4444', fontSize: '14px', marginTop: '8px' }}>{error}</p>}
+            <button type="submit" className="primary-cta auth-btn" disabled={sending} style={{ marginTop: '16px', width: '100%' }}>
               {sending ? 'Sending...' : 'Submit Appeal'}
             </button>
           </form>
         )}
 
-        <div style={{ marginTop: '24px', textAlign: 'center' }}>
+        <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
+          {currentUser && (
+            <button 
+              type="button" 
+              onClick={handleLogout} 
+              className="btn-secondary" 
+              style={{ padding: '8px 16px', fontSize: '14px', border: 'none', background: 'transparent', color: 'var(--brand-orange)', cursor: 'pointer', fontWeight: '600' }}
+            >
+              Log Out / Sign Out
+            </button>
+          )}
           <Link to="/" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '14px' }}>Return to Home</Link>
         </div>
       </div>

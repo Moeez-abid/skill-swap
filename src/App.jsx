@@ -25,13 +25,18 @@ import Blogs from './pages/Blogs.jsx';
 import Groups from './pages/Groups.jsx';
 import Banned from './pages/Banned.jsx';
 import Terms from './pages/Terms.jsx';
-import { isAdmin } from './shared/auth.js';
+import { isAdmin, getUser } from './shared/auth.js';
 
 export default function App() {
   const location = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => {
+    const user = getUser();
+    if (user?.isBanned && location.pathname !== '/banned') {
+      navigate('/banned', { replace: true });
+      return;
+    }
     // Route guarding for Admin isolation
     if (isAdmin() && location.pathname !== '/admin' && location.pathname !== '/login' && location.pathname !== '/blogs') {
       navigate('/admin', { replace: true });

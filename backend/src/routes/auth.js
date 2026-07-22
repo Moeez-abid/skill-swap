@@ -37,7 +37,7 @@ router.post('/login', authLimiter, validate(loginSchema), async (req, res) => {
   const user = await prisma.user.findFirst({
     where: { email: email.toLowerCase(), deletedAt: null },
   });
-  if (!user || user.isBanned) return apiError(res, 401, 'Invalid credentials');
+  if (!user) return apiError(res, 401, 'Invalid credentials');
 
   if (!user.passwordHash) return apiError(res, 401, 'Please log in with Google');
 
@@ -46,7 +46,7 @@ router.post('/login', authLimiter, validate(loginSchema), async (req, res) => {
 
   const token = signToken({ userId: user.id });
   return apiSuccess(res, {
-    user: { id: user.id, email: user.email, name: user.name, role: user.role, avatarUrl: user.avatarUrl, isVerified: user.isVerified, verificationRequested: user.verificationRequested, googleId: user.googleId, phoneVerified: user.phoneVerified },
+    user: { id: user.id, email: user.email, name: user.name, role: user.role, avatarUrl: user.avatarUrl, isVerified: user.isVerified, verificationRequested: user.verificationRequested, googleId: user.googleId, phoneVerified: user.phoneVerified, isBanned: user.isBanned, banReason: user.banReason },
     token,
   });
 });
@@ -82,11 +82,9 @@ router.post('/google', authLimiter, async (req, res) => {
       });
     }
 
-    if (user.isBanned) return apiError(res, 401, 'Account suspended');
-
     const token = signToken({ userId: user.id });
     return apiSuccess(res, {
-      user: { id: user.id, email: user.email, name: user.name, role: user.role, avatarUrl: user.avatarUrl, isVerified: user.isVerified, verificationRequested: user.verificationRequested, googleId: user.googleId, phoneVerified: user.phoneVerified },
+      user: { id: user.id, email: user.email, name: user.name, role: user.role, avatarUrl: user.avatarUrl, isVerified: user.isVerified, verificationRequested: user.verificationRequested, googleId: user.googleId, phoneVerified: user.phoneVerified, isBanned: user.isBanned, banReason: user.banReason },
       token,
     });
   } catch (error) {
@@ -102,7 +100,7 @@ router.get('/me', authenticate, async (req, res) => {
       id: true, email: true, name: true, bio: true, location: true, avatarUrl: true,
       timezone: true, role: true, availabilityStatus: true,
       notifyMatches: true, notifyMessages: true, notifySessions: true,
-      createdAt: true, isVerified: true, verificationRequested: true, googleId: true, phoneVerified: true,
+      createdAt: true, isVerified: true, verificationRequested: true, googleId: true, phoneVerified: true, isBanned: true, banReason: true,
     },
   });
   return apiSuccess(res, { user });

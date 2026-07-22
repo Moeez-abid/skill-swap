@@ -33,6 +33,11 @@ export default function Auth({ isRegister = false }) {
         try {
           const result = await authApi.google(response.credential);
           setAuth(result.token, result.user);
+          if (result.user?.isBanned) {
+            localStorage.setItem('skillswap-ban-reason', result.user.banReason || 'Your account has been suspended.');
+            navigate('/banned', { replace: true });
+            return;
+          }
           const searchParams = new URLSearchParams(location.search);
           navigate(searchParams.get('redirect') || '/dashboard');
         } catch (err) {
@@ -79,6 +84,11 @@ export default function Auth({ isRegister = false }) {
         result = await authApi.login(email, password);
       }
       setAuth(result.token, result.user);
+      if (result.user?.isBanned) {
+        localStorage.setItem('skillswap-ban-reason', result.user.banReason || 'Your account has been suspended.');
+        navigate('/banned', { replace: true });
+        return;
+      }
       const searchParams = new URLSearchParams(location.search);
       navigate(searchParams.get('redirect') || '/dashboard');
     } catch (err) {
