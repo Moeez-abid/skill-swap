@@ -10,7 +10,6 @@ export default function Admin() {
   const [users, setUsers] = useState([]);
   const [flags, setFlags] = useState([]);
   const [disputes, setDisputes] = useState([]);
-  const [verifications, setVerifications] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
   const [supportMessages, setSupportMessages] = useState([]);
   const [allGroups, setAllGroups] = useState([]);
@@ -77,12 +76,11 @@ export default function Admin() {
         // Dummy analytics structure to prevent crash if anything expects it
         setAnalytics({ users: { total: 0, growth30d: 0 }, skills: { total: 0, created30d: 0 }, matches: { active: 0, completed: 0 }, moderation: { pendingFlags: 0 } });
       } else {
-        const [analyticsRes, usersRes, flagsRes, disputesRes, verificationsRes, auditRes, supportRes, groupsRes, blogsRes] = await Promise.all([
+        const [analyticsRes, usersRes, flagsRes, disputesRes, auditRes, supportRes, groupsRes, blogsRes] = await Promise.all([
           admin.analytics(),
           admin.users(),
           admin.moderation(),
           admin.disputes(),
-          admin.verifications(),
           admin.auditLogs(),
           admin.supportMessages(),
           groups.list(),
@@ -92,7 +90,6 @@ export default function Admin() {
         setUsers(usersRes.users);
         setFlags(flagsRes.flags);
         setDisputes(disputesRes.disputes);
-        setVerifications(verificationsRes.users);
         setAuditLogs(auditRes.logs);
         setSupportMessages(supportRes.messages || []);
         setAllGroups(groupsRes.groups || []);
@@ -169,25 +166,7 @@ export default function Admin() {
     }
   };
 
-  const handleApproveVerification = async (userId) => {
-    try {
-      await admin.approveVerification(userId);
-      showToast('User verified');
-      loadData();
-    } catch (err) {
-      showToast(err.message);
-    }
-  };
 
-  const handleRejectVerification = async (userId) => {
-    try {
-      await admin.rejectVerification(userId);
-      showToast('Verification rejected');
-      loadData();
-    } catch (err) {
-      showToast(err.message);
-    }
-  };
 
   const handleMarkSupportRead = async (msgId) => {
     try {
@@ -497,28 +476,7 @@ export default function Admin() {
       </section>
       )}
 
-      {activeTab === 'verifications' && (
-      <section className="glass-card animate-fade-up delay-2" style={{ padding: '24px', marginTop: '32px' }}>
-        <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>Verification Requests</h2>
-        {verifications.length > 0 ? (
-          verifications.map(v => (
-            <div key={v.id} className="match-card" style={{ marginBottom: '12px', padding: '16px', border: '1px solid var(--border-subtle)', borderRadius: '12px' }}>
-              <p><strong>{v.name}</strong> ({v.email})</p>
-              <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                {v.linkedinUrl && <a href={v.linkedinUrl} target="_blank" rel="noreferrer" style={{ marginRight: '8px' }}>LinkedIn</a>}
-                {v.portfolioUrl && <a href={v.portfolioUrl} target="_blank" rel="noreferrer">Portfolio</a>}
-              </div>
-              <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
-                <button className="primary-cta" onClick={() => handleApproveVerification(v.id)}>Approve</button>
-                <button className="btn-secondary" onClick={() => handleRejectVerification(v.id)}>Reject</button>
-              </div>
-            </div>
-          ))
-        ) : (
-          <p className="empty-state">No pending verifications</p>
-        )}
-      </section>
-      )}
+
 
       {activeTab === 'support' && (
       <section className="glass-card animate-fade-up delay-2" style={{ padding: '24px', marginTop: '32px' }}>

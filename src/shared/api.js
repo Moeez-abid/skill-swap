@@ -177,8 +177,26 @@ export const dashboard = {
 export const users = {
   list: () => cachedApi('/users'),
   profile: (id) => cachedApi(`/users/${id}/profile`),
-  requestVerification: async () => {
-    const res = await api('/users/me/verify', { method: 'PATCH' });
+  linkGoogle: async (credential) => {
+    const res = await api('/users/me/link-google', { method: 'POST', body: JSON.stringify({ credential }) });
+    clearApiCache('/auth');
+    clearApiCache('/users');
+    return res;
+  },
+  sendEmailOtp: async () => {
+    return api('/users/me/send-email-otp', { method: 'POST' });
+  },
+  verifyEmailOtp: async (otp) => {
+    const res = await api('/users/me/verify-email-otp', { method: 'POST', body: JSON.stringify({ otp }) });
+    clearApiCache('/auth');
+    clearApiCache('/users');
+    return res;
+  },
+  sendPhoneOtp: async (phone) => {
+    return api('/users/me/send-phone-otp', { method: 'POST', body: JSON.stringify({ phone }) });
+  },
+  verifyPhoneOtp: async (otp) => {
+    const res = await api('/users/me/verify-phone-otp', { method: 'POST', body: JSON.stringify({ otp }) });
     clearApiCache('/auth');
     clearApiCache('/users');
     return res;
@@ -248,17 +266,7 @@ export const admin = {
     clearApiCache('/matches');
     return res;
   },
-  verifications: () => api('/admin/verifications'),
-  approveVerification: async (id) => {
-    const res = await api(`/admin/verifications/${id}/approve`, { method: 'PATCH' });
-    clearApiCache(`/users/${id}/profile`);
-    return res;
-  },
-  rejectVerification: async (id) => {
-    const res = await api(`/admin/verifications/${id}/reject`, { method: 'PATCH' });
-    clearApiCache(`/users/${id}/profile`);
-    return res;
-  },
+
   auditLogs: () => api('/admin/audit-logs'),
   supportMessages: () => api('/support'),
   markSupportMessageRead: async (id) => {

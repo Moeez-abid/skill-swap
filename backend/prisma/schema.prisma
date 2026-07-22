@@ -109,6 +109,12 @@ model User {
   isBanned              Boolean            @default(false)
   isVerified            Boolean            @default(false)
   verificationRequested Boolean            @default(false)
+  phone                 String?
+  phoneVerified         Boolean            @default(false)
+  emailOtp              String?
+  emailOtpExpires       DateTime?
+  phoneOtp              String?
+  phoneOtpExpires       DateTime?
   bannedAt              DateTime?
   banReason             String?
   deletedAt             DateTime?

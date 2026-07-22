@@ -21,6 +21,17 @@ export default function Settings() {
   const [isVerified, setIsVerified] = useState(false);
   const [verificationRequested, setVerificationRequested] = useState(false);
 
+  // New verification states
+  const [googleId, setGoogleId] = useState('');
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [phone, setPhone] = useState('');
+  const [inputPhone, setInputPhone] = useState('');
+  const [emailOtpSent, setEmailOtpSent] = useState(false);
+  const [emailOtpCode, setEmailOtpCode] = useState('');
+  const [phoneOtpSent, setPhoneOtpSent] = useState(false);
+  const [phoneOtpCode, setPhoneOtpCode] = useState('');
+  const googleBtnRef = React.useRef(null);
+
   // Password states
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -56,12 +67,136 @@ export default function Settings() {
 
         setIsVerified(user.isVerified || false);
         setVerificationRequested(user.verificationRequested || false);
+        setGoogleId(user.googleId || '');
+        setPhoneVerified(user.phoneVerified || false);
+        setPhone(user.phone || '');
+        setInputPhone(user.phone || '');
       })
       .catch(() => {})
       .finally(() => {
         setLoading(false);
       });
   }, [navigate]);
+
+  useEffect(() => {
+    if (googleId || loading) return;
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (!clientId) return;
+
+    const initGoogleLink = () => {
+      if (!window.google) return;
+      
+      window.handleGoogleLinkResponse = async (response) => {
+        try {
+          const result = await users.linkGoogle(response.credential);
+          setGoogleId(result.user.googleId);
+          setIsVerified(result.user.isVerified);
+          setPhoneVerified(result.user.phoneVerified);
+          const currentUser = getUser();
+          if (currentUser) {
+            setAuth(getToken(), { ...currentUser, ...result.user });
+          }
+          showToast('Google account linked successfully');
+          window.dispatchEvent(new Event('user-updated'));
+        } catch (err) {
+          showToast(err.message || 'Google account link failed');
+        }
+      };
+
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: window.handleGoogleLinkResponse
+      });
+
+      if (googleBtnRef.current) {
+        window.google.accounts.id.renderButton(
+          googleBtnRef.current,
+          { theme: 'outline', size: 'large', text: 'continue_with' }
+        );
+      }
+    };
+
+    if (window.google) {
+      initGoogleLink();
+    } else {
+      const intervalId = setInterval(() => {
+        if (window.google) {
+          clearInterval(intervalId);
+          initGoogleLink();
+        }
+      }, 100);
+      return () => clearInterval(intervalId);
+    }
+  }, [googleId, loading]);
+
+  const handleSendEmailOtp = async () => {
+    try {
+      const res = await users.sendEmailOtp();
+      setEmailOtpSent(true);
+      if (res.otp) {
+        showToast(`Verification code: ${res.otp}`);
+      } else {
+        showToast('Verification code sent to your email');
+      }
+    } catch (err) {
+      showToast(err.message);
+    }
+  };
+
+  const handleVerifyEmailOtp = async () => {
+    try {
+      const res = await users.verifyEmailOtp(emailOtpCode);
+      setIsVerified(res.user.isVerified);
+      setPhoneVerified(res.user.phoneVerified);
+      const currentUser = getUser();
+      if (currentUser) {
+        setAuth(getToken(), { ...currentUser, ...res.user });
+      }
+      showToast('Email verified successfully');
+      setEmailOtpSent(false);
+      setEmailOtpCode('');
+      window.dispatchEvent(new Event('user-updated'));
+    } catch (err) {
+      showToast(err.message);
+    }
+  };
+
+  const handleSendPhoneOtp = async () => {
+    if (!inputPhone.trim()) {
+      showToast('Please enter a valid phone number');
+      return;
+    }
+    try {
+      const res = await users.sendPhoneOtp(inputPhone);
+      setPhoneOtpSent(true);
+      if (res.otp) {
+        showToast(`Simulated SMS code: ${res.otp}`);
+      } else {
+        showToast('Verification code sent via SMS');
+      }
+    } catch (err) {
+      showToast(err.message);
+    }
+  };
+
+  const handleVerifyPhoneOtp = async () => {
+    try {
+      const res = await users.verifyPhoneOtp(phoneOtpCode);
+      setIsVerified(res.user.isVerified);
+      setPhoneVerified(res.user.phoneVerified);
+      setPhone(res.user.phone);
+      const currentUser = getUser();
+      if (currentUser) {
+        setAuth(getToken(), { ...currentUser, ...res.user });
+      }
+      showToast('Phone verified successfully');
+      setPhoneOtpSent(false);
+      setPhoneOtpCode('');
+      window.dispatchEvent(new Event('user-updated'));
+    } catch (err) {
+      showToast(err.message);
+    }
+  };
 
   const handleAvatarChange = async (e) => {
     const file = e.target.files[0];
@@ -233,25 +368,120 @@ export default function Settings() {
 
       <div className="form-card glass-card animate-fade-up delay-2" style={{ marginBottom: '32px' }}>
         <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>Account Verification</h2>
-        <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+        <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '24px' }}>
           Get a verified badge on your profile and skills to build trust with other users.
         </p>
+
         {isVerified ? (
-          <div className="badge badge--success" style={{ display: 'inline-flex', padding: '8px 16px', fontSize: '14px' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '8px' }}>
+          <div className="badge badge--success" style={{ display: 'inline-flex', padding: '10px 20px', fontSize: '15px', borderRadius: '30px' }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '8px' }}>
               <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
               <polyline points="22 4 12 14.01 9 11.01"></polyline>
             </svg>
             Verified Account
           </div>
-        ) : verificationRequested ? (
-          <div className="badge" style={{ display: 'inline-block', padding: '8px 16px', fontSize: '14px' }}>
-            Verification Pending
-          </div>
         ) : (
-          <button type="button" className="btn-secondary" onClick={handleRequestVerification}>
-            Request Verification
-          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {/* Step 1: Google account */}
+            <div style={{ padding: '20px', borderRadius: '12px', background: 'var(--bg-surface-raised)', border: '1px solid var(--border)' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '8px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                1. Google Account Link
+                {googleId && (
+                  <span style={{ color: '#22c55e', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Linked
+                  </span>
+                )}
+              </h3>
+              
+              {!googleId ? (
+                <div>
+                  <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+                    Please link your Google account to confirm your identity.
+                  </p>
+                  <div ref={googleBtnRef} style={{ display: 'inline-block' }}></div>
+                </div>
+              ) : (
+                <div style={{ marginTop: '12px' }}>
+                  <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+                    Google account linked successfully. Please verify your email inbox to verify ownership.
+                  </p>
+                  
+                  {emailOtpSent ? (
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center', maxWidth: '360px' }}>
+                      <input 
+                        type="text" 
+                        placeholder="Enter 6-digit Email code" 
+                        value={emailOtpCode} 
+                        onChange={(e) => setEmailOtpCode(e.target.value)}
+                        style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)' }}
+                      />
+                      <button type="button" className="primary-cta" onClick={handleVerifyEmailOtp} style={{ minHeight: 'auto', padding: '10px 16px' }}>
+                        Verify
+                      </button>
+                    </div>
+                  ) : (
+                    <button type="button" className="btn-secondary" onClick={handleSendEmailOtp} style={{ minHeight: 'auto', padding: '8px 16px' }}>
+                      Send Verification Code
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Step 2: Phone number */}
+            <div style={{ padding: '20px', borderRadius: '12px', background: 'var(--bg-surface-raised)', border: '1px solid var(--border)' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '8px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                2. Phone Number Verification
+                {phoneVerified && (
+                  <span style={{ color: '#22c55e', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Verified
+                  </span>
+                )}
+              </h3>
+
+              {phoneVerified ? (
+                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>
+                  Verified Number: <strong>{phone}</strong>
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '12px' }}>
+                  <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                    Add a verified phone number to complete account validation.
+                  </p>
+                  
+                  {!phoneOtpSent ? (
+                    <div style={{ display: 'flex', gap: '12px', maxWidth: '360px' }}>
+                      <input 
+                        type="tel" 
+                        placeholder="+1 555-555-5555" 
+                        value={inputPhone} 
+                        onChange={(e) => setInputPhone(e.target.value)}
+                        style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', flex: 1 }}
+                      />
+                      <button type="button" className="btn-secondary" onClick={handleSendPhoneOtp} style={{ minHeight: 'auto', padding: '10px 16px' }}>
+                        Send SMS
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center', maxWidth: '360px' }}>
+                      <input 
+                        type="text" 
+                        placeholder="Enter 6-digit SMS code" 
+                        value={phoneOtpCode} 
+                        onChange={(e) => setPhoneOtpCode(e.target.value)}
+                        style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)' }}
+                      />
+                      <button type="button" className="primary-cta" onClick={handleVerifyPhoneOtp} style={{ minHeight: 'auto', padding: '10px 16px' }}>
+                        Verify SMS
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
         )}
       </div>
 

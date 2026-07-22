@@ -61,7 +61,6 @@ export default function Navbar() {
         { href: '/admin?tab=groups', label: 'Groups' },
         { href: '/admin?tab=disputes', label: 'Disputes' },
         { href: '/admin?tab=moderation', label: 'Moderation' },
-        { href: '/admin?tab=verifications', label: 'Verifications' },
         { href: '/admin?tab=audit', label: 'Audit Logs' },
         { href: '/admin?tab=support', label: 'Support' },
         { href: '/admin?tab=blogs', label: 'Blogs' }

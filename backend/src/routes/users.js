@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
+import { OAuth2Client } from 'google-auth-library';
 import { prisma } from '../lib/prisma.js';
 import { authenticate } from '../middleware/auth.js';
 import { validate, profileUpdateSchema, passwordUpdateSchema } from '../middleware/validate.js';
@@ -8,9 +9,11 @@ import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
 import { uploadImage } from '../lib/cloudinary.js';
+import { sendEmail } from '../lib/email.js';
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 router.get('/', authenticate, async (req, res) => {
   const usersList = await prisma.user.findMany({
@@ -145,13 +148,193 @@ router.delete('/me', authenticate, async (req, res) => {
   return apiSuccess(res, { message: 'Account deleted' });
 });
 
-router.patch('/me/verify', authenticate, async (req, res) => {
-  const user = await prisma.user.update({
+// Link Google account to profile
+router.post('/me/link-google', authenticate, async (req, res) => {
+  const { credential } = req.body;
+  if (!credential) return apiError(res, 400, 'Missing credential');
+
+  try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    if (!payload || !payload.email) return apiError(res, 400, 'Invalid Google token');
+
+    const googleId = payload.sub;
+
+    // Check if googleId is already linked to another user
+    const existing = await prisma.user.findFirst({
+      where: {
+        googleId,
+        id: { not: req.user.id }
+      }
+    });
+    if (existing) {
+      return apiError(res, 400, 'This Google account is already linked to another profile');
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { googleId }
+    });
+
+    return apiSuccess(res, {
+      message: 'Google account linked successfully',
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        name: updatedUser.name,
+        role: updatedUser.role,
+        isVerified: updatedUser.isVerified,
+        googleId: updatedUser.googleId,
+        phoneVerified: updatedUser.phoneVerified
+      }
+    });
+  } catch (error) {
+    console.error('Link Google Error:', error);
+    return apiError(res, 401, 'Google account link failed');
+  }
+});
+
+// Send OTP to Google email account
+router.post('/me/send-email-otp', authenticate, async (req, res) => {
+  const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+  if (!user.googleId) {
+    return apiError(res, 400, 'Please link your Google account first');
+  }
+
+  // Generate 6 digit OTP
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+  await prisma.user.update({
     where: { id: req.user.id },
-    data: { verificationRequested: true },
-    select: { id: true, name: true, verificationRequested: true, isVerified: true }
+    data: {
+      emailOtp: otp,
+      emailOtpExpires: expires
+    }
   });
-  return apiSuccess(res, { user });
+
+  const mailSent = await sendEmail({
+    to: user.email,
+    subject: 'SkillSwap Email Verification OTP',
+    html: `<p>Your verification code is: <strong>${otp}</strong>. This code will expire in 10 minutes.</p>`
+  });
+
+  // For testing, print to console as well
+  console.log(`[TESTING OTP] Email verification code for ${user.email} is: ${otp}`);
+
+  return apiSuccess(res, {
+    message: 'Verification OTP sent to email',
+    otp: !mailSent ? otp : undefined
+  });
+});
+
+// Verify email OTP
+router.post('/me/verify-email-otp', authenticate, async (req, res) => {
+  const { otp } = req.body;
+  if (!otp) return apiError(res, 400, 'OTP is required');
+
+  const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+  if (!user.emailOtp || !user.emailOtpExpires || user.emailOtpExpires < new Date()) {
+    return apiError(res, 400, 'OTP has expired or does not exist. Please request a new one.');
+  }
+
+  if (user.emailOtp !== otp.trim()) {
+    return apiError(res, 400, 'Invalid OTP code');
+  }
+
+  // Verify and clean up
+  const isVerifiedNow = user.phoneVerified;
+
+  const updated = await prisma.user.update({
+    where: { id: req.user.id },
+    data: {
+      emailOtp: null,
+      emailOtpExpires: null,
+      isVerified: isVerifiedNow
+    }
+  });
+
+  return apiSuccess(res, {
+    message: 'Email verified successfully',
+    user: {
+      id: updated.id,
+      email: updated.email,
+      name: updated.name,
+      role: updated.role,
+      isVerified: updated.isVerified,
+      googleId: updated.googleId,
+      phoneVerified: updated.phoneVerified
+    }
+  });
+});
+
+// Send SMS OTP to phone number
+router.post('/me/send-phone-otp', authenticate, async (req, res) => {
+  const { phone } = req.body;
+  if (!phone) return apiError(res, 400, 'Phone number is required');
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+  await prisma.user.update({
+    where: { id: req.user.id },
+    data: {
+      phoneOtp: otp,
+      phoneOtpExpires: expires,
+      phone: phone.trim()
+    }
+  });
+
+  // Log to console to simulate Twilio/SMS gateway
+  console.log(`[TESTING OTP] SMS verification code to ${phone} is: ${otp}`);
+
+  return apiSuccess(res, {
+    message: 'SMS OTP sent successfully',
+    otp
+  });
+});
+
+// Verify phone OTP
+router.post('/me/verify-phone-otp', authenticate, async (req, res) => {
+  const { otp } = req.body;
+  if (!otp) return apiError(res, 400, 'OTP is required');
+
+  const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+  if (!user.phoneOtp || !user.phoneOtpExpires || user.phoneOtpExpires < new Date()) {
+    return apiError(res, 400, 'OTP has expired or does not exist. Please request a new one.');
+  }
+
+  if (user.phoneOtp !== otp.trim()) {
+    return apiError(res, 400, 'Invalid OTP code');
+  }
+
+  const isVerifiedNow = !!user.googleId;
+
+  const updated = await prisma.user.update({
+    where: { id: req.user.id },
+    data: {
+      phoneOtp: null,
+      phoneOtpExpires: null,
+      phoneVerified: true,
+      isVerified: isVerifiedNow
+    }
+  });
+
+  return apiSuccess(res, {
+    message: 'Phone verified successfully',
+    user: {
+      id: updated.id,
+      email: updated.email,
+      name: updated.name,
+      role: updated.role,
+      isVerified: updated.isVerified,
+      googleId: updated.googleId,
+      phoneVerified: updated.phoneVerified
+    }
+  });
 });
 
 router.post('/:id/block', authenticate, async (req, res) => {
