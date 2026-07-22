@@ -3,7 +3,7 @@ import { prisma } from '../lib/prisma.js';
 import { authenticate, requireRole } from '../middleware/auth.js';
 import { apiError, apiSuccess } from '../utils/helpers.js';
 import multer from 'multer';
-import { uploadFile } from '../lib/cloudinary.js';
+import { uploadImage } from '../lib/cloudinary.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -114,8 +114,19 @@ router.post('/', authenticate, requireRole(['SUPER_ADMIN', 'MANAGER']), upload.s
 
     let coverImageUrl = null;
     if (req.file) {
-      coverImageUrl = await uploadFile(req.file.path, 'blog_covers');
-      fs.unlinkSync(req.file.path);
+      try {
+        const buffer = fs.readFileSync(req.file.path);
+        const result = await uploadImage(buffer, 'blog_covers');
+        if (result && result.secure_url) {
+          coverImageUrl = result.secure_url;
+          fs.unlinkSync(req.file.path);
+        } else {
+          coverImageUrl = `/uploads/${req.file.filename}`;
+        }
+      } catch (err) {
+        console.error('Upload to cloudinary failed, using local path:', err);
+        coverImageUrl = `/uploads/${req.file.filename}`;
+      }
     }
 
     const post = await prisma.blogPost.create({
@@ -151,8 +162,19 @@ router.put('/:id', authenticate, requireRole(['SUPER_ADMIN', 'MANAGER']), upload
     const updateData = { title, content };
 
     if (req.file) {
-      updateData.coverImageUrl = await uploadFile(req.file.path, 'blog_covers');
-      fs.unlinkSync(req.file.path);
+      try {
+        const buffer = fs.readFileSync(req.file.path);
+        const result = await uploadImage(buffer, 'blog_covers');
+        if (result && result.secure_url) {
+          updateData.coverImageUrl = result.secure_url;
+          fs.unlinkSync(req.file.path);
+        } else {
+          updateData.coverImageUrl = `/uploads/${req.file.filename}`;
+        }
+      } catch (err) {
+        console.error('Upload to cloudinary failed, using local path:', err);
+        updateData.coverImageUrl = `/uploads/${req.file.filename}`;
+      }
     }
 
     const post = await prisma.blogPost.update({

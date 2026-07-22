@@ -324,12 +324,20 @@ export default function Blogs() {
         ) : (
           <>
             <article className="glass-card" style={{ padding: '0px', marginBottom: '32px', overflow: 'hidden', borderRadius: '24px' }}>
-              {currentPost.coverImageUrl && (
+              {currentPost.coverImageUrl ? (
                 <img 
                   src={getImageUrl(currentPost.coverImageUrl)} 
                   alt="" 
                   style={{ width: '100%', height: '350px', objectFit: 'cover' }} 
                 />
+              ) : (
+                <div style={{ width: '100%', height: '250px', background: 'linear-gradient(135deg, rgba(233,46,32,0.05) 0%, rgba(233,46,32,0.15) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.2, color: 'var(--accent)' }}>
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                    <circle cx="8.5" cy="8.5" r="1.5" />
+                    <polyline points="21 15 16 10 5 21" />
+                  </svg>
+                </div>
               )}
               <div style={{ padding: '32px' }}>
                 <h1 className="page-title" style={{ marginBottom: '16px' }}>
@@ -546,12 +554,20 @@ export default function Blogs() {
                   e.currentTarget.style.boxShadow = 'none';
                 }}
               >
-                {post.coverImageUrl && (
+                {post.coverImageUrl ? (
                   <img 
                     src={getImageUrl(post.coverImageUrl)} 
                     alt="" 
                     style={{ width: '100%', height: '180px', objectFit: 'cover' }} 
                   />
+                ) : (
+                  <div style={{ width: '100%', height: '140px', background: 'linear-gradient(135deg, rgba(233,46,32,0.05) 0%, rgba(233,46,32,0.15) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid var(--border-subtle)' }}>
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.2, color: 'var(--accent)' }}>
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                  </div>
                 )}
                 <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', flex: 1 }}>
                   <div>
