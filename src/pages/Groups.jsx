@@ -449,12 +449,12 @@ export default function Groups() {
         <div className="messages-layout animate-fade-up delay-1" style={{ flex: 1, minHeight: 0 }}>
           {/* SIDEBAR */}
           <aside className={`glass-card messages-sidebar ${selectedGroup ? 'hide-on-mobile' : ''}`} style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, overflow: 'hidden' }} aria-label="Groups">
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-surface)', borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }}>
+            <div style={{ flexShrink: 0, padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-surface)', borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }}>
               <strong style={{ fontSize: '1.05rem' }}>Community Groups</strong>
               <button type="button" className="primary-cta" onClick={() => setIsCreating(true)} style={{ padding: '6px 12px', fontSize: '0.85rem', width: 'auto' }}>+ Create Group</button>
             </div>
             
-            <div style={{ padding: '12px' }}>
+            <div style={{ flexShrink: 0, padding: '12px' }}>
               <input
                 type="search"
                 placeholder="Search groups..."
@@ -464,7 +464,7 @@ export default function Groups() {
               />
             </div>
 
-            <div className="tabs" style={{ margin: '0 12px 20px 12px', borderBottom: '1px solid var(--border)', position: 'relative' }}>
+            <div className="tabs" style={{ flexShrink: 0, margin: '0 12px 20px 12px', borderBottom: '1px solid var(--border)', position: 'relative' }}>
               <button 
                 className={`tab ${sidebarTab === 'joined' ? 'active' : ''}`} 
                 onClick={() => setSidebarTab('joined')}
@@ -483,7 +483,7 @@ export default function Groups() {
             </div>
 
             {invitations.length > 0 && sidebarTab === 'joined' && (
-              <div style={{ padding: '0 12px 12px 12px' }}>
+              <div style={{ flexShrink: 0, padding: '0 12px 12px 12px' }}>
                 <strong style={{ fontSize: '13px', color: 'var(--text-secondary)', padding: '0 8px', display: 'block', marginBottom: '8px' }}>Invitations</strong>
                 {invitations.map(inv => (
                   <div key={inv.id} className="conversation-item" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '8px', cursor: 'default' }}>
@@ -496,7 +496,7 @@ export default function Groups() {
                 ))}
               </div>
             )}
-            <div className="conversation-list" style={{ padding: '0 12px 12px 12px' }}>
+            <div className="conversation-list" style={{ flex: 1, overflowY: 'auto', padding: '0 12px 12px 12px' }}>
               {loadingList ? (
                 <p className="loading" style={{ color: 'var(--text-muted)', textAlign: 'center', margin: '20px 0' }}>Loading channels...</p>
               ) : (
