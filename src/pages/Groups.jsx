@@ -464,18 +464,18 @@ export default function Groups() {
               />
             </div>
 
-            <div className="tabs" style={{ flexShrink: 0, margin: '0 12px 20px 12px', borderBottom: '1px solid var(--border)', position: 'relative' }}>
+            <div className="tabs" style={{ flexShrink: 0, margin: '0 12px 8px 12px', borderBottom: '1px solid var(--border)', position: 'relative' }}>
               <button 
                 className={`tab ${sidebarTab === 'joined' ? 'active' : ''}`} 
                 onClick={() => setSidebarTab('joined')}
-                style={{ flex: 1, textAlign: 'center', paddingBottom: '16px', borderBottom: 'none', background: 'transparent' }}
+                style={{ flex: 1, textAlign: 'center', paddingBottom: '10px', borderBottom: 'none', background: 'transparent' }}
               >
                 My Groups
               </button>
               <button 
                 className={`tab ${sidebarTab === 'discover' ? 'active' : ''}`} 
                 onClick={() => setSidebarTab('discover')}
-                style={{ flex: 1, textAlign: 'center', paddingBottom: '16px', borderBottom: 'none', background: 'transparent' }}
+                style={{ flex: 1, textAlign: 'center', paddingBottom: '10px', borderBottom: 'none', background: 'transparent' }}
               >
                 Discover
               </button>
