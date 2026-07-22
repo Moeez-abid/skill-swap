@@ -24,6 +24,7 @@ import SuccessStories from './pages/SuccessStories.jsx';
 import Blogs from './pages/Blogs.jsx';
 import Groups from './pages/Groups.jsx';
 import Banned from './pages/Banned.jsx';
+import Terms from './pages/Terms.jsx';
 import { isAdmin } from './shared/auth.js';
 
 export default function App() {
@@ -81,6 +82,7 @@ export default function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/success-stories" element={<SuccessStories />} />
           <Route path="/banned" element={<Banned />} />
+          <Route path="/terms" element={<Terms />} />
           <Route path="*" element={<div className="empty-state"><h3>Page not found</h3></div>} />
         </Routes>
       </main>

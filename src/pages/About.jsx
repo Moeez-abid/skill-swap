@@ -11,7 +11,7 @@ export default function About() {
         </p>
       </div>
 
-      <div className="animate-fade-up delay-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '24px', marginBottom: '32px' }}>
+      <div className="animate-fade-up delay-1" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px', marginBottom: '32px' }}>
         <section className="glass-card" style={{ padding: '32px' }}>
           <h2 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '16px', color: 'var(--text-primary)' }}>Our Story</h2>
           <p style={{ lineHeight: '1.7', color: 'var(--text-secondary)' }}>
@@ -44,7 +44,7 @@ export default function About() {
         </ul>
       </section>
 
-      <div className="animate-fade-up delay-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '24px', marginBottom: '32px' }}>
+      <div className="animate-fade-up delay-3" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px', marginBottom: '32px' }}>
         <section className="glass-card" style={{ padding: '32px' }}>
           <h2 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '24px', color: 'var(--text-primary)' }}>Why Choose SkillSwap?</h2>
           <ul style={{ lineHeight: '1.7', color: 'var(--text-secondary)', paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>

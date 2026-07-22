@@ -56,8 +56,9 @@ export default function Footer() {
         </div>
       </div>
       
-      <div className="footer-bottom" style={{ borderTop: '1px solid var(--border)', padding: '24px', textAlign: 'center' }}>
+      <div className="footer-bottom" style={{ borderTop: '1px solid var(--border)', padding: '24px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>&copy; {new Date().getFullYear()} SkillSwap. Built for the community.</p>
+        <Link to="/terms" style={{ color: 'var(--text-muted)', textDecoration: 'underline', fontSize: '0.85rem', transition: 'color 0.15s ease' }} onMouseEnter={(e) => e.target.style.color = 'var(--accent)'} onMouseLeave={(e) => e.target.style.color = 'var(--text-muted)'}>Terms & Conditions</Link>
       </div>
     </footer>
   );

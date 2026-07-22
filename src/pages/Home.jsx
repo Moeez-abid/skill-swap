@@ -9,6 +9,7 @@ export default function Home() {
   const [communityStats, setCommunityStats] = useState(null);
   const [categoryPills, setCategoryPills] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [openFaqIndex, setOpenFaqIndex] = useState(null);
   const carouselRef = useRef(null);
 
   useEffect(() => {
@@ -187,6 +188,88 @@ export default function Home() {
             </Link>
           ))}
           {categoryPills.length === 0 && <Link to="/marketplace" className="category-pill">View Marketplace</Link>}
+        </div>
+      </section>
+
+      <section className="section reveal" aria-labelledby="faq-title" style={{ marginTop: '64px', marginBottom: '64px' }}>
+        <h2 id="faq-title" className="section-title">Frequently Asked Questions</h2>
+        <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {[
+            {
+              q: "What is SkillSwap?",
+              a: "SkillSwap is a community-driven platform where people trade knowledge directly. No money is exchanged—you teach a skill you have in exchange for learning a skill you need."
+            },
+            {
+              q: "How does the barter system work?",
+              a: "It is a direct 1-to-1 exchange. Once you request a match and the other person accepts, you can chat, propose sessions, and take turns teaching each other your respective skills."
+            },
+            {
+              q: "Is there any charge to use SkillSwap?",
+              a: "No, SkillSwap is completely free of charge. Our mission is to make learning accessible to everyone through peer-to-peer knowledge sharing."
+            },
+            {
+              q: "Who can teach on SkillSwap?",
+              a: "Anyone! Everyone has a skill, hobby, or area of expertise they can share—whether it is coding, photography, playing an instrument, learning a language, or business planning."
+            },
+            {
+              q: "How do I get started?",
+              a: "Simply sign up for an account, set up your profile, list the skills you want to teach and learn, and browse the marketplace to find people to connect with."
+            }
+          ].map((faq, idx) => {
+            const isOpen = openFaqIndex === idx;
+            return (
+              <div 
+                key={idx} 
+                className="glass-card" 
+                style={{ 
+                  borderRadius: '16px', 
+                  overflow: 'hidden', 
+                  border: '1px solid var(--border)',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
+                  style={{
+                    width: '100%',
+                    padding: '20px 24px',
+                    background: 'transparent',
+                    border: 'none',
+                    textAlign: 'left',
+                    color: 'var(--text-primary)',
+                    fontWeight: '600',
+                    fontSize: '1.1rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: '16px'
+                  }}
+                >
+                  <span>{faq.q}</span>
+                  <span style={{ 
+                    transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', 
+                    transition: 'transform 0.2s ease',
+                    fontSize: '1.25rem',
+                    color: 'var(--accent)',
+                    fontWeight: 'bold'
+                  }}>
+                    ▼
+                  </span>
+                </button>
+                <div style={{
+                  maxHeight: isOpen ? '200px' : '0px',
+                  opacity: isOpen ? 1 : 0,
+                  overflow: 'hidden',
+                  transition: 'all 0.3s cubic-bezier(0, 1, 0, 1)',
+                  padding: isOpen ? '0 24px 20px 24px' : '0 24px'
+                }}>
+                  <p style={{ color: 'var(--text-secondary)', margin: 0, lineHeight: '1.6', fontSize: '0.975rem' }}>{faq.a}</p>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </section>
     </>
