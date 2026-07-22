@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useSearchParams, Link } from 'react-router-dom';
 import { blogs, getImageUrl } from '../shared/api.js';
 import { isLoggedIn, getUser, isAdmin } from '../shared/auth.js';
@@ -424,7 +425,7 @@ export default function Blogs() {
           </>
         )}
 
-        {commentToDelete && (
+        {commentToDelete && createPortal(
           <div style={{ position: 'fixed', inset: 0, zIndex: 1100, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
             <div onClick={() => setCommentToDelete(null)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} />
             <div className="glass-card animate-dropdown-enter" style={{ position: 'relative', zIndex: 1, padding: '24px', borderRadius: '12px', width: '100%', maxWidth: '400px' }}>
@@ -435,10 +436,11 @@ export default function Blogs() {
                 <button type="button" className="primary-cta" style={{ width: 'auto', minHeight: 'auto', padding: '8px 16px', background: '#ef4444', borderColor: '#ef4444' }} onClick={() => handleDeleteComment(commentToDelete)}>Delete</button>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
 
-        {postToDelete && (
+        {postToDelete && createPortal(
           <div style={{ position: 'fixed', inset: 0, zIndex: 1100, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
             <div onClick={() => setPostToDelete(null)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} />
             <div className="glass-card animate-dropdown-enter" style={{ position: 'relative', zIndex: 1, padding: '24px', borderRadius: '12px', width: '100%', maxWidth: '400px' }}>
@@ -449,7 +451,8 @@ export default function Blogs() {
                 <button type="button" className="primary-cta" style={{ width: 'auto', minHeight: 'auto', padding: '8px 16px', background: '#ef4444', borderColor: '#ef4444' }} onClick={handleDeletePost}>Delete</button>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     );
@@ -589,7 +592,7 @@ export default function Blogs() {
         </div>
       )}
 
-      {commentToDelete && (
+      {commentToDelete && createPortal(
         <div style={{ position: 'fixed', inset: 0, zIndex: 1100, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <div onClick={() => setCommentToDelete(null)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} />
           <div className="glass-card animate-dropdown-enter" style={{ position: 'relative', zIndex: 1, padding: '24px', borderRadius: '12px', width: '100%', maxWidth: '400px' }}>
@@ -600,10 +603,11 @@ export default function Blogs() {
               <button type="button" className="primary-cta" style={{ width: 'auto', minHeight: 'auto', padding: '8px 16px', background: '#ef4444', borderColor: '#ef4444' }} onClick={() => handleDeleteComment(commentToDelete)}>Delete</button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {postToDelete && (
+      {postToDelete && createPortal(
         <div style={{ position: 'fixed', inset: 0, zIndex: 1100, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <div onClick={() => setPostToDelete(null)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} />
           <div className="glass-card animate-dropdown-enter" style={{ position: 'relative', zIndex: 1, padding: '24px', borderRadius: '12px', width: '100%', maxWidth: '400px' }}>
@@ -614,7 +618,8 @@ export default function Blogs() {
               <button type="button" className="primary-cta" style={{ width: 'auto', minHeight: 'auto', padding: '8px 16px', background: '#ef4444', borderColor: '#ef4444' }} onClick={handleDeletePost}>Delete</button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
