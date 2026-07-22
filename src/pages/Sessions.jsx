@@ -28,11 +28,12 @@ export default function Sessions() {
   const [activeTab, setActiveTab] = useState(tabFromUrl);
 
   useEffect(() => {
-    setSearchParams(prev => {
-      prev.set('tab', activeTab);
-      return prev;
-    }, { replace: true });
-  }, [activeTab, setSearchParams]);
+    const params = { tab: activeTab };
+    if (activeMatchId) {
+      params.matchId = activeMatchId;
+    }
+    setSearchParams(params, { replace: true });
+  }, [activeTab, activeMatchId, setSearchParams]);
   const [editingSessionId, setEditingSessionId] = useState(null);
   const [reviewingSessionId, setReviewingSessionId] = useState(null);
   const [rating, setRating] = useState(5);
