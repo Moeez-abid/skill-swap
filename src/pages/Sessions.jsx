@@ -100,9 +100,9 @@ export default function Sessions() {
       }
     });
     return () => {
-      unsubUpdate();
-      unsubProposed();
-      unsubCancelled();
+      if (unsubUpdate) unsubUpdate();
+      if (unsubProposed) unsubProposed();
+      if (unsubCancelled) unsubCancelled();
     };
   }, [currentUser?.id, activeMatchId]);
 
