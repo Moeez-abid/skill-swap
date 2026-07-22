@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { notifications, getPusher, getImageUrl } from '../shared/api';
 import { getUser } from '../shared/auth';
@@ -11,6 +12,15 @@ export default function NotificationsDropdown() {
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
   const user = getUser();
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Handle click outside to close dropdown
   useEffect(() => {
@@ -123,6 +133,99 @@ export default function NotificationsDropdown() {
 
   if (!user) return null;
 
+  const dropdownContent = (
+    <div className="notifications-dropdown glass-card animate-dropdown-enter" style={isMobile ? {
+      position: 'fixed',
+      top: '88px',
+      left: '16px',
+      right: '16px',
+      width: 'auto',
+      maxWidth: 'calc(100vw - 32px)',
+      maxHeight: '400px',
+      overflowY: 'auto',
+      zIndex: 1100,
+      padding: '0',
+      display: 'flex',
+      flexDirection: 'column',
+      background: 'var(--bg-surface)'
+    } : {
+      position: 'absolute',
+      top: '100%',
+      right: '0',
+      width: '320px',
+      maxHeight: '400px',
+      overflowY: 'auto',
+      zIndex: 1000,
+      marginTop: '8px',
+      padding: '0',
+      display: 'flex',
+      flexDirection: 'column',
+      background: 'var(--bg-surface)'
+    }}>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        padding: '16px', 
+        borderBottom: '1px solid var(--border-subtle)',
+        background: 'linear-gradient(to right, rgba(233, 46, 32, 0.08), transparent)',
+        borderTopLeftRadius: '16px',
+        borderTopRightRadius: '16px'
+      }}>
+        <h3 style={{ margin: 0, fontSize: '16px', fontFamily: 'Fustat,sans-serif', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          Notifications
+          {notifs.length > 0 && (
+            <span style={{ fontSize: '12px', background: 'var(--bg-surface-raised)', color: 'var(--text-secondary)', padding: '2px 8px', borderRadius: '12px' }}>
+              {notifs.length}
+            </span>
+          )}
+        </h3>
+        {unreadCount > 0 && (
+          <button 
+            onClick={handleMarkAllRead}
+            style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '12px' }}
+          >
+            Mark all read
+          </button>
+        )}
+      </div>
+      
+      <div className="notifications-list" style={{ padding: '8px 0' }}>
+        {notifs.length === 0 ? (
+          <p style={{ padding: '16px', textAlign: 'center', color: 'var(--text-secondary)', margin: 0, fontSize: '14px' }}>
+            No notifications
+          </p>
+        ) : (
+          notifs.map(n => (
+            <div 
+              key={n.id} 
+              onClick={() => handleNotificationClick(n)}
+              style={{ 
+                padding: '12px 16px', 
+                cursor: 'pointer',
+                background: n.isRead ? 'transparent' : 'rgba(255, 62, 0, 0.05)',
+                borderLeft: n.isRead ? '3px solid transparent' : '3px solid var(--accent)',
+                transition: 'background 0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-surface-raised)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = n.isRead ? 'transparent' : 'rgba(255, 62, 0, 0.05)'}
+            >
+              <div style={{ fontSize: '14px', fontWeight: n.isRead ? 'normal' : '600', marginBottom: '4px', color: 'var(--text-primary)' }}>
+                {n.title}
+              </div>
+              <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '4px', lineHeight: '1.4' }}>
+                {n.content}
+              </div>
+              <div style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>
+                {new Date(n.createdAt).toLocaleDateString()} at {new Date(n.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div className="notifications-container" ref={dropdownRef} style={{ position: 'relative' }}>
       <button 
@@ -156,94 +259,18 @@ export default function NotificationsDropdown() {
         )}
       </button>
 
-      {isOpen && (
-        <div className="notifications-dropdown glass-card animate-dropdown-enter" style={{
-          position: 'absolute',
-          top: '100%',
-          right: '0',
-          width: '320px',
-          maxHeight: '400px',
-          overflowY: 'auto',
-          zIndex: 1000,
-          marginTop: '8px',
-          padding: '0',
-          display: 'flex',
-          flexDirection: 'column',
-          background: 'var(--bg-surface)'
-        }}>
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
-            padding: '16px', 
-            borderBottom: '1px solid var(--border-subtle)',
-            background: 'linear-gradient(to right, rgba(233, 46, 32, 0.08), transparent)',
-            borderTopLeftRadius: '16px',
-            borderTopRightRadius: '16px'
-          }}>
-            <h3 style={{ margin: 0, fontSize: '16px', fontFamily: 'Fustat,sans-serif', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              Notifications
-              {notifs.length > 0 && (
-                <span style={{ fontSize: '12px', background: 'var(--bg-surface-raised)', color: 'var(--text-secondary)', padding: '2px 8px', borderRadius: '12px' }}>
-                  {notifs.length}
-                </span>
-              )}
-            </h3>
-            {unreadCount > 0 && (
-              <button 
-                onClick={handleMarkAllRead}
-                style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '12px' }}
-              >
-                Mark all read
-              </button>
-            )}
-          </div>
-          
-          <div className="notifications-list" style={{ padding: '8px 0' }}>
-            {notifs.length === 0 ? (
-              <p style={{ padding: '16px', textAlign: 'center', color: 'var(--text-secondary)', margin: 0, fontSize: '14px' }}>
-                No notifications
-              </p>
-            ) : (
-              notifs.map(n => (
-                <div 
-                  key={n.id} 
-                  onClick={() => handleNotificationClick(n)}
-                  style={{ 
-                    padding: '12px 16px', 
-                    cursor: 'pointer',
-                    background: n.isRead ? 'transparent' : 'rgba(255, 62, 0, 0.05)',
-                    borderLeft: n.isRead ? '3px solid transparent' : '3px solid var(--accent)',
-                    transition: 'background 0.2s'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-surface-raised)'}
-                  onMouseLeave={(e) => e.currentTarget.style.background = n.isRead ? 'transparent' : 'rgba(255, 62, 0, 0.05)'}
-                >
-                  <div style={{ fontSize: '14px', fontWeight: n.isRead ? 'normal' : '600', marginBottom: '4px', color: 'var(--text-primary)' }}>
-                    {n.title}
-                  </div>
-                  <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '4px', lineHeight: '1.4' }}>
-                    {n.content}
-                  </div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>
-                    {new Date(n.createdAt).toLocaleDateString()} at {new Date(n.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      )}
+      {isOpen && (isMobile ? createPortal(dropdownContent, document.body) : dropdownContent)}
 
       {/* Toast Notification Overlay */}
-      {toast && (
+      {toast && createPortal(
         <div 
           className="notification-toast glass-card animate-dropdown-enter" 
           style={{
             position: 'fixed',
             top: '80px',
-            right: '24px',
-            width: '340px',
+            right: isMobile ? '16px' : '24px',
+            left: isMobile ? '16px' : 'auto',
+            width: isMobile ? 'calc(100vw - 32px)' : '340px',
             zIndex: 9999,
             cursor: 'pointer',
             display: 'flex',
@@ -276,7 +303,8 @@ export default function NotificationsDropdown() {
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
           </button>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
