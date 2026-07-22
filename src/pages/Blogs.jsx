@@ -116,6 +116,8 @@ export default function Blogs() {
   const [editContent, setEditContent] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [coverFile, setCoverFile] = useState(null);
+  const [commentToDelete, setCommentToDelete] = useState(null);
+  const [postToDelete, setPostToDelete] = useState(null);
 
   const loggedIn = isLoggedIn();
   const currentUser = loggedIn ? getUser() : null;
@@ -193,9 +195,9 @@ export default function Blogs() {
   };
 
   const handleDeletePost = async () => {
-    if (!window.confirm('Are you sure you want to delete this blog post?')) return;
     try {
       await blogs.delete(currentPost.id);
+      setPostToDelete(null);
       setSearchParams({});
     } catch (err) {
       setError(err.message || 'Failed to delete post');
@@ -232,9 +234,11 @@ export default function Blogs() {
   };
 
   const handleDeleteComment = async (commentId) => {
-    if (!window.confirm('Are you sure you want to delete this comment?')) return;
+    const targetId = commentId || commentToDelete;
+    if (!targetId) return;
     try {
-      await blogs.deleteComment(postId, commentId);
+      await blogs.deleteComment(postId, targetId);
+      setCommentToDelete(null);
       // Reload comments
       const updatedPostRes = await blogs.get(postId);
       setComments(updatedPostRes.comments || []);
@@ -353,7 +357,7 @@ export default function Blogs() {
                     <button onClick={startEdit} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '13px', minHeight: 'auto' }}>
                       Edit
                     </button>
-                    <button onClick={handleDeletePost} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '13px', minHeight: 'auto', color: '#ef4444', borderColor: '#ef4444' }}>
+                    <button onClick={() => setPostToDelete(currentPost.id)} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '13px', minHeight: 'auto', color: '#ef4444', borderColor: '#ef4444' }}>
                       Delete
                     </button>
                   </div>
@@ -404,7 +408,7 @@ export default function Blogs() {
                       key={comment.id}
                       comment={comment}
                       onReply={handleReplyToComment}
-                      onDelete={handleDeleteComment}
+                      onDelete={setCommentToDelete}
                       loggedIn={loggedIn}
                       currentUser={currentUser}
                       adminUser={adminUser}
@@ -418,6 +422,34 @@ export default function Blogs() {
               </div>
             </section>
           </>
+        )}
+
+        {commentToDelete && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 1100, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <div onClick={() => setCommentToDelete(null)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} />
+            <div className="glass-card animate-dropdown-enter" style={{ position: 'relative', zIndex: 1, padding: '24px', borderRadius: '12px', width: '100%', maxWidth: '400px' }}>
+              <h2 style={{ marginTop: 0, marginBottom: '16px', fontSize: '1.25rem', fontFamily: 'Fustat, sans-serif' }}>Delete Comment</h2>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>Are you sure you want to delete this comment? This action cannot be undone.</p>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                <button type="button" className="btn-secondary" style={{ width: 'auto', minHeight: 'auto', padding: '8px 16px' }} onClick={() => setCommentToDelete(null)}>Cancel</button>
+                <button type="button" className="primary-cta" style={{ width: 'auto', minHeight: 'auto', padding: '8px 16px', background: '#ef4444', borderColor: '#ef4444' }} onClick={() => handleDeleteComment(commentToDelete)}>Delete</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {postToDelete && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 1100, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <div onClick={() => setPostToDelete(null)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} />
+            <div className="glass-card animate-dropdown-enter" style={{ position: 'relative', zIndex: 1, padding: '24px', borderRadius: '12px', width: '100%', maxWidth: '400px' }}>
+              <h2 style={{ marginTop: 0, marginBottom: '16px', fontSize: '1.25rem', fontFamily: 'Fustat, sans-serif' }}>Delete Blog Post</h2>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>Are you sure you want to permanently delete this blog post? This action cannot be undone.</p>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                <button type="button" className="btn-secondary" style={{ width: 'auto', minHeight: 'auto', padding: '8px 16px' }} onClick={() => setPostToDelete(null)}>Cancel</button>
+                <button type="button" className="primary-cta" style={{ width: 'auto', minHeight: 'auto', padding: '8px 16px', background: '#ef4444', borderColor: '#ef4444' }} onClick={handleDeletePost}>Delete</button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     );
@@ -554,6 +586,34 @@ export default function Blogs() {
         <div className="empty-state" style={{ padding: '60px 0' }}>
           <h3>No articles published yet</h3>
           <p>Check back later or check with the administrator to write content!</p>
+        </div>
+      )}
+
+      {commentToDelete && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1100, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <div onClick={() => setCommentToDelete(null)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} />
+          <div className="glass-card animate-dropdown-enter" style={{ position: 'relative', zIndex: 1, padding: '24px', borderRadius: '12px', width: '100%', maxWidth: '400px' }}>
+            <h2 style={{ marginTop: 0, marginBottom: '16px', fontSize: '1.25rem', fontFamily: 'Fustat, sans-serif' }}>Delete Comment</h2>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>Are you sure you want to delete this comment? This action cannot be undone.</p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <button type="button" className="btn-secondary" style={{ width: 'auto', minHeight: 'auto', padding: '8px 16px' }} onClick={() => setCommentToDelete(null)}>Cancel</button>
+              <button type="button" className="primary-cta" style={{ width: 'auto', minHeight: 'auto', padding: '8px 16px', background: '#ef4444', borderColor: '#ef4444' }} onClick={() => handleDeleteComment(commentToDelete)}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {postToDelete && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1100, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <div onClick={() => setPostToDelete(null)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} />
+          <div className="glass-card animate-dropdown-enter" style={{ position: 'relative', zIndex: 1, padding: '24px', borderRadius: '12px', width: '100%', maxWidth: '400px' }}>
+            <h2 style={{ marginTop: 0, marginBottom: '16px', fontSize: '1.25rem', fontFamily: 'Fustat, sans-serif' }}>Delete Blog Post</h2>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>Are you sure you want to permanently delete this blog post? This action cannot be undone.</p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <button type="button" className="btn-secondary" style={{ width: 'auto', minHeight: 'auto', padding: '8px 16px' }} onClick={() => setPostToDelete(null)}>Cancel</button>
+              <button type="button" className="primary-cta" style={{ width: 'auto', minHeight: 'auto', padding: '8px 16px', background: '#ef4444', borderColor: '#ef4444' }} onClick={handleDeletePost}>Delete</button>
+            </div>
+          </div>
         </div>
       )}
     </div>
