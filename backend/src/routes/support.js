@@ -87,23 +87,33 @@ router.post('/:id/accept-appeal', authenticate, requireAdmin, async (req, res) =
       return apiError(res, 404, 'Appeal message not found');
     }
 
-    // Find the user by email
-    const user = await prisma.user.findUnique({ where: { email: msg.email } });
-    if (user) {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { isBanned: false, bannedAt: null, banReason: null },
-      });
+    // Find the user by email (case-insensitive check)
+    const user = await prisma.user.findFirst({
+      where: {
+        email: {
+          equals: msg.email,
+          mode: 'insensitive'
+        }
+      }
+    });
 
-      await prisma.auditLog.create({
-        data: {
-          action: 'USER_UNBANNED',
-          actorId: req.user.id,
-          targetId: user.id,
-          metadata: { appealId: id }
-        },
-      });
+    if (!user) {
+      return apiError(res, 404, `No active account found for email: ${msg.email}`);
     }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { isBanned: false, bannedAt: null, banReason: null },
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        action: 'USER_UNBANNED',
+        actorId: req.user.id,
+        targetId: user.id,
+        metadata: { appealId: id }
+      },
+    });
 
     // Mark the appeal support message as read
     await prisma.supportMessage.update({
