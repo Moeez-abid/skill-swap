@@ -129,6 +129,17 @@ export default function Groups() {
       }
     });
 
+    const unsubMemberRemoved = subscribeToGroupEvents(selectedGroup.id, 'group-member-removed', (data) => {
+      if (data) {
+        if (data.userId === currentUser.id) {
+          setSelectedGroup(null);
+          loadGroups();
+        } else {
+          setGroupMembers(prev => prev.filter(m => m.id !== data.userId));
+        }
+      }
+    });
+
     return () => {
       if (unsubscribe) unsubscribe();
       if (unsubGrpDel) unsubGrpDel();
@@ -136,6 +147,7 @@ export default function Groups() {
       if (unsubMyBulkDel) unsubMyBulkDel();
       if (unsubSettings) unsubSettings();
       if (unsubMemberRole) unsubMemberRole();
+      if (unsubMemberRemoved) unsubMemberRemoved();
     };
   }, [selectedGroup, currentUser?.id]);
 
@@ -262,6 +274,20 @@ export default function Groups() {
       loadMessages(selectedGroup.id);
     } catch (err) {
       alert(err.message || 'Failed to update member role');
+    } finally {
+      setUpdatingSettings(false);
+    }
+  };
+
+  const handleRemoveMember = async (targetUserId) => {
+    if (!selectedGroup) return;
+    if (!window.confirm('Are you sure you want to remove this member from the group?')) return;
+    setUpdatingSettings(true);
+    try {
+      await groups.removeMember(selectedGroup.id, targetUserId);
+      setGroupMembers(prev => prev.filter(m => m.id !== targetUserId));
+    } catch (err) {
+      alert(err.message || 'Failed to remove member');
     } finally {
       setUpdatingSettings(false);
     }
@@ -900,14 +926,24 @@ export default function Groups() {
                       member.id !== currentUser?.id && 
                       member.id !== selectedGroup.creatorId &&
                       (!['SUPER_ADMIN', 'MANAGER'].includes(member.platformRole) || ['SUPER_ADMIN', 'MANAGER'].includes(currentUser?.role))) ? (
-                      <button 
-                        type="button"
-                        onClick={() => handleToggleMemberRole(member.id, member.role)} 
-                        disabled={updatingSettings}
-                        style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '11px', textDecoration: 'underline', padding: 0 }}
-                      >
-                        {member.role === 'ADMIN' ? 'Dismiss Admin' : 'Make Admin'}
-                      </button>
+                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <button 
+                          type="button"
+                          onClick={() => handleToggleMemberRole(member.id, member.role)} 
+                          disabled={updatingSettings}
+                          style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '11px', textDecoration: 'underline', padding: 0 }}
+                        >
+                          {member.role === 'ADMIN' ? 'Dismiss Admin' : 'Make Admin'}
+                        </button>
+                        <button 
+                          type="button"
+                          onClick={() => handleRemoveMember(member.id)} 
+                          disabled={updatingSettings}
+                          style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '11px', textDecoration: 'underline', padding: 0 }}
+                        >
+                          Remove
+                        </button>
+                      </div>
                     ) : null}
                   </div>
                 ))}

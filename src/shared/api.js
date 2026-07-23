@@ -380,6 +380,11 @@ export const groups = {
     clearApiCache('/groups');
     return res;
   },
+  removeMember: async (groupId, userId) => {
+    const res = await api(`/groups/${groupId}/members/${userId}`, { method: 'DELETE' });
+    clearApiCache('/groups');
+    return res;
+  },
   bulkDeleteMessages: (groupId, messageIds) => api(`/groups/${groupId}/messages/bulk-delete`, { method: 'POST', body: JSON.stringify({ messageIds }) })
 };
 

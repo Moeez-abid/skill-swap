@@ -541,6 +541,62 @@ router.patch('/:id/members/:targetUserId/role', async (req, res) => {
   }
 });
 
+// DELETE /api/groups/:id/members/:targetUserId - Kick/Remove a member from the group
+router.delete('/:id/members/:targetUserId', async (req, res) => {
+  try {
+    const { id, targetUserId } = req.params;
+    const userId = req.user.id;
+
+    const group = await prisma.group.findUnique({
+      where: { id },
+      include: {
+        members: {
+          where: { userId }
+        }
+      }
+    });
+
+    if (!group) return apiError(res, 404, 'Group not found');
+
+    const isPlatformAdminOrManager = ['SUPER_ADMIN', 'MANAGER'].includes(req.user.role);
+    const member = group.members[0];
+    const isGroupAdmin = member && member.role === 'ADMIN';
+    const isGroupCreator = group.creatorId === userId;
+
+    if (!isPlatformAdminOrManager && !isGroupAdmin && !isGroupCreator) {
+      return apiError(res, 403, 'Not authorized to remove members from this group');
+    }
+
+    if (group.creatorId === targetUserId) {
+      return apiError(res, 400, 'Cannot remove the group creator');
+    }
+
+    const targetMember = await prisma.groupMember.findUnique({
+      where: { groupId_userId: { groupId: id, userId: targetUserId } },
+      include: { user: { select: { role: true } } }
+    });
+    
+    if (!targetMember) return apiError(res, 404, 'Member not found');
+
+    // Platform admin superiority check
+    const isTargetPlatformAdminOrManager = ['SUPER_ADMIN', 'MANAGER'].includes(targetMember.user.role);
+    if (isTargetPlatformAdminOrManager && !isPlatformAdminOrManager) {
+      return apiError(res, 403, 'Not authorized to remove a platform administrator or manager');
+    }
+
+    await prisma.groupMember.delete({
+      where: { groupId_userId: { groupId: id, userId: targetUserId } }
+    });
+
+    await triggerEvent(`group-${id}`, 'group-member-removed', { groupId: id, userId: targetUserId });
+
+    return apiSuccess(res, { success: true });
+  } catch (error) {
+    console.error('Error removing group member:', error);
+    return apiError(res, 500, 'Internal server error');
+  }
+});
+
 router.delete('/:id/messages/:messageId', async (req, res) => {
   try {
     const { id, messageId } = req.params;
