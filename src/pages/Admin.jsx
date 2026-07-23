@@ -23,6 +23,12 @@ export default function Admin() {
   const [blogCoverFile, setBlogCoverFile] = useState(null);
   const [blogSubmitting, setBlogSubmitting] = useState(false);
 
+  // Group form states
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
+  const [newGroupName, setNewGroupName] = useState('');
+  const [newGroupDescription, setNewGroupDescription] = useState('');
+  const [groupSubmitting, setGroupSubmitting] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
@@ -178,6 +184,39 @@ export default function Admin() {
     }
   };
 
+  const handleUnbanUser = async (userId) => {
+    if (!window.confirm('Are you sure you want to reinstate/unban this user?')) return;
+    try {
+      await admin.unbanUser(userId);
+      showToast('User has been successfully unbanned.');
+      loadData();
+    } catch (err) {
+      showToast(err.message || 'Failed to unban user');
+    }
+  };
+
+  const handleAcceptAppeal = async (msgId) => {
+    if (!window.confirm('Are you sure you want to ACCEPT this appeal? This will unban the user.')) return;
+    try {
+      await admin.acceptAppeal(msgId);
+      showToast('Appeal accepted and user unbanned.');
+      loadData();
+    } catch (err) {
+      showToast(err.message || 'Failed to accept appeal');
+    }
+  };
+
+  const handleRejectAppeal = async (msgId) => {
+    if (!window.confirm('Are you sure you want to REJECT this appeal? The user will remain banned.')) return;
+    try {
+      await admin.rejectAppeal(msgId);
+      showToast('Appeal rejected.');
+      loadData();
+    } catch (err) {
+      showToast(err.message || 'Failed to reject appeal');
+    }
+  };
+
   const handleSetRole = async (userId, role) => {
     try {
       await admin.setUserRole(userId, role);
@@ -257,6 +296,24 @@ export default function Admin() {
     }
   };
 
+  const handleCreateGroup = async (e) => {
+    e.preventDefault();
+    if (!newGroupName.trim() || !newGroupDescription.trim()) return;
+    setGroupSubmitting(true);
+    try {
+      await groups.create({ name: newGroupName, description: newGroupDescription });
+      showToast('Community group created successfully');
+      setNewGroupName('');
+      setNewGroupDescription('');
+      setIsGroupModalOpen(false);
+      loadData();
+    } catch (err) {
+      showToast(err.message || 'Failed to create group');
+    } finally {
+      setGroupSubmitting(false);
+    }
+  };
+
   if (error) return <div style={{ paddingTop: '130px', paddingBottom: '64px' }}><div className="empty-state"><h3>Admin panel unavailable</h3></div></div>;
 
   return (
@@ -301,7 +358,10 @@ export default function Admin() {
 
       {activeTab === 'groups' && (
       <section className="glass-card animate-fade-up delay-2" style={{ padding: '24px', marginTop: '32px' }}>
-        <h2 style={{ fontFamily: 'Fustat,sans-serif', marginBottom: '16px' }}>Group Management</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h2 style={{ fontFamily: 'Fustat,sans-serif', margin: 0 }}>Group Management</h2>
+          <button type="button" className="primary-cta" onClick={() => setIsGroupModalOpen(true)} style={{ padding: '8px 16px', fontSize: '0.9rem', width: 'auto' }}>+ Create Group</button>
+        </div>
         <div className="admin-table-wrap" style={{ overflowX: 'auto' }}>
           {allGroups.length > 0 ? (
           <div className="table-responsive">
@@ -364,6 +424,9 @@ export default function Admin() {
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                       {!u.isBanned && u.role !== 'SUPER_ADMIN' && (
                         <button className="btn-secondary" onClick={() => { setUserToBan(u.id); setBanReason(''); }} style={{ padding: '6px 12px', fontSize: '12px', color: '#ef4444', borderColor: 'rgba(239,68,68,0.3)' }}>Ban User</button>
+                      )}
+                      {u.isBanned && (
+                        <button className="primary-cta" onClick={() => handleUnbanUser(u.id)} style={{ padding: '6px 12px', fontSize: '12px', width: 'auto', background: 'var(--brand-green)', borderColor: 'var(--brand-green)' }}>Unban User</button>
                       )}
                       {currentUser?.role === 'SUPER_ADMIN' && (
                         <>
@@ -532,10 +595,19 @@ export default function Admin() {
                     <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>Received: {new Date(msg.createdAt).toLocaleString()}</p>
                   </div>
                   {!msg.isRead && (
-                    <button className="primary-cta" onClick={() => handleMarkSupportRead(msg.id)}>Mark as Read</button>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      {msg.isAppeal ? (
+                        <>
+                          <button className="primary-cta" style={{ background: 'var(--brand-green)', borderColor: 'var(--brand-green)', padding: '6px 12px', fontSize: '13px', width: 'auto' }} onClick={() => handleAcceptAppeal(msg.id)}>Accept Appeal</button>
+                          <button className="btn-secondary" style={{ color: '#ef4444', borderColor: 'rgba(239,68,68,0.3)', padding: '6px 12px', fontSize: '13px' }} onClick={() => handleRejectAppeal(msg.id)}>Reject Appeal</button>
+                        </>
+                      ) : (
+                        <button className="primary-cta" style={{ padding: '6px 12px', fontSize: '13px' }} onClick={() => handleMarkSupportRead(msg.id)}>Mark as Read</button>
+                      )}
+                    </div>
                   )}
                   {msg.isRead && (
-                    <span className="badge badge--success">Read</span>
+                    <span className="badge badge--success">{msg.isAppeal ? 'Handled' : 'Read'}</span>
                   )}
                 </div>
                 <div style={{ marginTop: '16px', padding: '12px', background: 'var(--bg-surface-raised)', borderRadius: '8px' }}>
@@ -723,6 +795,45 @@ export default function Admin() {
               <button type="button" className="btn-secondary" onClick={() => setIsBlogModalOpen(false)}>Cancel</button>
               <button type="submit" className="primary-cta" disabled={blogSubmitting} style={{ width: 'auto' }}>
                 {blogSubmitting ? 'Saving...' : 'Save Post'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {isGroupModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1100, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <div onClick={() => setIsGroupModalOpen(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} />
+          <form onSubmit={handleCreateGroup} className="glass-card animate-dropdown-enter" style={{ position: 'relative', zIndex: 1, padding: '24px', borderRadius: '12px', width: '100%', maxWidth: '500px' }}>
+            <h2 style={{ marginTop: 0, marginBottom: '16px', fontSize: '1.25rem' }}>Create Community Group</h2>
+            <div className="form-group" style={{ marginBottom: '16px' }}>
+              <label htmlFor="groupName" style={{ display: 'block', marginBottom: '6px', fontSize: '14px' }}>Group Name</label>
+              <input
+                type="text"
+                id="groupName"
+                required
+                value={newGroupName}
+                onChange={(e) => setNewGroupName(e.target.value)}
+                placeholder="e.g. JavaScript Developers"
+                style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-primary)' }}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '24px' }}>
+              <label htmlFor="groupDescription" style={{ display: 'block', marginBottom: '6px', fontSize: '14px' }}>Description</label>
+              <textarea
+                id="groupDescription"
+                required
+                rows="4"
+                value={newGroupDescription}
+                onChange={(e) => setNewGroupDescription(e.target.value)}
+                placeholder="Describe what this community group is about..."
+                style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-primary)', resize: 'vertical' }}
+              />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <button type="button" className="btn-secondary" onClick={() => setIsGroupModalOpen(false)}>Cancel</button>
+              <button type="submit" className="primary-cta" disabled={groupSubmitting} style={{ width: 'auto' }}>
+                {groupSubmitting ? 'Creating...' : 'Create Group'}
               </button>
             </div>
           </form>

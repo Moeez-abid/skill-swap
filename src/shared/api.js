@@ -285,6 +285,17 @@ export const admin = {
   },
   impersonate: async (id) => {
     return api(`/admin/impersonate/${id}`, { method: 'POST' });
+  },
+  unbanUser: async (id) => {
+    const res = await api(`/admin/users/${id}/unban`, { method: 'PATCH' });
+    clearApiCache('/users');
+    return res;
+  },
+  acceptAppeal: async (id) => {
+    return api(`/support/${id}/accept-appeal`, { method: 'POST' });
+  },
+  rejectAppeal: async (id) => {
+    return api(`/support/${id}/reject-appeal`, { method: 'POST' });
   }
 };
 

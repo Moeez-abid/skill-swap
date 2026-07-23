@@ -69,6 +69,23 @@ router.patch('/users/:id/ban', requireRole(['SUPER_ADMIN', 'MANAGER']), async (r
   return apiSuccess(res, { user: { id: user.id, isBanned: true } });
 });
 
+router.patch('/users/:id/unban', requireRole(['SUPER_ADMIN', 'MANAGER']), async (req, res) => {
+  const user = await prisma.user.update({
+    where: { id: req.params.id },
+    data: { isBanned: false, bannedAt: null, banReason: null },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      action: 'USER_UNBANNED',
+      actorId: req.user.id,
+      targetId: user.id,
+    },
+  });
+
+  return apiSuccess(res, { user: { id: user.id, isBanned: false } });
+});
+
 router.get('/moderation', async (_req, res) => {
   const flags = await prisma.flag.findMany({
     where: { status: 'PENDING' },

@@ -10,6 +10,8 @@ export default function Banned() {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
   const [sending, setSending] = useState(false);
+  const [hasAppealed, setHasAppealed] = useState(false);
+  const [checking, setChecking] = useState(true);
   const navigate = useNavigate();
 
   const currentUser = getUser();
@@ -24,6 +26,32 @@ export default function Banned() {
       navigate('/');
     }
   }, [navigate, currentUser]);
+
+  useEffect(() => {
+    const checkStatus = async () => {
+      const email = currentUser?.email;
+      if (!email) {
+        setChecking(false);
+        return;
+      }
+      try {
+        const res = await api(`/support/check-appeal?email=${encodeURIComponent(email)}`);
+        if (res.hasAppealed) {
+          setHasAppealed(true);
+          setSent(true);
+        }
+      } catch (err) {
+        console.error('Failed to check appeal status:', err);
+      } finally {
+        setChecking(false);
+      }
+    };
+    if (currentUser) {
+      checkStatus();
+    } else {
+      setChecking(false);
+    }
+  }, [currentUser]);
 
   const handleLogout = () => {
     clearAuth();
@@ -53,6 +81,7 @@ export default function Banned() {
           isAppeal: true
         }),
       });
+      setHasAppealed(true);
       setSent(true);
     } catch (err) {
       setError(err.message || 'Failed to send appeal');
@@ -60,6 +89,28 @@ export default function Banned() {
       setSending(false);
     }
   };
+
+  if (checking) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        minHeight: 'calc(100vh - 80px)',
+        background: 'radial-gradient(circle at 50% 0%, rgba(var(--accent-rgb, 232, 83, 14), 0.08) 0%, transparent 60%)',
+        position: 'relative'
+      }}>
+        <div className="bg-ambient-layer">
+          <div className="bg-grid-overlay"></div>
+          <div className="glow-orb orb-top-left"></div>
+          <div className="glow-orb orb-bottom-right"></div>
+        </div>
+        <div className="glass-card" style={{ padding: '24px 48px', borderRadius: '16px', border: '1px solid var(--border)', background: 'var(--bg-surface)', zIndex: 1 }}>
+          <p style={{ color: 'var(--text-secondary)', fontFamily: 'Fustat, sans-serif', fontSize: '1.1rem' }}>Checking status...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ 
@@ -157,9 +208,13 @@ export default function Banned() {
                 <polyline points="20 6 9 17 4 12"/>
               </svg>
             </div>
-            <h3 style={{ color: 'var(--brand-green)', fontWeight: '700', fontSize: '1.2rem' }}>Appeal Submitted</h3>
+            <h3 style={{ color: 'var(--brand-green)', fontWeight: '700', fontSize: '1.2rem' }}>
+              {hasAppealed ? 'Appeal Already Submitted' : 'Appeal Submitted'}
+            </h3>
             <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', lineHeight: '1.5', margin: '0' }}>
-              Our support team will review your appeal and contact you at your email address if your account status changes.
+              {hasAppealed 
+                ? 'We have already received your appeal for this account. Our support team is currently reviewing it.' 
+                : 'Our support team will review your appeal and contact you at your email address if your account status changes.'}
             </p>
           </div>
         ) : (
