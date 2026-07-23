@@ -62,29 +62,114 @@ export default function Banned() {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-card glass-card">
-        <h1 className="auth-title" style={{ color: 'var(--brand-orange)' }}>Account Suspended</h1>
-        <p className="auth-subtitle" style={{ color: 'var(--text-primary)' }}>Your access to SkillSwap has been revoked.</p>
+    <div style={{ 
+      paddingTop: '120px', 
+      paddingBottom: '80px', 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      minHeight: 'calc(100vh - 80px)',
+      background: 'radial-gradient(circle at 50% 0%, rgba(var(--accent-rgb, 232, 83, 14), 0.08) 0%, transparent 60%)',
+      position: 'relative'
+    }}>
+      {/* Background glow orbs */}
+      <div className="bg-ambient-layer">
+        <div className="bg-grid-overlay"></div>
+        <div className="glow-orb orb-top-left"></div>
+        <div className="glow-orb orb-bottom-right"></div>
+      </div>
 
-        <div style={{ marginTop: '24px', padding: '16px', background: 'rgba(255, 69, 0, 0.1)', border: '1px solid var(--brand-orange)', borderRadius: '8px' }}>
-          <h3 style={{ color: 'var(--brand-orange)', marginBottom: '8px', fontSize: '14px', textTransform: 'uppercase' }}>Reason</h3>
-          <p style={{ color: 'var(--text-primary)', whiteSpace: 'pre-wrap' }}>{reason}</p>
+      <div className="glass-card animate-fade-up" style={{ 
+        width: '100%', 
+        maxWidth: '520px', 
+        padding: '48px 40px', 
+        borderRadius: '20px', 
+        boxShadow: '0 24px 48px -12px rgba(0,0,0,0.15), 0 0 0 1px var(--border)',
+        background: 'var(--bg-surface)',
+        zIndex: 1
+      }}>
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <div style={{ 
+            width: '64px', 
+            height: '64px', 
+            borderRadius: '16px', 
+            background: 'var(--accent-subtle)', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            color: 'var(--accent)', 
+            margin: '0 auto 20px auto',
+            boxShadow: '0 8px 16px var(--accent-shadow)'
+          }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+          </div>
+          <h1 style={{ fontSize: '1.8rem', fontWeight: '700', marginBottom: '10px', color: 'var(--text-primary)', fontFamily: 'Fustat, sans-serif' }}>
+            Account Suspended
+          </h1>
+          <p style={{ fontSize: '1rem', color: 'var(--text-secondary)' }}>
+            Your access to SkillSwap has been suspended.
+          </p>
+        </div>
+
+        <div style={{ 
+          padding: '20px', 
+          background: 'var(--bg-surface-raised)', 
+          border: '1px solid var(--border)', 
+          borderRadius: '14px',
+          marginBottom: '32px'
+        }}>
+          <h3 style={{ 
+            color: 'var(--accent)', 
+            marginBottom: '8px', 
+            fontSize: '0.85rem', 
+            fontWeight: '700', 
+            textTransform: 'uppercase', 
+            letterSpacing: '0.05em' 
+          }}>
+            Suspension Reason
+          </h3>
+          <p style={{ 
+            color: 'var(--text-primary)', 
+            whiteSpace: 'pre-wrap', 
+            fontSize: '0.95rem', 
+            lineHeight: '1.6' 
+          }}>
+            {reason}
+          </p>
         </div>
 
         {sent ? (
-          <div style={{ marginTop: '32px', textAlign: 'center' }}>
-            <p style={{ color: 'var(--brand-green)', fontWeight: 'bold' }}>Appeal Sent Successfully</p>
-            <p style={{ marginTop: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>Our support team will review your appeal and contact you if your account status changes.</p>
+          <div style={{ marginTop: '32px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }} className="animate-fade-up">
+            <div style={{ 
+              width: '48px', 
+              height: '48px', 
+              borderRadius: '50%', 
+              background: 'rgba(22, 163, 74, 0.1)', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              color: 'var(--brand-green)' 
+            }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            <h3 style={{ color: 'var(--brand-green)', fontWeight: '700', fontSize: '1.2rem' }}>Appeal Submitted</h3>
+            <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', lineHeight: '1.5', margin: '0' }}>
+              Our support team will review your appeal and contact you at your email address if your account status changes.
+            </p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} style={{ marginTop: '32px' }}>
-            <p style={{ fontSize: '14px', marginBottom: '16px', color: 'var(--text-secondary)' }}>
+          <form onSubmit={handleSubmit}>
+            <p style={{ fontSize: '0.95rem', marginBottom: '20px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
               If you believe this is a mistake, you can contact our support team to appeal this decision.
             </p>
             {!currentUser && (
-              <div className="form-group" style={{ marginBottom: '16px' }}>
-                <label htmlFor="email">Your Email Address</label>
+              <div className="form-group" style={{ marginBottom: '20px' }}>
+                <label htmlFor="email" style={{ fontSize: '0.9rem', fontWeight: '500', marginBottom: '8px', display: 'block', color: 'var(--text-primary)' }}>Your Email Address</label>
                 <input
                   type="email"
                   id="email"
@@ -92,12 +177,22 @@ export default function Banned() {
                   value={emailInput}
                   onChange={(e) => setEmailInput(e.target.value)}
                   placeholder="name@example.com"
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-primary)' }}
+                  style={{ 
+                    width: '100%', 
+                    padding: '14px 16px', 
+                    borderRadius: '12px', 
+                    border: '1px solid var(--border)', 
+                    background: 'var(--bg-surface)', 
+                    color: 'var(--text-primary)',
+                    fontSize: '1rem',
+                    transition: 'border-color 0.2s ease',
+                    outline: 'none'
+                  }}
                 />
               </div>
             )}
-            <div className="form-group">
-              <label htmlFor="appealMsg">Appeal Message</label>
+            <div className="form-group" style={{ marginBottom: '24px' }}>
+              <label htmlFor="appealMsg" style={{ fontSize: '0.9rem', fontWeight: '500', marginBottom: '8px', display: 'block', color: 'var(--text-primary)' }}>Appeal Message</label>
               <textarea
                 id="appealMsg"
                 required
@@ -105,28 +200,54 @@ export default function Banned() {
                 value={contactMsg}
                 onChange={(e) => setContactMsg(e.target.value)}
                 placeholder="Explain why your account should be reinstated..."
-                style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-primary)' }}
+                style={{ 
+                  width: '100%', 
+                  padding: '14px 16px', 
+                  borderRadius: '12px', 
+                  border: '1px solid var(--border)', 
+                  background: 'var(--bg-surface)', 
+                  color: 'var(--text-primary)',
+                  fontSize: '1rem',
+                  lineHeight: '1.5',
+                  transition: 'border-color 0.2s ease',
+                  outline: 'none',
+                  resize: 'vertical'
+                }}
               />
             </div>
-            {error && <p className="error-message" style={{ color: '#ef4444', fontSize: '14px', marginTop: '8px' }}>{error}</p>}
-            <button type="submit" className="primary-cta auth-btn" disabled={sending} style={{ marginTop: '16px', width: '100%' }}>
+            {error && (
+              <div className="form-error" style={{ marginBottom: '16px', padding: '12px', background: 'rgba(220, 38, 38, 0.1)', color: '#DC2626', borderRadius: '10px', textAlign: 'center', fontSize: '0.95rem', border: '1px solid rgba(220, 38, 38, 0.2)' }}>
+                {error}
+              </div>
+            )}
+            <button type="submit" className="primary-cta" disabled={sending} style={{ width: '100%' }}>
               {sending ? 'Sending...' : 'Submit Appeal'}
             </button>
           </form>
         )}
 
-        <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
+        <div style={{ 
+          marginTop: '32px', 
+          paddingTop: '24px', 
+          borderTop: '1px solid var(--border)', 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: '16px', 
+          alignItems: 'center' 
+        }}>
           {currentUser && (
             <button 
               type="button" 
               onClick={handleLogout} 
               className="btn-secondary" 
-              style={{ padding: '8px 16px', fontSize: '14px', border: 'none', background: 'transparent', color: 'var(--brand-orange)', cursor: 'pointer', fontWeight: '600' }}
+              style={{ width: '100%', padding: '12px', borderRadius: '12px', fontSize: '0.95rem', fontWeight: '600' }}
             >
-              Log Out / Sign Out
+              Sign Out
             </button>
           )}
-          <Link to="/" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '14px' }}>Return to Home</Link>
+          <Link to="/" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.95rem', fontWeight: '500', transition: 'color 0.2s' }}>
+            Return to Home
+          </Link>
         </div>
       </div>
     </div>
