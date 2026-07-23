@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { groups, users, notifications, subscribeToGroupEvents, subscribeToUserEvents, getImageUrl } from '../shared/api.js';
 import { isLoggedIn, getUser } from '../shared/auth.js';
 
 export default function Groups() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const groupIdFromUrl = searchParams.get('id');
   const messagesEndRef = useRef(null);
 
   const [invitations, setInvitations] = useState([]);
@@ -166,11 +168,22 @@ export default function Groups() {
     setLoadingList(true);
     try {
       const res = await groups.list();
-      setGroupList(res.groups || []);
+      const list = res.groups || [];
+      setGroupList(list);
       // If a group was already selected, update its membership status in the current selection
+      if (groupIdFromUrl) {
+        const target = list.find(g => g.id === groupIdFromUrl);
+        if (target) {
+          setSelectedGroup(target);
+          return;
+        }
+      }
+
       if (selectedGroup) {
-        const updated = res.groups.find(g => g.id === selectedGroup.id);
+        const updated = list.find(g => g.id === selectedGroup.id);
         if (updated) setSelectedGroup(updated);
+      } else if (list.length > 0) {
+        setSelectedGroup(list[0]);
       }
     } catch (err) {
       console.error(err);

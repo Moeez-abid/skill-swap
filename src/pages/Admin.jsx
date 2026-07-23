@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { admin, groups, blogs, getImageUrl } from '../shared/api';
 import { isLoggedIn, isAdmin, getUser } from '../shared/auth';
 
@@ -381,7 +381,10 @@ export default function Admin() {
                   <td style={{ padding: '12px', color: 'var(--text-secondary)' }}>{g.description.slice(0, 50)}{g.description.length > 50 ? '...' : ''}</td>
                   <td style={{ padding: '12px' }}>{g.memberCount}</td>
                   <td style={{ padding: '12px' }}>
-                    <button onClick={() => setGroupToDelete(g.id)} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '12px', color: '#ef4444', borderColor: 'rgba(239,68,68,0.3)' }}>Delete</button>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <Link to={`/groups?id=${g.id}`} className="primary-cta" style={{ padding: '6px 12px', fontSize: '12px', width: 'auto', minHeight: 'auto', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>View Chat</Link>
+                      <button onClick={() => setGroupToDelete(g.id)} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '12px', color: '#ef4444', borderColor: 'rgba(239,68,68,0.3)' }}>Delete</button>
+                    </div>
                   </td>
                 </tr>
               ))}
