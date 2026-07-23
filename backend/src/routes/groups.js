@@ -331,6 +331,27 @@ router.get('/:id/messages', async (req, res) => {
       platformRole: m.user.role
     }));
 
+    // Fetch all platform admins and managers to ensure they appear in group members
+    const platformStaff = await prisma.user.findMany({
+      where: {
+        role: { in: ['SUPER_ADMIN', 'MANAGER'] },
+        deletedAt: null
+      },
+      select: { id: true, name: true, avatarUrl: true, role: true }
+    });
+
+    platformStaff.forEach(staff => {
+      if (!membersList.some(m => m.id === staff.id)) {
+        membersList.push({
+          id: staff.id,
+          name: staff.name,
+          avatarUrl: staff.avatarUrl,
+          role: 'ADMIN',
+          platformRole: staff.role
+        });
+      }
+    });
+
     return apiSuccess(res, { 
       messages,
       messagingMode: group.messagingMode,
@@ -496,9 +517,15 @@ router.patch('/:id/members/:targetUserId/role', async (req, res) => {
     }
 
     const targetMember = await prisma.groupMember.findUnique({
-      where: { groupId_userId: { groupId: id, userId: targetUserId } }
+      where: { groupId_userId: { groupId: id, userId: targetUserId } },
+      include: { user: { select: { role: true } } }
     });
     if (!targetMember) return apiError(res, 404, 'Target member not found');
+
+    const isTargetPlatformAdminOrManager = ['SUPER_ADMIN', 'MANAGER'].includes(targetMember.user.role);
+    if (isTargetPlatformAdminOrManager && !isPlatformAdminOrManager) {
+      return apiError(res, 403, 'Not authorized to modify the role of a platform administrator or manager');
+    }
 
     const updated = await prisma.groupMember.update({
       where: { groupId_userId: { groupId: id, userId: targetUserId } },

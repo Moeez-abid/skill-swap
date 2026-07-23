@@ -896,7 +896,10 @@ export default function Groups() {
                       {member.name} 
                       {member.role === 'ADMIN' && <span className="badge badge--success" style={{ marginLeft: '6px', fontSize: '9px', padding: '1px 5px' }}>Admin</span>}
                     </span>
-                    {((['SUPER_ADMIN', 'MANAGER'].includes(currentUser?.role) || userGroupRole === 'ADMIN' || selectedGroup.creatorId === currentUser?.id) && member.id !== currentUser?.id && member.id !== selectedGroup.creatorId) ? (
+                    {((['SUPER_ADMIN', 'MANAGER'].includes(currentUser?.role) || userGroupRole === 'ADMIN' || selectedGroup.creatorId === currentUser?.id) && 
+                      member.id !== currentUser?.id && 
+                      member.id !== selectedGroup.creatorId &&
+                      (!['SUPER_ADMIN', 'MANAGER'].includes(member.platformRole) || ['SUPER_ADMIN', 'MANAGER'].includes(currentUser?.role))) ? (
                       <button 
                         type="button"
                         onClick={() => handleToggleMemberRole(member.id, member.role)} 
