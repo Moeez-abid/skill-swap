@@ -45,7 +45,7 @@ export default function Navbar() {
   const currentPath = location.pathname;
 
   let links = [];
-  if (currentPath.startsWith('/admin')) {
+  if (currentPath.startsWith('/admin') || (isSuperAdmin() && currentPath === '/groups')) {
     const userRole = getUser()?.role;
     if (userRole === 'MANAGER') {
       links = [
@@ -106,6 +106,9 @@ export default function Navbar() {
   const isActive = (l) => {
     if (l.href.startsWith('/admin?tab=')) {
       const tab = new URLSearchParams(l.href.split('?')[1]).get('tab');
+      if (tab === 'groups' && location.pathname === '/groups') {
+        return true;
+      }
       return location.pathname === '/admin' && currentTab === tab;
     }
     return location.pathname === l.href || (location.pathname === '/' && l.href === '/index.html');
