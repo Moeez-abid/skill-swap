@@ -170,10 +170,11 @@ router.get('/', async (req, res) => {
       orderBy: { createdAt: 'desc' }
     });
 
+    const isPlatformAdminOrManager = ['SUPER_ADMIN', 'MANAGER'].includes(req.user.role);
     const mappedGroups = groups.map(group => {
       const memberInfo = group.members.find(m => m.userId === userId);
-      const isMember = !!memberInfo;
-      const userGroupRole = memberInfo ? memberInfo.role : null;
+      const isMember = !!memberInfo || isPlatformAdminOrManager;
+      const userGroupRole = memberInfo ? memberInfo.role : (isPlatformAdminOrManager ? 'ADMIN' : null);
       const { members, ...groupData } = group;
       return {
         ...groupData,

@@ -281,6 +281,28 @@ router.patch('/users/:id/role', requireRole(['SUPER_ADMIN']), async (req, res) =
       },
     });
 
+    await prisma.notification.create({
+      data: {
+        userId: updated.id,
+        type: 'SYSTEM',
+        title: role === 'MANAGER' ? 'Promoted to Manager' : 'Role Demoted to User',
+        content: role === 'MANAGER'
+          ? 'You have been promoted to a platform Manager. You now have access to administrative and moderator controls.'
+          : 'Your platform access level has been set to User. Manager privileges have been removed.',
+        linkUrl: '/dashboard'
+      }
+    });
+
+    try {
+      await triggerEvent(`user-${updated.id}`, 'notification', {
+        type: 'SYSTEM',
+        title: role === 'MANAGER' ? 'Promoted to Manager' : 'Role Demoted to User',
+        content: role === 'MANAGER' ? 'You have been promoted to a platform Manager.' : 'Your role has been set to User.'
+      });
+    } catch (e) {
+      console.error('Failed to trigger Pusher notification event:', e);
+    }
+
     return apiSuccess(res, { user: updated });
   } catch (error) {
     console.error('Error updating user role:', error);

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { isLoggedIn, getUser, logout, isAdmin } from '../shared/auth';
+import { isLoggedIn, getUser, logout, isAdmin, isSuperAdmin } from '../shared/auth';
 import { getImageUrl } from '../shared/api';
 import NotificationsDropdown from './NotificationsDropdown';
 
@@ -45,7 +45,7 @@ export default function Navbar() {
   const currentPath = location.pathname;
 
   let links = [];
-  if (isAdmin()) {
+  if (currentPath.startsWith('/admin')) {
     const userRole = getUser()?.role;
     if (userRole === 'MANAGER') {
       links = [
@@ -86,6 +86,10 @@ export default function Navbar() {
         { href: '/success-stories', label: 'Success Stories' },
         { href: '/contact', label: 'Contact Us' },
       ];
+
+    if (loggedIn && user && isAdmin()) {
+      links.push({ href: '/admin', label: 'Admin Panel' });
+    }
   }
 
   const searchParams = new URLSearchParams(location.search);
@@ -185,7 +189,7 @@ export default function Navbar() {
           </button>
 
           {loggedIn && user ? (
-            isAdmin() ? (
+            isSuperAdmin() ? (
               <button type="button" onClick={handleLogout} className="nav-btn nav-btn--ghost hide-on-mobile" style={{ marginLeft: '12px' }}>Log out</button>
             ) : (
               <>
@@ -214,6 +218,7 @@ export default function Navbar() {
                       <span>{user.email || ''}</span>
                     </div>
                     <Link to="/profile">My Profile</Link>
+                    {isAdmin() && <Link to="/admin">Admin Panel</Link>}
                     <Link to="/settings">Settings</Link>
                     <Link to="/settings/notifications">Notification Settings</Link>
                     <button type="button" onClick={handleLogout}>Log out</button>

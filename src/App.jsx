@@ -25,7 +25,7 @@ import Blogs from './pages/Blogs.jsx';
 import Groups from './pages/Groups.jsx';
 import Banned from './pages/Banned.jsx';
 import Terms from './pages/Terms.jsx';
-import { isAdmin, getUser } from './shared/auth.js';
+import { isAdmin, isSuperAdmin, getUser } from './shared/auth.js';
 
 export default function App() {
   const location = useLocation();
@@ -37,8 +37,8 @@ export default function App() {
       navigate('/banned', { replace: true });
       return;
     }
-    // Route guarding for Admin isolation
-    if (isAdmin() && location.pathname !== '/admin' && location.pathname !== '/login' && location.pathname !== '/blogs') {
+    // Route guarding for Admin isolation (Super admins only)
+    if (isSuperAdmin() && location.pathname !== '/admin' && location.pathname !== '/login' && location.pathname !== '/blogs') {
       navigate('/admin', { replace: true });
     } else if (!isAdmin() && location.pathname === '/admin') {
       navigate('/', { replace: true });
