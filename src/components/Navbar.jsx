@@ -67,28 +67,36 @@ export default function Navbar() {
       ];
     }
   } else {
-    links = loggedIn && user
-      ? [
-        { href: '/', label: 'Home' },
-        { href: '/marketplace', label: 'Marketplace' },
-        { href: '/dashboard', label: 'Dashboard' },
-        { href: '/blogs', label: 'Blogs' },
+    if (loggedIn && user && isSuperAdmin()) {
+      links = [
         { href: '/groups', label: 'Groups' },
-        { href: '/matches', label: 'Matches' },
-        { href: '/messages', label: 'Messages' },
-        { href: '/sessions', label: 'Sessions' },
-      ]
-      : [
-        { href: '/', label: 'Home' },
-        { href: '/marketplace', label: 'Marketplace' },
         { href: '/blogs', label: 'Blogs' },
-        { href: '/about', label: 'About Us' },
-        { href: '/success-stories', label: 'Success Stories' },
-        { href: '/contact', label: 'Contact Us' },
+        { href: '/admin', label: 'Admin Panel' }
       ];
+    } else {
+      links = loggedIn && user
+        ? [
+          { href: '/', label: 'Home' },
+          { href: '/marketplace', label: 'Marketplace' },
+          { href: '/dashboard', label: 'Dashboard' },
+          { href: '/blogs', label: 'Blogs' },
+          { href: '/groups', label: 'Groups' },
+          { href: '/matches', label: 'Matches' },
+          { href: '/messages', label: 'Messages' },
+          { href: '/sessions', label: 'Sessions' },
+        ]
+        : [
+          { href: '/', label: 'Home' },
+          { href: '/marketplace', label: 'Marketplace' },
+          { href: '/blogs', label: 'Blogs' },
+          { href: '/about', label: 'About Us' },
+          { href: '/success-stories', label: 'Success Stories' },
+          { href: '/contact', label: 'Contact Us' },
+        ];
 
-    if (loggedIn && user && isAdmin()) {
-      links.push({ href: '/admin', label: 'Admin Panel' });
+      if (loggedIn && user && isAdmin()) {
+        links.push({ href: '/admin', label: 'Admin Panel' });
+      }
     }
   }
 

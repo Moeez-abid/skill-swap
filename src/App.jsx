@@ -38,7 +38,7 @@ export default function App() {
       return;
     }
     // Route guarding for Admin isolation (Super admins only)
-    if (isSuperAdmin() && location.pathname !== '/admin' && location.pathname !== '/login' && location.pathname !== '/blogs') {
+    if (isSuperAdmin() && location.pathname !== '/admin' && location.pathname !== '/login' && location.pathname !== '/blogs' && location.pathname !== '/groups') {
       navigate('/admin', { replace: true });
     } else if (!isAdmin() && location.pathname === '/admin') {
       navigate('/', { replace: true });
