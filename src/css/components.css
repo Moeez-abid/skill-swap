@@ -93,10 +93,20 @@ dialog {
   padding: 0;
   border: none;
   background: transparent;
+  max-height: 85vh;
+  max-width: calc(100vw - 24px);
+  box-sizing: border-box;
+}
+
+dialog.glass-card {
+  max-height: 85vh;
+  overflow-y: auto;
+  box-sizing: border-box;
 }
 
 dialog::backdrop {
   background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
 }
 
 dialog[open] {
@@ -825,6 +835,33 @@ select option {
   .hide-on-mobile {
     display: none !important;
   }
+}
+
+.chat-view-container {
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .chat-view-container {
+    top: 76px !important;
+    bottom: 12px !important;
+    width: calc(100vw - 16px) !important;
+    max-width: 100% !important;
+  }
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 /* Conversation List */

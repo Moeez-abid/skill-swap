@@ -3,6 +3,11 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { groups, users, notifications, subscribeToGroupEvents, subscribeToUserEvents, getImageUrl } from '../shared/api.js';
 import { isLoggedIn, getUser } from '../shared/auth.js';
 
+function getInitials(name) {
+  if (!name) return 'U';
+  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+}
+
 export default function Groups() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -29,6 +34,8 @@ export default function Groups() {
   const fileInputRef = useRef(null);
   const [selectedMessages, setSelectedMessages] = useState(new Set());
   const [replyingTo, setReplyingTo] = useState(null);
+  const [groupMembers, setGroupMembers] = useState([]);
+  const [memberSearchQuery, setMemberSearchQuery] = useState('');
   const [hoveredMsgId, setHoveredMsgId] = useState(null);
   const [menuConfig, setMenuConfig] = useState({ id: null });
 
@@ -46,7 +53,6 @@ export default function Groups() {
   // Group permission states
   const [messagingMode, setMessagingMode] = useState('ALL');
   const [userGroupRole, setUserGroupRole] = useState('MEMBER');
-  const [groupMembers, setGroupMembers] = useState([]);
   const [updatingSettings, setUpdatingSettings] = useState(false);
 
   const loggedIn = isLoggedIn();
@@ -470,7 +476,7 @@ export default function Groups() {
 
   return (
     <>
-      <div style={{ 
+      <div className="chat-view-container" style={{ 
         position: 'fixed', 
         top: '110px', 
         bottom: '24px', 
@@ -914,39 +920,86 @@ export default function Groups() {
 
             {/* Members role list */}
             {groupMembers.length > 0 && (
-              <div style={{ marginBottom: '20px', maxHeight: '180px', overflowY: 'auto' }}>
-                <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', color: 'var(--text-primary)', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '4px' }}>Group Members</h4>
-                {groupMembers.map(member => (
-                  <div key={member.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                    <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-                      {member.name} 
-                      {member.role === 'ADMIN' && <span className="badge badge--success" style={{ marginLeft: '6px', fontSize: '9px', padding: '1px 5px' }}>Admin</span>}
-                    </span>
-                    {((['SUPER_ADMIN', 'MANAGER'].includes(currentUser?.role) || userGroupRole === 'ADMIN' || selectedGroup.creatorId === currentUser?.id) && 
-                      member.id !== currentUser?.id && 
-                      member.id !== selectedGroup.creatorId &&
-                      (!['SUPER_ADMIN', 'MANAGER'].includes(member.platformRole) || ['SUPER_ADMIN', 'MANAGER'].includes(currentUser?.role))) ? (
-                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                        <button 
-                          type="button"
-                          onClick={() => handleToggleMemberRole(member.id, member.role)} 
-                          disabled={updatingSettings}
-                          style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '11px', textDecoration: 'underline', padding: 0 }}
-                        >
-                          {member.role === 'ADMIN' ? 'Dismiss Admin' : 'Make Admin'}
-                        </button>
-                        <button 
-                          type="button"
-                          onClick={() => handleRemoveMember(member.id)} 
-                          disabled={updatingSettings}
-                          style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '11px', textDecoration: 'underline', padding: 0 }}
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    ) : null}
+              <div style={{ marginBottom: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', paddingBottom: '6px', borderBottom: '1px solid var(--border-subtle)' }}>
+                  <h4 style={{ margin: 0, fontSize: '14px', color: 'var(--text-primary)', fontFamily: 'Fustat, sans-serif' }}>
+                    Group Members <span className="badge badge--neutral" style={{ marginLeft: '6px', fontSize: '11px', padding: '2px 6px' }}>{groupMembers.length}</span>
+                  </h4>
+                </div>
+
+                {groupMembers.length > 5 && (
+                  <div style={{ marginBottom: '12px' }}>
+                    <input
+                      type="search"
+                      placeholder="Search members..."
+                      value={memberSearchQuery}
+                      onChange={(e) => setMemberSearchQuery(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-subtle)',
+                        background: 'var(--bg-surface-raised)',
+                        color: 'var(--text-primary)',
+                        fontSize: '13px',
+                        outline: 'none',
+                        boxSizing: 'border-box'
+                      }}
+                    />
                   </div>
-                ))}
+                )}
+
+                <div className="custom-scrollbar" style={{ maxHeight: '220px', overflowY: 'auto', paddingRight: '4px' }}>
+                  {groupMembers
+                    .filter(m => m.name.toLowerCase().includes(memberSearchQuery.toLowerCase()))
+                    .map(member => (
+                      <div key={member.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.04)', gap: '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
+                          {member.avatarUrl ? (
+                            <img src={getImageUrl(member.avatarUrl)} alt={member.name} style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                          ) : (
+                            <span className="avatar avatar--initials" style={{ width: '30px', height: '30px', fontSize: '11px', flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                              {getInitials(member.name)}
+                            </span>
+                          )}
+                          <span style={{ fontSize: '13px', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {member.name}
+                            {member.role === 'ADMIN' && <span className="badge badge--success" style={{ marginLeft: '6px', fontSize: '9px', padding: '1px 5px' }}>Admin</span>}
+                            {selectedGroup.creatorId === member.id && <span className="badge badge--neutral" style={{ marginLeft: '4px', fontSize: '9px', padding: '1px 5px' }}>Creator</span>}
+                          </span>
+                        </div>
+                        {((['SUPER_ADMIN', 'MANAGER'].includes(currentUser?.role) || userGroupRole === 'ADMIN' || selectedGroup.creatorId === currentUser?.id) && 
+                          member.id !== currentUser?.id && 
+                          member.id !== selectedGroup.creatorId &&
+                          (!['SUPER_ADMIN', 'MANAGER'].includes(member.platformRole) || ['SUPER_ADMIN', 'MANAGER'].includes(currentUser?.role))) ? (
+                          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexShrink: 0 }}>
+                            <button 
+                              type="button"
+                              onClick={() => handleToggleMemberRole(member.id, member.role)} 
+                              disabled={updatingSettings}
+                              style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '11px', textDecoration: 'underline', padding: 0 }}
+                            >
+                              {member.role === 'ADMIN' ? 'Dismiss Admin' : 'Make Admin'}
+                            </button>
+                            <button 
+                              type="button"
+                              onClick={() => handleRemoveMember(member.id)} 
+                              disabled={updatingSettings}
+                              style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '11px', textDecoration: 'underline', padding: 0 }}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
+                    ))}
+
+                  {groupMembers.filter(m => m.name.toLowerCase().includes(memberSearchQuery.toLowerCase())).length === 0 && (
+                    <p style={{ color: 'var(--text-muted)', fontSize: '13px', textAlign: 'center', padding: '16px 0', margin: 0 }}>
+                      {memberSearchQuery ? 'No matching members found' : 'No members'}
+                    </p>
+                  )}
+                </div>
               </div>
             )}
  

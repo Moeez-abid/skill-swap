@@ -351,7 +351,7 @@ export default function Messages() {
   };
 
   return (
-    <div style={{ 
+    <div className="chat-view-container" style={{ 
       position: 'fixed', 
       top: '110px', 
       bottom: '24px', 
